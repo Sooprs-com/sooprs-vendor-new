@@ -8,6 +8,8 @@ import BottomTab from './BottomTab';
 import HomeVerificationScreen from '../Screen/Verification/HomeVerification';
 // import RegistrationScreen from '../Screen/Home/Registration/RegistrationScreen';
 import AddPackagesScreen from '../Screen/AddPackage/AddPackagesScreen';
+import CabRideReviewScreen from '../Screen/CabDetails/CabRideDetailsScreen';
+import ProfileScreen from '../Screen/Profile/ProfileScreen';
 import RegistrationScreen from '../auth/RegistrationScreen';
 // import WelcomeScreen from './auth/WelcomeScreen';
 // import ProfileSelection from './auth/ProfileSelection';
@@ -82,7 +84,8 @@ const AuthenticationRouter = () => {
           <Stack.Screen name="HomeVerificationScreen" component={HomeVerificationScreen} />
           <Stack.Screen name="RegistrationScreen" component={RegistrationScreen} />
            <Stack.Screen name="AddPackagesScreen" component={AddPackagesScreen} />
-
+           <Stack.Screen name="CabRideReviewScreen" component={CabRideReviewScreen} />
+           <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
       <Stack.Screen name="BottomTab" component={BottomTab} />
     
       {/* <Stack.Screen name="ProfileSelection" component={ProfileSelection} />

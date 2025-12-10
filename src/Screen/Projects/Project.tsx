@@ -87,59 +87,101 @@ const Project = () => {
     },
   ]);
 
-  const renderPackageCard = (pkg: Package) => (
-    <View key={pkg.id} style={styles.packageCard}>
-      {/* Left Side - Vehicle Image & Details */}
-      <View style={styles.leftSection}>
-        <View style={styles.imageContainer}>
-          <Image source={pkg.vehicleImage} style={styles.vehicleImage} />
-        </View>
-        <View style={styles.detailsContainer}>
-          <Text style={styles.vehicleName}>
-            {pkg.vehicleName}, {pkg.vehicleType}
-          </Text>
-          <Text style={styles.routeText}>{pkg.route}</Text>
-          <Text style={styles.featuresText}>
-            {pkg.seats} seats • {pkg.features.join(' • ')}
-          </Text>
-        </View>
-      </View>
+  // const renderPackageCard = (pkg: Package) => (
+  //   <View key={pkg.id} style={styles.packageCard}>
+  //     {/* Left Side - Vehicle Image & Details */}
+  //     <View style={styles.leftSection}>
+  //       <View style={styles.imageContainer}>
+  //         <Image source={pkg.vehicleImage} style={styles.vehicleImage} />
+  //       </View>
+  //       <View style={styles.detailsContainer}>
+  //         <Text style={styles.vehicleName}>
+  //           {pkg.vehicleName}, {pkg.vehicleType}
+  //         </Text>
+  //         <Text style={styles.routeText}>{pkg.route}</Text>
+  //         <Text style={styles.featuresText}>
+  //           {pkg.seats} seats • {pkg.features.join(' • ')}
+  //         </Text>
+  //       </View>
+  //     </View>
 
-      {/* Right Side - Pricing Information */}
-      <View style={styles.rightSection}>
-        <View style={{flexDirection: 'row', alignItems: 'center',gap: wp(1)}}>
+  //     {/* Right Side - Pricing Information */}
+  //     <View style={styles.rightSection}>
+  //       <View style={{flexDirection: 'row', alignItems: 'center',gap: wp(1)}}>
+  //       <View style={styles.discountTag}>
+  //         <Text style={styles.discountText}>{pkg.discount}% off</Text>
+  //       </View>
+  //       <Text style={styles.originalPrice}>{pkg.originalPrice}</Text>
+  //       </View>
+  //       <Text style={styles.discountedPrice}>{pkg.discountedPrice}</Text>
+  //       <View style={styles.additionalChargesContainer}>
+  //         <Text style={styles.additionalChargesText}>
+  //           +{pkg.additionalCharges}
+  //         </Text>
+  //         <Text style={styles.taxesText}>(Taxes & Charges)</Text>
+  //       </View>
+  //     </View>
+  //   </View>
+  // );
+
+
+  const renderPackageCard = (pkg: Package) => (
+  <TouchableOpacity
+    key={pkg.id}
+    activeOpacity={0.8}
+    onPress={() => navigation.navigate("CabRideReviewScreen", { data: pkg })}
+    style={styles.packageCard}
+  >
+    {/* Left Side - Vehicle Image & Details */}
+    <View style={styles.leftSection}>
+      <View style={styles.imageContainer}>
+        <Image source={pkg.vehicleImage} style={styles.vehicleImage} />
+      </View>
+      <View style={styles.detailsContainer}>
+        <Text style={styles.vehicleName}>
+          {pkg.vehicleName}, {pkg.vehicleType}
+        </Text>
+        <Text style={styles.routeText}>{pkg.route}</Text>
+        <Text style={styles.featuresText}>
+          {pkg.seats} seats • {pkg.features.join(" • ")}
+        </Text>
+      </View>
+    </View>
+
+    {/* Right Side - Pricing */}
+    <View style={styles.rightSection}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: wp(1) }}>
         <View style={styles.discountTag}>
           <Text style={styles.discountText}>{pkg.discount}% off</Text>
         </View>
         <Text style={styles.originalPrice}>{pkg.originalPrice}</Text>
-        </View>
-        <Text style={styles.discountedPrice}>{pkg.discountedPrice}</Text>
-        <View style={styles.additionalChargesContainer}>
-          <Text style={styles.additionalChargesText}>
-            +{pkg.additionalCharges}
-          </Text>
-          <Text style={styles.taxesText}>(Taxes & Charges)</Text>
-        </View>
+      </View>
+
+      <Text style={styles.discountedPrice}>{pkg.discountedPrice}</Text>
+
+      <View style={styles.additionalChargesContainer}>
+        <Text style={styles.additionalChargesText}>+{pkg.additionalCharges}</Text>
+        <Text style={styles.taxesText}>(Taxes & Charges)</Text>
       </View>
     </View>
-  );
+  </TouchableOpacity>
+);
 
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>My Packages</Text>
-        {/* <TouchableOpacity style={styles.addButton}>
-          <Image source={Images.addIcon} style={styles.addIcon} />
-          <Text style={styles.addButtonText}>Add Packages</Text>
-        </TouchableOpacity> */}
-        <TouchableOpacity 
+     <TouchableOpacity 
   style={styles.addButton}
   onPress={() => navigation.navigate("AddPackagesScreen")}
 >
-  <Image source={Images.addIcon} style={styles.addIcon} />
-  <Text style={styles.addButtonText}>Add Packages</Text>
+  <View style={styles.plusRow}>
+    <Text style={styles.plus}>+</Text>
+    <Text style={styles.addText}>Add Packages</Text>
+  </View>
 </TouchableOpacity>
+
 
       </View>
 
@@ -186,16 +228,33 @@ const styles = StyleSheet.create({
     borderColor: Colors.sooprsblue,
     backgroundColor: Colors.white,
   },
-  addIcon: {
-    width: wp(4),
-    height: wp(4),
-    marginRight: wp(1.5),
-    tintColor: Colors.sooprsblue,
-  },
+  
+plusRow: {
+  flexDirection: "row",
+  alignItems: "center",
+},
+
+plus: {
+  fontSize: FSize.fs22,   
+  fontWeight: '600',
+  color: Colors.sooprsblue,
+  marginRight: wp(2),
+
+      
+},
+
+addText: {
+  fontSize: FSize.fs14,
+  fontWeight: '600',
+  color: Colors.sooprsblue,
+},
+
   addButtonText: {
+    marginTop:hp(-1),
     fontSize: FSize.fs13,
     fontWeight: '600',
     color: Colors.sooprsblue,
+    
   },
   scrollView: {
     flex: 1,
