@@ -300,6 +300,7 @@ import React, { useState } from "react";
 import { hp, wp } from "../../assets/commonCSS/GlobalCSS";
 import Colors from "../../assets/commonCSS/Colors";
 import FSize from "../../assets/commonCSS/FSize";
+import Images from "../../assets/image";
 
 const AddPackagesScreen = () => {
   const [vehicleType, setVehicleType] = useState("Sedan");
