@@ -9,7 +9,9 @@ const Images = {
   Sooprsnewlogo: require('../assets/images/sooprsnewlogo.png'),
 
   Clientlogo: require('../assets/images/client.png'),
-
+  grayVerification:require('../assets/images/sheld.png'),
+  shieldIcon:require('../assets/images/Frame.png'),
+  rightArrowBlue:require('../assets/images/arrow.png'),
   Professionallogo: require('../assets/images/professional.png'),
 
   backArrow: require('../assets/Icons/backArrow.png'),

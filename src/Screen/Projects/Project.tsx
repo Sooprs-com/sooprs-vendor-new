@@ -8,6 +8,8 @@ import {
   SafeAreaView,
 } from 'react-native';
 import React, {useState} from 'react';
+import { useNavigation } from '@react-navigation/native';
+
 import {hp, wp, GlobalCss} from '../../assets/commonCSS/GlobalCSS';
 import Colors from '../../assets/commonCSS/Colors';
 import Images from '../../assets/image';
@@ -28,6 +30,8 @@ interface Package {
 }
 
 const Project = () => {
+  const navigation = useNavigation();
+
   const [packages] = useState<Package[]>([
     {
       id: '1',
@@ -125,10 +129,18 @@ const Project = () => {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>My Packages</Text>
-        <TouchableOpacity style={styles.addButton}>
+        {/* <TouchableOpacity style={styles.addButton}>
           <Image source={Images.addIcon} style={styles.addIcon} />
           <Text style={styles.addButtonText}>Add Packages</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
+        <TouchableOpacity 
+  style={styles.addButton}
+  onPress={() => navigation.navigate("AddPackagesScreen")}
+>
+  <Image source={Images.addIcon} style={styles.addIcon} />
+  <Text style={styles.addButtonText}>Add Packages</Text>
+</TouchableOpacity>
+
       </View>
 
       {/* Packages List */}
