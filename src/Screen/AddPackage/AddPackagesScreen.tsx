@@ -1,291 +1,3 @@
-// import {
-//   StyleSheet,
-//   Text,
-//   View,
-//   TouchableOpacity,
-//   TextInput,
-//   Image,
-//   ScrollView,
-//   SafeAreaView,
-// } from "react-native";
-// import React, { useState } from "react";
-// import { hp, wp } from "../../assets/commonCSS/GlobalCSS";
-// import Colors from "../../assets/commonCSS/Colors";
-// import FSize from "../../assets/commonCSS/FSize";
-// import Images from "../../assets/image";
-
-// const AddPackagesScreen = () => {
-//   const [selectedInclusions, setSelectedInclusions] = useState({
-//     fuel: true,
-//     tolls: true,
-//     ac: true,
-//     water: false,
-//     rooftop: false,
-//   });
-
-//   const toggleCheckbox = (key) => {
-//     setSelectedInclusions({
-//       ...selectedInclusions,
-//       [key]: !selectedInclusions[key],
-//     });
-//   };
-
-//   return (
-//     <SafeAreaView style={styles.container}>
-//       <ScrollView showsVerticalScrollIndicator={false}>
-
-//         {/* Header */}
-//         <View style={styles.header}>
-//           <TouchableOpacity>
-//             <Image source={Images.backArrow} style={styles.backIcon} />
-//           </TouchableOpacity>
-//           <Text style={styles.headerTitle}>Add Packages</Text>
-//         </View>
-
-//         <View style={styles.divider} />
-
-//         {/* Package Name */}
-//         <Text style={styles.label}>PACKAGE NAME</Text>
-//         <TextInput style={styles.input} placeholder="Delhi" />
-
-//         {/* FROM - TO */}
-//         <View style={styles.row}>
-//           <View style={styles.col}>
-//             <Text style={styles.label}>FROM</Text>
-//             <TextInput style={styles.input} placeholder="Delhi" />
-//           </View>
-
-//           <View style={styles.col}>
-//             <Text style={styles.label}>TO</Text>
-//             <TextInput style={styles.input} placeholder="Manali" />
-//           </View>
-//         </View>
-
-//         {/* Vehicle Type and Fuel Type */}
-//         <View style={styles.row}>
-//           <View style={styles.col}>
-//             <Text style={styles.label}>VEHICLE TYPE 1</Text>
-//             <TouchableOpacity style={styles.dropdown}>
-//               <Text style={styles.dropdownText}>Sedan</Text>
-//               <Image source={Images.downArrow} style={styles.downIcon} />
-//             </TouchableOpacity>
-//           </View>
-
-//           <View style={styles.col}>
-//             <Text style={styles.label}>FUEL TYPE</Text>
-//             <TouchableOpacity style={styles.dropdown}>
-//               <Text style={styles.dropdownText}>Petrol</Text>
-//               <Image source={Images.downArrow} style={styles.downIcon} />
-//             </TouchableOpacity>
-//           </View>
-//         </View>
-
-//         {/* SEATS + BAGS */}
-//         <View style={styles.row}>
-//           <View style={styles.col}>
-//             <Text style={styles.label}>
-//               TOTAL SEATS <Text style={styles.subLabel}>(Excluding Driver)</Text>
-//             </Text>
-//             <TextInput style={styles.input} placeholder="5" />
-//           </View>
-
-//           <View style={styles.col}>
-//             <Text style={styles.label}>TOTAL BAGS</Text>
-//             <TextInput style={styles.input} placeholder="4" />
-//           </View>
-//         </View>
-
-//         {/* Inclusions */}
-//         <Text style={[styles.label, { marginTop: hp(1) }]}>INCLUSIONS</Text>
-
-//         <View style={styles.inclusionsRow}>
-//           {[
-//             { key: "fuel", label: "Fuel" },
-//             { key: "tolls", label: "Tolls" },
-//             { key: "ac", label: "AC" },
-//             { key: "water", label: "Water" },
-//             { key: "rooftop", label: "Roof Top" },
-//           ].map((item) => (
-//             <TouchableOpacity
-//               key={item.key}
-//               style={[
-//                 styles.chip,
-//                 selectedInclusions[item.key] && styles.chipSelected,
-//               ]}
-//               onPress={() => toggleCheckbox(item.key)}
-//             >
-//               <View
-//                 style={[
-//                   styles.checkbox,
-//                   selectedInclusions[item.key] && styles.checkboxChecked,
-//                 ]}
-//               />
-//               <Text style={styles.chipText}>{item.label}</Text>
-//             </TouchableOpacity>
-//           ))}
-//         </View>
-
-//         {/* Total Price */}
-//         <Text style={styles.label}>TOTAL PRICE</Text>
-//         <TextInput style={styles.input} placeholder="5,499" />
-
-//         {/* Continue Button */}
-//         <TouchableOpacity style={styles.submitBtn}>
-//           <Text style={styles.submitText}>Add Package</Text>
-//         </TouchableOpacity>
-
-//       </ScrollView>
-//     </SafeAreaView>
-//   );
-// };
-
-// export default AddPackagesScreen;
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: Colors.white,
-//   },
-
-//   header: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     paddingHorizontal: wp(5),
-//     paddingVertical: hp(2),
-//   },
-//   backIcon: {
-//     width: wp(5),
-//     height: wp(5),
-//     tintColor: Colors.black,
-//   },
-//   headerTitle: {
-//     fontSize: FSize.fs16,
-//     fontWeight: "600",
-//     marginLeft: wp(4),
-//   },
-//   divider: {
-//     width: "100%",
-//     height: hp(0.1),
-//     backgroundColor: Colors.lightgrey3,
-//   },
-
-//   label: {
-//     fontSize: FSize.fs13,
-//     fontWeight: "600",
-//     marginTop: hp(2),
-//     marginLeft: wp(5),
-//     color: Colors.black,
-//   },
-//   subLabel: {
-//     fontSize: FSize.fs10,
-//     color: Colors.grey,
-//   },
-
-//   input: {
-//     width: "90%",
-//     alignSelf: "center",
-//     paddingVertical: hp(1.8),
-//     paddingHorizontal: wp(3),
-//     borderWidth: 1,
-//     borderColor: Colors.lightgrey2,
-//     borderRadius: wp(2),
-//     marginTop: hp(0.8),
-//     fontSize: FSize.fs14,
-//   },
-
-//   row: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     width: "90%",
-//     alignSelf: "center",
-//   },
-
-//   col: {
-//     width: "47%",
-//   },
-
-//   dropdown: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     alignItems: "center",
-//     borderWidth: 1,
-//     borderColor: Colors.lightgrey2,
-//     borderRadius: wp(2),
-//     paddingVertical: hp(1.6),
-//     paddingHorizontal: wp(3),
-//     marginTop: hp(0.8),
-//   },
-//   dropdownText: {
-//     fontSize: FSize.fs14,
-//     color: Colors.black,
-//   },
-//   downIcon: {
-//     width: wp(4),
-//     height: wp(4),
-//     tintColor: Colors.black,
-//   },
-
-//   inclusionsRow: {
-//     flexDirection: "row",
-//     flexWrap: "wrap",
-//     width: "90%",
-//     alignSelf: "center",
-//     marginTop: hp(1),
-//   },
-
-//   chip: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     borderWidth: 1,
-//     borderColor: Colors.lightgrey2,
-//     borderRadius: wp(2),
-//     paddingVertical: hp(0.8),
-//     paddingHorizontal: wp(3),
-//     marginRight: wp(2),
-//     marginBottom: hp(1),
-//   },
-
-//   chipSelected: {
-//     backgroundColor: Colors.lightblue,
-//     borderColor: Colors.sooprsblue,
-//   },
-
-//   checkbox: {
-//     width: wp(3.5),
-//     height: wp(3.5),
-//     borderWidth: 1,
-//     borderRadius: wp(1),
-//     borderColor: Colors.grey,
-//     marginRight: wp(2),
-//   },
-//   checkboxChecked: {
-//     backgroundColor: Colors.sooprsblue,
-//     borderColor: Colors.sooprsblue,
-//   },
-
-//   chipText: {
-//     fontSize: FSize.fs13,
-//     fontWeight: "500",
-//   },
-
-//   submitBtn: {
-//     width: "90%",
-//     alignSelf: "center",
-//     backgroundColor: Colors.sooprsblue,
-//     paddingVertical: hp(2),
-//     borderRadius: wp(3),
-//     marginTop: hp(3),
-//     marginBottom: hp(4),
-//   },
-//   submitText: {
-//     color: Colors.white,
-//     textAlign: "center",
-//     fontSize: FSize.fs16,
-//     fontWeight: "600",
-//   },
-// });
-
-
 import {
   StyleSheet,
   Text,
@@ -295,49 +7,277 @@ import {
   ScrollView,
   Image,
   SafeAreaView,
-} from "react-native";
-import React, { useState } from "react";
-import { hp, wp } from "../../assets/commonCSS/GlobalCSS";
-import Colors from "../../assets/commonCSS/Colors";
-import FSize from "../../assets/commonCSS/FSize";
-import Images from "../../assets/image";
+  Alert,
+  Platform,
+} from 'react-native';
+import React, {useState} from 'react';
+import {useNavigation} from '@react-navigation/native';
+import * as ImagePicker from 'react-native-image-picker';
+import {hp, wp} from '../../assets/commonCSS/GlobalCSS';
+import Colors from '../../assets/commonCSS/Colors';
+import FSize from '../../assets/commonCSS/FSize';
+import Images from '../../assets/image';
+
+interface ImageData {
+  uri: string;
+  isThumbnail: boolean;
+  isDefault: boolean;
+}
 
 const AddPackagesScreen = () => {
-  const [vehicleType, setVehicleType] = useState("Sedan");
-  const [fuelType, setFuelType] = useState("Petrol");
+  const navigation = useNavigation();
 
-  const [openVehicle, setOpenVehicle] = useState(false);
-  const [openFuel, setOpenFuel] = useState(false);
+  const [packageName, setPackageName] = useState(
+    'Healing & Wellness Retreat - Rishikesh 5N/6D',
+  );
+  const [shortDescription, setShortDescription] = useState(
+    'Detox your mind & body with yoga, meditation, Ayurveda therapies & Ganga-side healing experience in the foothills of the Himalayas.',
+  );
+  const [longDescription, setLongDescription] = useState(
+    'A transformative wellness journey with daily yoga & meditation sessions, Ayurvedic massage & spa treatments, sound healing, mindfulness workshops, Ganga Aarti experience, organic meals, Himalayan trekking & river-side relaxation. Perfect for stress relief, burnout recovery & inner peace seekers. Includes luxury wellness resort stay, private instructor & full retreat coordination.',
+  );
 
-  const vehicleOptions = ["Sedan", "SUV", "Hatchback"];
-  const fuelOptions = ["Petrol", "Diesel", "CNG"];
+  // Inclusions
+  const [inclusionsInput, setInclusionsInput] = useState('');
+  const [inclusionsTags, setInclusionsTags] = useState([
+    'Pickup & Drop',
+    'Himalayan Trek',
+  ]);
+  const inclusionsOptions = [
+    'Daily Yoga & Meditation Sessions',
+    'Ayurvedic Spa & Massage Treatments',
+    'Detox Diet - Breakfast, Lunch & Dinner',
+  ];
 
-  const [inc, setInc] = useState({
-    fuel: true,
-    tolls: true,
-    ac: true,
-    water: false,
-    rooftop: false,
-  });
+  // Exclusions
+  const [exclusionsInput, setExclusionsInput] = useState('');
+  const [exclusionsTags, setExclusionsTags] = useState([
+    'Personal Shopping',
+    'Adventure Sports',
+  ]);
+  const exclusionsOptions = [
+    'Photography & Videography',
+    'Private Ayurveda Doctor Consultation',
+  ];
 
-  const toggleInc = (key) => {
-    setInc({ ...inc, [key]: !inc[key] });
+  // Amenities
+  const [amenitiesInput, setAmenitiesInput] = useState('');
+  const [amenitiesTags, setAmenitiesTags] = useState([
+    'Herbal Tea Lounge',
+    'Food Menu',
+  ]);
+  const amenitiesOptions = [
+    'Herbal Tea Lounge',
+    '24x7 Wellness Support',
+    'In-house Ayurveda Center',
+  ];
+
+  // Location and Pricing
+  const [location1, setLocation1] = useState('');
+  const [location2, setLocation2] = useState('');
+  const [basePrice, setBasePrice] = useState('');
+  const [discountPrice, setDiscountPrice] = useState('');
+  const [chargesPerDay, setChargesPerDay] = useState('');
+
+  // Images
+  const [images, setImages] = useState<ImageData[]>([
+    {uri: '', isThumbnail: true, isDefault: false},
+    {uri: '', isThumbnail: false, isDefault: false},
+    {uri: '', isThumbnail: false, isDefault: false},
+  ]);
+
+  const addTag = (
+    tags: string[],
+    setTags: (tags: string[]) => void,
+    input: string,
+    setInput: (input: string) => void,
+  ) => {
+    if (input.trim()) {
+      setTags([...tags, input.trim()]);
+      setInput('');
+    }
   };
+
+  const removeTag = (
+    tags: string[],
+    setTags: (tags: string[]) => void,
+    index: number,
+  ) => {
+    setTags(tags.filter((_: string, i: number) => i !== index));
+  };
+
+  const addOption = (
+    tags: string[],
+    setTags: (tags: string[]) => void,
+    option: string,
+  ) => {
+    if (!tags.includes(option)) {
+      setTags([...tags, option]);
+    }
+  };
+
+  const pickImage = (index: number) => {
+    try {
+      if (!ImagePicker || !ImagePicker.launchImageLibrary) {
+        Alert.alert('Error', 'Image picker is not available. Please rebuild the app.');
+        console.log('ImagePicker not available');
+        return;
+      }
+
+      const options: any = {
+        mediaType: 'photo',
+        quality: 0.8,
+        includeBase64: false,
+        maxHeight: 2000,
+        maxWidth: 2000,
+      };
+
+      ImagePicker.launchImageLibrary(options, (response: ImagePicker.ImagePickerResponse) => {
+        if (response.didCancel) {
+          console.log('User cancelled image picker');
+          return;
+        }
+        
+        if (response.errorCode) {
+          let errorMessage = 'Failed to pick image';
+          if (response.errorCode === 'permission') {
+            errorMessage = 'Permission denied. Please allow photo library access in settings.';
+          } else if (response.errorCode === 'others') {
+            errorMessage = response.errorMessage || 'Unknown error occurred';
+          }
+          Alert.alert('Error', errorMessage);
+          console.log('ImagePicker Error: ', response.errorMessage);
+          return;
+        }
+
+        if (response.assets && response.assets.length > 0 && response.assets[0].uri) {
+          const newImages = [...images];
+          newImages[index] = {
+            ...newImages[index],
+            uri: response.assets[0].uri,
+          };
+          setImages(newImages);
+        } else {
+          Alert.alert('Error', 'No image selected');
+        }
+      });
+    } catch (error) {
+      console.log('ImagePicker Exception: ', error);
+      Alert.alert('Error', 'Failed to open image picker');
+    }
+  };
+
+  const removeImage = (index: number) => {
+    const newImages = [...images];
+    newImages[index] = {uri: '', isThumbnail: false, isDefault: false};
+    setImages(newImages);
+  };
+
+  const toggleThumbnail = (index: number) => {
+    const newImages = images.map((img, i) => ({
+      ...img,
+      isThumbnail: i === index,
+    }));
+    setImages(newImages);
+  };
+
+  const toggleDefault = (index: number) => {
+    const newImages = images.map((img, i) => ({
+      ...img,
+      isDefault: i === index,
+    }));
+    setImages(newImages);
+  };
+
+  const renderTagSection = (
+    label: string,
+    input: string,
+    setInput: (input: string) => void,
+    tags: string[],
+    setTags: (tags: string[]) => void,
+    options: string[] | null,
+    tagColor: string = Colors.sooprslight,
+    tagTextColor: string = Colors.black,
+    removeIconColor: string = Colors.sooprsblue,
+  ) => (
+    <View style={styles.section}>
+      <Text style={styles.label}>{label}</Text>
+      <TextInput
+        style={styles.input}
+        placeholder={`e.g ${label === 'INCLUSIONS' ? 'Healing workshops' : label === 'EXCLUSIONS' ? 'Airfare' : 'Spa & Sauna'}`}
+        value={input}
+        onChangeText={setInput}
+        onSubmitEditing={() => addTag(tags, setTags, input, setInput)}
+        multiline={false}
+      />
+
+      {/* Tags */}
+      {tags.length > 0 && (
+        <View style={styles.tagsContainer}>
+          {tags.map((tag: string, index: number) => (
+            <View
+              key={index}
+              style={[styles.tag, {backgroundColor: tagColor}]}>
+              <Text style={[styles.tagText, {color: tagTextColor}]}>
+                {tag}
+              </Text>
+              <TouchableOpacity
+                onPress={() => removeTag(tags, setTags, index)}
+                style={[
+                  styles.tagRemove,
+                  {backgroundColor: removeIconColor},
+                ]}>
+                <Text
+                  style={[
+                    styles.tagRemoveText,
+                    {
+                      color:
+                        tagColor === Colors.sooprslight
+                          ? Colors.white
+                          : Colors.grey,
+                    },
+                  ]}>
+                  ×
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {/* Add Options */}
+      {options && options.length > 0 && (
+        <View style={styles.optionsContainer}>
+          {options.map((option: string, index: number) => (
+            <TouchableOpacity
+              key={index}
+              style={[
+                styles.addOptionButton,
+                {backgroundColor: tagColor === Colors.sooprslight ? Colors.sooprslight : Colors.lightgrey1},
+              ]}
+              onPress={() => addOption(tags, setTags, option)}>
+              <Text
+                style={[
+                  styles.addOptionText,
+                  {color: tagTextColor},
+                ]}>
+                + {option}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-
         {/* HEADER */}
         <View style={styles.header}>
-   {/* <TouchableOpacity style={styles.backBtn}>
-  <View style={styles.backArrow} />
-</TouchableOpacity> */}
- <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
             <Image source={Images.backArrow} style={styles.backIcon} />
-           </TouchableOpacity>
-
-
+          </TouchableOpacity>
           <Text style={styles.headerTitle}>Add Packages</Text>
         </View>
 
@@ -345,158 +285,256 @@ const AddPackagesScreen = () => {
 
         {/* PACKAGE NAME */}
         <Text style={styles.label}>PACKAGE NAME</Text>
-        <TextInput style={styles.input} placeholder="Delhi" />
+        <TextInput
+          style={styles.input}
+          value={packageName}
+          onChangeText={setPackageName}
+          placeholder="Enter package name"
+        />
 
-        {/* FROM / TO */}
-        <View style={styles.row}>
-          <View style={styles.col}>
-            <Text style={styles.label}>FROM</Text>
-            <TextInput style={styles.input} placeholder="Delhi" />
-          </View>
+        {/* SHORT DESCRIPTION */}
+        <Text style={styles.label}>SHORT DESCRIPTION</Text>
+        <TextInput
+          style={[styles.input, styles.textArea]}
+          value={shortDescription}
+          onChangeText={setShortDescription}
+          placeholder="Enter short description"
+          multiline
+          numberOfLines={4}
+        />
 
-          <View style={styles.col}>
-            <Text style={styles.label}>TO</Text>
-            <TextInput style={styles.input} placeholder="Manali" />
-          </View>
-        </View>
-
-        {/* VEHICLE TYPE / FUEL TYPE */}
-        <View style={styles.row}>
-
-          {/* VEHICLE TYPE */}
-          <View style={styles.col}>
-            <Text style={styles.label}>VEHICLE TYPE 1</Text>
-
-            <TouchableOpacity
-              style={styles.dropdownBox}
-              onPress={() => {
-                setOpenVehicle(!openVehicle);
-                setOpenFuel(false);
-              }}
-            >
-              <Text style={styles.dropdownText}>{vehicleType}</Text>
-
-              <View style={styles.arrowBox}>
-                <View style={styles.arrowDown} />
-              </View>
-            </TouchableOpacity>
-
-            {openVehicle && (
-              <View style={styles.dropdownList}>
-                {vehicleOptions.map((v) => (
-                  <TouchableOpacity
-                    key={v}
-                    style={styles.dropdownItem}
-                    onPress={() => {
-                      setVehicleType(v);
-                      setOpenVehicle(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownItemText}>{v}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
-
-          {/* FUEL TYPE */}
-          <View style={styles.col}>
-            <Text style={styles.label}>FUEL TYPE</Text>
-
-            <TouchableOpacity
-              style={styles.dropdownBox}
-              onPress={() => {
-                setOpenFuel(!openFuel);
-                setOpenVehicle(false);
-              }}
-            >
-              <Text style={styles.dropdownText}>{fuelType}</Text>
-
-              <View style={styles.arrowBox}>
-                <View style={styles.arrowDown} />
-              </View>
-            </TouchableOpacity>
-
-            {openFuel && (
-              <View style={styles.dropdownList}>
-                {fuelOptions.map((f) => (
-                  <TouchableOpacity
-                    key={f}
-                    style={styles.dropdownItem}
-                    onPress={() => {
-                      setFuelType(f);
-                      setOpenFuel(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownItemText}>{f}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
-        </View>
-
-        {/* SEATS + BAGS */}
-        <View style={styles.row}>
-          <View style={styles.col}>
-            {/* <Text style={styles.label}>
-              TOTAL SEATS <Text style={styles.subLabel}>(Excluding Driver)</Text>
-            </Text> */}
-            <Text style={styles.label}>
-  TOTAL SEATS 
-  <Text style={styles.excludingText}> (Excluding Driver)</Text>
-</Text>
-
-            <TextInput style={styles.input} placeholder="5" />
-          </View>
-
-          <View style={styles.col}>
-            <Text style={styles.label}>TOTAL BAGS</Text>
-            <TextInput style={styles.input} placeholder="4" />
-          </View>
-        </View>
+        {/* LONG DESCRIPTION */}
+        <Text style={styles.label}>LONG DESCRIPTION</Text>
+        <TextInput
+          style={[styles.input, styles.textArea]}
+          value={longDescription}
+          onChangeText={setLongDescription}
+          placeholder="Enter long description"
+          multiline
+          numberOfLines={6}
+        />
 
         {/* INCLUSIONS */}
-        <Text style={[styles.label, { marginTop: hp(1) }]}>INCLUSIONS</Text>
+        {renderTagSection(
+          'INCLUSIONS',
+          inclusionsInput,
+          setInclusionsInput,
+          inclusionsTags,
+          setInclusionsTags,
+          inclusionsOptions,
+          Colors.sooprslight,
+          Colors.black,
+          Colors.sooprsblue,
+        )}
 
-        <View style={styles.inclusionRow}>
-          {[
-            { key: "fuel", label: "Fuel" },
-            { key: "tolls", label: "Tolls" },
-            { key: "ac", label: "AC" },
-            { key: "water", label: "Water" },
-            { key: "rooftop", label: "Roof Top" },
-          ].map((item) => {
-            const selected = inc[item.key];
-            return (
-              <TouchableOpacity
-                key={item.key}
-                style={[
-                  styles.chip,
-                  selected && styles.chipSelected,
-                ]}
-                onPress={() => toggleInc(item.key)}
-              >
-                {/* WHITE TICK WITHOUT IMAGE */}
-                <View style={[styles.tickBox, selected && styles.tickOn]}>
-                  {selected && <View style={styles.tickMark} />}
-                </View>
+        {/* EXCLUSIONS */}
+        {renderTagSection(
+          'EXCLUSIONS',
+          exclusionsInput,
+          setExclusionsInput,
+          exclusionsTags,
+          setExclusionsTags,
+          exclusionsOptions,
+          Colors.lightgrey1,
+          Colors.black,
+          Colors.grey,
+        )}
 
-                <Text style={styles.chipText}>{item.label}</Text>
-              </TouchableOpacity>
-            );
-          })}
+        {/* AMENITIES */}
+        {renderTagSection(
+          'AMENITIES',
+          amenitiesInput,
+          setAmenitiesInput,
+          amenitiesTags,
+          setAmenitiesTags,
+          amenitiesOptions,
+          Colors.lightgrey1,
+          Colors.black,
+          Colors.grey,
+        )}
+
+        {/* Location 1 */}
+        <Text style={styles.label}>Location 1</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="e.g. Rishikesh"
+          value={location1}
+          onChangeText={setLocation1}
+        />
+
+        {/* Location 2 */}
+        <Text style={styles.label}>Location 2</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="e.g. Rishikesh"
+          value={location2}
+          onChangeText={setLocation2}
+        />
+
+        {/* Base Price */}
+        <Text style={styles.label}>Base Price</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your base price"
+          value={basePrice}
+          onChangeText={setBasePrice}
+          keyboardType="numeric"
+        />
+
+        {/* Discount Price */}
+        <Text style={styles.label}>Discount Price</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="e.g. 5"
+          value={discountPrice}
+          onChangeText={setDiscountPrice}
+          keyboardType="numeric"
+        />
+
+        {/* Charges/Day */}
+        <Text style={styles.label}>Charges/Day</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="e.g. 4"
+          value={chargesPerDay}
+          onChangeText={setChargesPerDay}
+          keyboardType="numeric"
+        />
+
+        {/* Upload Photos */}
+        <Text style={styles.label}>
+          Upload Photos<Text style={styles.required}>*</Text>
+        </Text>
+        <View style={styles.uploadContainer}>
+          {images.map((image, index) => (
+            <View key={index} style={styles.uploadSlot}>
+              {image.uri ? (
+                <>
+                  <Image source={{uri: image.uri}} style={styles.uploadedImage} />
+                  <TouchableOpacity
+                    style={styles.removeButton}
+                    onPress={() => removeImage(index)}>
+                    <Text style={styles.removeText}>Remove</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.checkboxRow}
+                    onPress={() => toggleThumbnail(index)}>
+                    <View
+                      style={[
+                        styles.checkbox,
+                        image.isThumbnail && styles.checkboxChecked,
+                      ]}>
+                      {image.isThumbnail && (
+                        <Image
+                          source={Images.checkedCheckBox}
+                          style={styles.checkboxIcon}
+                        />
+                      )}
+                    </View>
+                    <Text style={styles.checkboxLabel}>Set as Thumbnail</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.checkboxRow}
+                    onPress={() => toggleDefault(index)}>
+                    <View
+                      style={[
+                        styles.checkbox,
+                        image.isDefault && styles.checkboxChecked,
+                      ]}>
+                      {image.isDefault && (
+                        <Image
+                          source={Images.checkedCheckBox}
+                          style={styles.checkboxIcon}
+                        />
+                      )}
+                    </View>
+                    <Text style={styles.checkboxLabel}>Set as Default</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <TouchableOpacity
+                    style={styles.uploadArea}
+                    onPress={() => pickImage(index)}>
+                    <Image
+                      source={Images.imageIcon}
+                      style={styles.uploadIcon}
+                    />
+                    <Text style={styles.uploadText}>No Photo Uploaded</Text>
+                    <TouchableOpacity
+                      style={styles.addButton}
+                      onPress={() => pickImage(index)}>
+                      <Text style={styles.addButtonText}>+ Add</Text>
+                    </TouchableOpacity>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.checkboxRow}
+                    onPress={() => toggleDefault(index)}>
+                    <View
+                      style={[
+                        styles.checkbox,
+                        image.isDefault && styles.checkboxChecked,
+                      ]}>
+                      {image.isDefault && (
+                        <Image
+                          source={Images.checkedCheckBox}
+                          style={styles.checkboxIcon}
+                        />
+                      )}
+                    </View>
+                    <Text style={styles.checkboxLabel}>Set as Default</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          ))}
         </View>
 
-        {/* PRICE */}
-        <Text style={styles.label}>TOTAL PRICE</Text>
-        <TextInput style={styles.input} placeholder="5,499" />
+        {/* Image Guidelines */}
+        <Text style={styles.label}>Image Guidelines</Text>
+        <View style={styles.guidelinesContainer}>
+          <View style={styles.guidelineItem}>
+            <View style={styles.guidelineImage}>
+              <Text style={styles.guidelinePlaceholder}>Image</Text>
+            </View>
+            <View style={styles.guidelineCheck}>
+              <Text style={styles.guidelineCheckText}>✓</Text>
+            </View>
+            <Text style={styles.guidelineLabel}>Clear Picture</Text>
+          </View>
+          <View style={styles.guidelineItem}>
+            <View style={styles.guidelineImage}>
+              <Text style={styles.guidelinePlaceholder}>Image</Text>
+            </View>
+            <View style={styles.guidelineCross}>
+              <Text style={styles.guidelineCrossText}>×</Text>
+            </View>
+            <Text style={styles.guidelineLabel}>Blurred Photo</Text>
+          </View>
+          <View style={styles.guidelineItem}>
+            <View style={styles.guidelineImage}>
+              <Text style={styles.guidelinePlaceholder}>Image</Text>
+            </View>
+            <View style={styles.guidelineCross}>
+              <Text style={styles.guidelineCrossText}>×</Text>
+            </View>
+            <Text style={styles.guidelineLabel}>Blurred Photo</Text>
+          </View>
+          <View style={styles.guidelineItem}>
+            <View style={styles.guidelineImage}>
+              <Text style={styles.guidelinePlaceholder}>Image</Text>
+            </View>
+            <View style={styles.guidelineCross}>
+              <Text style={styles.guidelineCrossText}>×</Text>
+            </View>
+            <Text style={styles.guidelineLabel}>Watermark</Text>
+          </View>
+        </View>
 
-        {/* BUTTON */}
+        {/* Submit Button */}
         <TouchableOpacity style={styles.submitBtn}>
           <Text style={styles.submitText}>Add Package</Text>
         </TouchableOpacity>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -505,254 +543,271 @@ const AddPackagesScreen = () => {
 export default AddPackagesScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.white },
-
-  // HEADER
+  container: {
+    flex: 1,
+    backgroundColor: Colors.white,
+  },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: wp(5),
     paddingVertical: hp(2),
   },
-  backCircle: {
-    width: wp(8),
-    height: wp(8),
-    borderRadius: wp(4),
-    backgroundColor: "#f1f1f1",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  arrowLeft: {
-    width: wp(3),
-    height: wp(3),
-    borderLeftWidth: 2,
-    borderBottomWidth: 2,
-    borderColor: "#000",
-    transform: [{ rotate: "45deg" }],
+  backIcon: {
+    width: wp(5),
+    height: wp(5),
+    tintColor: Colors.black,
   },
   headerTitle: {
-    fontSize: FSize.fs16,
-    fontWeight: "600",
+    fontSize: FSize.fs18,
+    fontWeight: '700',
     marginLeft: wp(4),
+    color: Colors.black,
   },
   divider: {
     height: hp(0.1),
-    backgroundColor: Colors.lightgrey3,
+    backgroundColor: Colors.lightgrey2,
   },
-
-  // LABELS
   label: {
     fontSize: FSize.fs13,
-    fontWeight: "600",
+    fontWeight: '600',
     marginLeft: wp(5),
     marginTop: hp(2),
+    color: Colors.black,
   },
-  subLabel: {
-    fontSize: FSize.fs10,
-    color: Colors.grey,
+  required: {
+    color: 'red',
   },
-
-  // INPUT
   input: {
-    width: "90%",
-    alignSelf: "center",
+    width: '90%',
+    alignSelf: 'center',
     borderWidth: 1,
     borderColor: Colors.lightgrey2,
     borderRadius: wp(2),
     paddingVertical: hp(1.8),
     paddingHorizontal: wp(3),
     marginTop: hp(0.8),
-  },
-
-  // ROW LAYOUT
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "90%",
-    alignSelf: "center",
-  },
-  col: { width: "47%" },
-
-  // DROPDOWN
-  dropdownBox: {
-    borderWidth: 1,
-    borderColor: Colors.lightgrey2,
-    borderRadius: wp(2),
-    paddingVertical: hp(1.6),
-    paddingHorizontal: wp(3),
-    marginTop: hp(0.8),
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  dropdownText: { fontSize: FSize.fs14 },
-
-  arrowBox: {
-    width: wp(7),
-    height: wp(7),
-    backgroundColor: "#eee",
-    borderRadius: wp(2),
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  arrowDown: {
-    width: wp(3),
-    height: wp(3),
-    borderRightWidth: 2,
-    borderBottomWidth: 2,
-    borderColor: "#333",
-    transform: [{ rotate: "45deg" }],
-  },
-backBtn: {
-  paddingHorizontal: wp(2),
-  paddingVertical: hp(1),
-  justifyContent: "center",
-  alignItems: "center",
-},
-
-backArrow: {
-  width: wp(3.5),
-  height: wp(3.5),
-  borderLeftWidth: 2,
-  borderBottomWidth: 2,
-  borderColor: "#000",
-  transform: [{ rotate: "45deg" }],
-  marginLeft: wp(1),
-},
-
-  dropdownList: {
-    backgroundColor: Colors.white,
-    borderWidth: 1,
-    borderColor: Colors.lightgrey2,
-    borderRadius: wp(2),
-    marginTop: hp(0.5),
-  },
-  dropdownItem: {
-    paddingVertical: hp(1.3),
-    paddingHorizontal: wp(3),
-  },
-  dropdownItemText: {
     fontSize: FSize.fs14,
   },
-
-  // INCLUSIONS
-  inclusionRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    width: "90%",
-    alignSelf: "center",
+  textArea: {
+    minHeight: hp(10),
+    textAlignVertical: 'top',
+    paddingTop: hp(1.8),
+  },
+  section: {
     marginTop: hp(1),
   },
-  chip: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: Colors.lightgrey2,
-    borderRadius: wp(2),
-    paddingVertical: hp(0.7),
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    width: '90%',
+    alignSelf: 'center',
+    marginTop: hp(1),
+  },
+  tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: wp(5),
+    paddingVertical: hp(0.6),
     paddingHorizontal: wp(3),
     marginRight: wp(2),
     marginBottom: hp(1),
   },
-  chipSelected: {
-    backgroundColor: "#DDEAFF",
-    borderColor: Colors.sooprsblue,
+  tagText: {
+    fontSize: FSize.fs13,
+    marginRight: wp(1.5),
   },
-  tickBox: {
+  tagRemove: {
     width: wp(4),
     height: wp(4),
-    borderRadius: wp(1),
-    borderWidth: 1,
-    borderColor: Colors.grey,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: wp(1),
+    borderRadius: wp(2),
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  tickOn: {
+  tagRemoveText: {
+    fontSize: FSize.fs14,
+    fontWeight: '600',
+  },
+  optionsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    width: '90%',
+    alignSelf: 'center',
+    marginTop: hp(0.5),
+  },
+  addOptionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: wp(5),
+    paddingVertical: hp(0.6),
+    paddingHorizontal: wp(3),
+    marginRight: wp(2),
+    marginBottom: hp(1),
+  },
+  addOptionText: {
+    fontSize: FSize.fs13,
+    fontWeight: '500',
+  },
+  uploadContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '90%',
+    alignSelf: 'center',
+    marginTop: hp(1),
+  },
+  uploadSlot: {
+    width: '30%',
+  },
+  uploadArea: {
+    width: '100%',
+    aspectRatio: 1,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: Colors.lightgrey2,
+    borderRadius: wp(2),
+    backgroundColor: Colors.lightgrey1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: wp(2),
+  },
+  uploadIcon: {
+    width: wp(8),
+    height: wp(8),
+    tintColor: Colors.sooprsblue,
+    marginBottom: hp(0.5),
+  },
+  uploadText: {
+    fontSize: FSize.fs11,
+    color: Colors.grey,
+    textAlign: 'center',
+    marginBottom: hp(0.5),
+  },
+  addButton: {
+    backgroundColor: Colors.sooprsblue,
+    paddingVertical: hp(0.5),
+    paddingHorizontal: wp(3),
+    borderRadius: wp(2),
+  },
+  addButtonText: {
+    color: Colors.white,
+    fontSize: FSize.fs12,
+    fontWeight: '600',
+  },
+  uploadedImage: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: wp(2),
+    backgroundColor: Colors.lightgrey1,
+  },
+  removeButton: {
+    alignSelf: 'center',
+    marginTop: hp(0.5),
+  },
+  removeText: {
+    fontSize: FSize.fs12,
+    color: 'red',
+    fontWeight: '500',
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: hp(0.5),
+  },
+  checkbox: {
+    width: wp(4),
+    height: wp(4),
+    borderWidth: 1,
+    borderColor: Colors.lightgrey2,
+    borderRadius: wp(1),
+    marginRight: wp(1.5),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
     backgroundColor: Colors.sooprsblue,
     borderColor: Colors.sooprsblue,
   },
-  // LABEL FIX
-excludingText: {
-  fontSize: FSize.fs11,
-  color: Colors.sooprsblue,   // BLUE TEXT
-},
-
-// BACK ARROW BUTTON AREA
-// backBtn: {
-//   width: wp(9),
-//   height: wp(9),
-//   justifyContent: "center",
-// },
-backButton: {
-  padding: wp(2),
-  paddingLeft: 0,
-},
-
-// backArrow: {
-//   fontSize: FSize.fs22,   // बिल्कुल iOS जैसा बड़ा पतला arrow
-//   color: Colors.black,
-//   fontWeight: '300',
-//   marginTop: hp(0.3),
-// },
-
-// LONG STRAIGHT ARROW LIKE FIGMA
-backArrow: {
-  width: wp(4.5),
-  height: wp(4.5),
-  borderLeftWidth: 2,
-  borderBottomWidth: 2,
-  borderColor: Colors.black,
-  transform: [{ rotate: "45deg" }],
-  marginLeft: wp(1),
-},
-backBtn: {
-  padding: wp(2),
-  justifyContent: "center",
-  alignItems: "flex-start",
-},
-
-iosBackArrow: {
-  width: wp(4.5),
-  height: wp(4.5),
-  borderLeftWidth: 2.3,
-  borderBottomWidth: 2.3,
-  borderColor: Colors.black,
-  transform: [{ rotate: "45deg" }],
-  marginLeft: wp(1),
-},
-
-  tickMark: {
-    width: wp(2),
-    height: wp(1),
-    borderLeftWidth: 2,
-    borderBottomWidth: 2,
-    borderColor: "white",
-    transform: [{ rotate: "-45deg" }],
+  checkboxIcon: {
+    width: wp(2.5),
+    height: wp(2.5),
+    tintColor: Colors.white,
   },
-  chipText: {
-    fontSize: FSize.fs13,
+  checkboxLabel: {
+    fontSize: FSize.fs11,
+    color: Colors.black,
   },
-
-  // BUTTON
+  guidelinesContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '90%',
+    alignSelf: 'center',
+    marginTop: hp(1),
+  },
+  guidelineItem: {
+    alignItems: 'center',
+    width: '23%',
+  },
+  guidelineImage: {
+    width: '100%',
+    aspectRatio: 1,
+    backgroundColor: Colors.lightgrey1,
+    borderRadius: wp(2),
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.lightgrey2,
+  },
+  guidelinePlaceholder: {
+    fontSize: FSize.fs10,
+    color: Colors.grey,
+  },
+  guidelineCheck: {
+    width: wp(5),
+    height: wp(5),
+    borderRadius: wp(2.5),
+    backgroundColor: '#4CAF50',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: hp(0.5),
+  },
+  guidelineCheckText: {
+    color: Colors.white,
+    fontSize: FSize.fs12,
+    fontWeight: '700',
+  },
+  guidelineCross: {
+    width: wp(5),
+    height: wp(5),
+    borderRadius: wp(2.5),
+    backgroundColor: 'red',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: hp(0.5),
+  },
+  guidelineCrossText: {
+    color: Colors.white,
+    fontSize: FSize.fs14,
+    fontWeight: '700',
+  },
+  guidelineLabel: {
+    fontSize: FSize.fs10,
+    color: Colors.black,
+    marginTop: hp(0.5),
+    textAlign: 'center',
+  },
   submitBtn: {
-    width: "90%",
-    alignSelf: "center",
+    width: '90%',
+    alignSelf: 'center',
     backgroundColor: Colors.sooprsblue,
     paddingVertical: hp(2),
     borderRadius: wp(3),
     marginTop: hp(3),
     marginBottom: hp(4),
   },
-   backIcon: {
-    width: wp(5),
-    height: wp(5),
-    tintColor: Colors.black,
-  },
   submitText: {
-    textAlign: "center",
+    textAlign: 'center',
     fontSize: FSize.fs16,
     color: Colors.white,
-    fontWeight: "600",
+    fontWeight: '600',
   },
 });

@@ -7,6 +7,8 @@ const Colors = {
   darkblack: '#09101D',
   darkblue: '#000066',
   gray: '#797979',
+   darkGray:'#343434',
+  blackgray:'#5D5D5D',
   sooprsblue: '#0077FF',
   sooprsblue2: '#70a8e9ff',
   successbackground: '#D4E3FC',
@@ -15,6 +17,7 @@ const Colors = {
   sooprslight: '#DEE8FF',
   sooprsDark:'#00366B',
   lightgrey1:'#F5F5F5',
+  lightgreen:'#E7FFEF',
   lightgrey2:'#DEDEDE'
 };
 export default Colors;
