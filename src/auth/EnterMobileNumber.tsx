@@ -7,23 +7,346 @@ import {
   TouchableOpacity,
   StatusBar,
   Animated,
+  Image,
+  Platform,
+  Alert,
 } from 'react-native';
 import {hp, wp} from '../assets/commonCSS/GlobalCSS';
 import Colors from '../assets/commonCSS/Colors';
 import FSize from '../assets/commonCSS/FSize';
-// import ButtonNew from '../components/ButtonNew';
+import Images from '../assets/image';
+import SimData from 'react-native-sim-data';
+import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
+import {NativeModules} from 'react-native';
+import {postDataWithToken1} from '../services/mobile-api';
 
-const EnterMobileNumber = ({navigation}: {navigation: any}) => {
-  const [mobileNumber, setMobileNumber] = useState('9990099000');
+const {SimPhoneNumberModule} = NativeModules;
+
+const EnterMobileNumber = ({navigation, route}: {navigation: any; route?: any}) => {
+  const [mobileNumber, setMobileNumber] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
-  const [showBottomSheet, setShowBottomSheet] = useState(true);
-  const [simNumbers, setSimNumbers] = useState([
-    {id: 1, label: 'SIM 1', number: '+91 9999009900'},
-    {id: 2, label: 'SIM 2', number: '+91 8888009900'},
-  ]);
+  const [showBottomSheet, setShowBottomSheet] = useState(true); // Show immediately on load
+  const [simNumbers, setSimNumbers] = useState<Array<{id: number; label: string; number: string}>>([]);
+  const [isLoadingSims, setIsLoadingSims] = useState(true); // Start with loading state
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
 
-  const slideAnim = useRef(new Animated.Value(hp(50))).current;
-  const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(0)).current; // Start at 0 so modal is visible
+  const backdropOpacity = useRef(new Animated.Value(1)).current; // Start visible
+
+  // Detect SIM cards when screen loads
+  useEffect(() => {
+    console.log('EnterMobileNumber mounted');
+    const detectSimCards = async () => {
+      try {
+        console.log('Starting SIM detection...');
+        setIsLoadingSims(true);
+        
+        // Request permissions for Android
+        if (Platform.OS === 'android') {
+          // Request READ_PHONE_STATE permission
+          const phoneStatePermission = PERMISSIONS.ANDROID.READ_PHONE_STATE;
+          const phoneStateResult = await request(phoneStatePermission);
+          
+          if (phoneStateResult !== RESULTS.GRANTED) {
+            console.log('READ_PHONE_STATE permission not granted');
+            setShowBottomSheet(true); // Still show modal
+            setIsLoadingSims(false);
+            return;
+          }
+          
+          // For Android 8.0+ (API 26+), also request READ_PHONE_NUMBERS
+          try {
+            const phoneNumbersPermission = PERMISSIONS.ANDROID.READ_PHONE_NUMBERS;
+            const phoneNumbersResult = await request(phoneNumbersPermission);
+            console.log('READ_PHONE_NUMBERS permission result:', phoneNumbersResult);
+          } catch (error) {
+            // READ_PHONE_NUMBERS might not be available on older Android versions
+            console.log('READ_PHONE_NUMBERS permission not available:', error);
+          }
+        }
+        
+        const detectedSims: Array<{id: number; label: string; number: string}> = [];
+        
+        // console.log('=== SIM Detection Started ===');
+        // console.log('Platform.OS:', Platform.OS);
+        // console.log('SimPhoneNumberModule:', SimPhoneNumberModule);
+        // console.log('SimPhoneNumberModule type:', typeof SimPhoneNumberModule);
+        // console.log('SimPhoneNumberModule available:', !!SimPhoneNumberModule);
+        
+        // Try native module first (more reliable)
+        if (Platform.OS === 'android') {
+          // console.log('Platform is Android, checking SimPhoneNumberModule...');
+          
+          if (SimPhoneNumberModule) {
+            // console.log('SimPhoneNumberModule is available!');
+            // console.log('SimPhoneNumberModule methods:', Object.keys(SimPhoneNumberModule));
+            
+            try {
+              console.log('Trying native SimPhoneNumberModule.getAllPhoneNumbers()...');
+              
+              // Check if getAllPhoneNumbers method exists
+              if (SimPhoneNumberModule.getAllPhoneNumbers) {
+                // console.log('getAllPhoneNumbers method exists, calling it...');
+                const nativeSimData = await SimPhoneNumberModule.getAllPhoneNumbers();
+                // console.log('Native module result:', JSON.stringify(nativeSimData, null, 2));
+                // console.log('Native module result type:', typeof nativeSimData);
+                // console.log('Is array?', Array.isArray(nativeSimData));
+                
+                if (nativeSimData) {
+                  // Handle array response
+                  if (Array.isArray(nativeSimData)) {
+                    // console.log('Result is an array, length:', nativeSimData.length);
+                    
+                    if (nativeSimData.length > 0) {
+                      nativeSimData.forEach((sim: any, index: number) => {
+                        // console.log(`Processing SIM ${index}:`, JSON.stringify(sim));
+                        const phoneNumber = sim?.phoneNumber || sim?.number || sim?.phone || sim;
+                        // console.log(`Native SIM ${index} phoneNumber:`, phoneNumber, 'Type:', typeof phoneNumber);
+                        
+                        if (phoneNumber !== null && phoneNumber !== undefined && phoneNumber !== '') {
+                          const phoneStr = String(phoneNumber).trim();
+                          // console.log(`Phone string for SIM ${index}:`, phoneStr, 'Length:', phoneStr.length);
+                          
+                          if (phoneStr !== '' && phoneStr !== 'null' && phoneStr !== 'undefined' && phoneStr.length > 0) {
+                            let formattedNumber = phoneStr.replace(/[^\d]/g, '');
+                            // console.log(`Native SIM ${index} formatted:`, formattedNumber, 'Length:', formattedNumber.length);
+                            
+                            if (formattedNumber.length > 0) {
+                              if (formattedNumber.length === 10 && !formattedNumber.startsWith('91')) {
+                                formattedNumber = '91' + formattedNumber;
+                              }
+                              let displayNumber = '';
+                              if (formattedNumber.length > 10) {
+                                const countryCode = formattedNumber.slice(0, formattedNumber.length - 10);
+                                const number = formattedNumber.slice(formattedNumber.length - 10);
+                                displayNumber = `+${countryCode} ${number}`;
+                              } else if (formattedNumber.length === 10) {
+                                displayNumber = `+91 ${formattedNumber}`;
+                              } else {
+                                displayNumber = `+91 ${formattedNumber}`;
+                              }
+                              // console.log(`✅ Adding Native SIM ${index + 1}:`, displayNumber);
+                              detectedSims.push({
+                                id: sim.id || index + 1,
+                                label: sim.label || `SIM ${index + 1}`,
+                                number: displayNumber,
+                              });
+                            } else {
+                              console.log(`❌ SIM ${index} formatted number is empty`);
+                            }
+                          } else {
+                            console.log(`❌ SIM ${index} phone string is invalid`);
+                          }
+                        } else {
+                          console.log(`❌ SIM ${index} phoneNumber is null/undefined/empty`);
+                        }
+                      });
+                    } else {
+                      console.log('Native module returned empty array');
+                    }
+                  } 
+                  // Handle string response
+                  else if (typeof nativeSimData === 'string' && nativeSimData.trim() !== '') {
+                    console.log('Result is a string:', nativeSimData);
+                    const phoneStr = nativeSimData.trim();
+                    let formattedNumber = phoneStr.replace(/[^\d]/g, '');
+                    if (formattedNumber.length > 0) {
+                      if (formattedNumber.length === 10 && !formattedNumber.startsWith('91')) {
+                        formattedNumber = '91' + formattedNumber;
+                      }
+                      let displayNumber = '';
+                      if (formattedNumber.length > 10) {
+                        const countryCode = formattedNumber.slice(0, formattedNumber.length - 10);
+                        const number = formattedNumber.slice(formattedNumber.length - 10);
+                        displayNumber = `+${countryCode} ${number}`;
+                      } else if (formattedNumber.length === 10) {
+                        displayNumber = `+91 ${formattedNumber}`;
+                      } else {
+                        displayNumber = `+91 ${formattedNumber}`;
+                      }
+                      console.log(`✅ Adding Native SIM from string:`, displayNumber);
+                      detectedSims.push({
+                        id: 1,
+                        label: 'SIM 1',
+                        number: displayNumber,
+                      });
+                    }
+                  }
+                  // Handle object response
+                  else if (typeof nativeSimData === 'object') {
+                    console.log('Result is an object:', nativeSimData);
+                    const phoneNumber = (nativeSimData as any).phoneNumber || (nativeSimData as any).number || (nativeSimData as any).phone;
+                    if (phoneNumber) {
+                      const phoneStr = String(phoneNumber).trim();
+                      if (phoneStr !== '' && phoneStr !== 'null' && phoneStr !== 'undefined') {
+                        let formattedNumber = phoneStr.replace(/[^\d]/g, '');
+                        if (formattedNumber.length > 0) {
+                          if (formattedNumber.length === 10 && !formattedNumber.startsWith('91')) {
+                            formattedNumber = '91' + formattedNumber;
+                          }
+                          let displayNumber = '';
+                          if (formattedNumber.length > 10) {
+                            const countryCode = formattedNumber.slice(0, formattedNumber.length - 10);
+                            const number = formattedNumber.slice(formattedNumber.length - 10);
+                            displayNumber = `+${countryCode} ${number}`;
+                          } else if (formattedNumber.length === 10) {
+                            displayNumber = `+91 ${formattedNumber}`;
+                          } else {
+                            displayNumber = `+91 ${formattedNumber}`;
+                          }
+                          console.log(`✅ Adding Native SIM from object:`, displayNumber);
+                          detectedSims.push({
+                            id: 1,
+                            label: 'SIM 1',
+                            number: displayNumber,
+                          });
+                        }
+                      }
+                    }
+                  } else {
+                    console.log('Native module returned unexpected type:', typeof nativeSimData);
+                  }
+                } else {
+                  console.log('Native module returned null/undefined');
+                }
+              } else {
+                console.log('❌ getAllPhoneNumbers method does not exist in SimPhoneNumberModule');
+                console.log('Available methods:', Object.keys(SimPhoneNumberModule));
+              }
+            } catch (error) {
+              console.log('❌ Error with native module:', error);
+              console.log('Error message:', (error as any)?.message);
+              console.log('Error stack:', (error as any)?.stack);
+            }
+          } else {
+            console.log('❌ SimPhoneNumberModule is not available (undefined/null)');
+          }
+        } else {
+          console.log('Platform is not Android, skipping native module');
+        }
+        
+        // Fallback to react-native-sim-data if native module didn't work
+        if (detectedSims.length === 0) {
+          try {
+            console.log('Trying react-native-sim-data as fallback...');
+            const simData = await SimData.getSimInfo();
+            console.log('SimData.getSimInfo result:', JSON.stringify(simData, null, 2));
+            console.log('SimData type:', typeof simData);
+            console.log('SimData keys:', simData ? Object.keys(simData) : 'null');
+            
+            if (simData) {
+              // Log all properties to debug
+              Object.keys(simData).forEach(key => {
+                console.log(`SimData.${key}:`, (simData as any)[key], 'Type:', typeof (simData as any)[key]);
+              });
+              
+              // Check for phoneNumber0, phoneNumber1, etc. (up to 4 SIMs)
+              let simIndex = 0;
+              while (simIndex < 4) {
+                const phoneNumberKey = `phoneNumber${simIndex}`;
+                const phoneNumber = (simData as any)[phoneNumberKey];
+                console.log(`Checking ${phoneNumberKey}:`, phoneNumber, 'Type:', typeof phoneNumber);
+                
+                // More robust checking
+                if (phoneNumber !== null && phoneNumber !== undefined && phoneNumber !== '') {
+                  const phoneStr = String(phoneNumber).trim();
+                  console.log(`Phone string for ${phoneNumberKey}:`, phoneStr, 'Length:', phoneStr.length);
+                  
+                  if (phoneStr !== '' && phoneStr !== 'null' && phoneStr !== 'undefined' && phoneStr.length > 0) {
+                    let formattedNumber = phoneStr.replace(/[^\d]/g, '');
+                    console.log(`Formatted number for ${phoneNumberKey}:`, formattedNumber, 'Length:', formattedNumber.length);
+                    
+                    // Only process if we have at least some digits
+                    if (formattedNumber.length > 0) {
+                      if (formattedNumber.length === 10 && !formattedNumber.startsWith('91')) {
+                        formattedNumber = '91' + formattedNumber;
+                      }
+                      let displayNumber = '';
+                      if (formattedNumber.length > 10) {
+                        const countryCode = formattedNumber.slice(0, formattedNumber.length - 10);
+                        const number = formattedNumber.slice(formattedNumber.length - 10);
+                        displayNumber = `+${countryCode} ${number}`;
+                      } else if (formattedNumber.length === 10) {
+                        displayNumber = `+91 ${formattedNumber}`;
+                      } else {
+                        // Even if less than 10 digits, show it
+                        displayNumber = `+91 ${formattedNumber}`;
+                      }
+                      
+                      console.log(`Adding SIM ${simIndex + 1} with display number:`, displayNumber);
+                      detectedSims.push({
+                        id: simIndex + 1,
+                        label: `SIM ${simIndex + 1}`,
+                        number: displayNumber,
+                      });
+                    }
+                  }
+                }
+                simIndex++;
+              }
+              
+              // Also check for direct phoneNumber field (without index)
+              if (detectedSims.length === 0) {
+                const directPhoneNumber = (simData as any).phoneNumber;
+                console.log('Checking direct phoneNumber field:', directPhoneNumber, 'Type:', typeof directPhoneNumber);
+                
+                if (directPhoneNumber !== null && directPhoneNumber !== undefined && directPhoneNumber !== '') {
+                  const phoneStr = String(directPhoneNumber).trim();
+                  if (phoneStr !== '' && phoneStr !== 'null' && phoneStr !== 'undefined' && phoneStr.length > 0) {
+                    let formattedNumber = phoneStr.replace(/[^\d]/g, '');
+                    if (formattedNumber.length > 0) {
+                      if (formattedNumber.length === 10 && !formattedNumber.startsWith('91')) {
+                        formattedNumber = '91' + formattedNumber;
+                      }
+                      let displayNumber = '';
+                      if (formattedNumber.length > 10) {
+                        const countryCode = formattedNumber.slice(0, formattedNumber.length - 10);
+                        const number = formattedNumber.slice(formattedNumber.length - 10);
+                        displayNumber = `+${countryCode} ${number}`;
+                      } else if (formattedNumber.length === 10) {
+                        displayNumber = `+91 ${formattedNumber}`;
+                      } else {
+                        displayNumber = `+91 ${formattedNumber}`;
+                      }
+                      console.log('Adding SIM from direct phoneNumber:', displayNumber);
+                      detectedSims.push({
+                        id: 1,
+                        label: 'SIM 1',
+                        number: displayNumber,
+                      });
+                    }
+                  }
+                }
+              }
+            } else {
+              console.log('SIM Data is null or undefined');
+            }
+          } catch (error) {
+            console.log('Error with react-native-sim-data:', error);
+            console.log('Error details:', JSON.stringify(error, null, 2));
+          }
+        }
+        
+        console.log('=== Final Detected SIMs ===', detectedSims);
+        setSimNumbers(detectedSims);
+        
+        // Always show bottom sheet modal when screen loads
+        setShowBottomSheet(true);
+      } catch (error) {
+        console.log('=== Error detecting SIM cards ===');
+        console.log('Error:', error);
+        console.log('Error message:', (error as any)?.message);
+        console.log('Error stack:', (error as any)?.stack);
+        // Still show modal even if error occurs
+        setShowBottomSheet(true);
+      } finally {
+        setIsLoadingSims(false);
+      }
+    };
+    
+    // Always try to detect SIMs when screen loads
+    detectSimCards();
+  }, [route]);
 
   useEffect(() => {
     if (showBottomSheet) {
@@ -55,71 +378,87 @@ const EnterMobileNumber = ({navigation}: {navigation: any}) => {
     }
   }, [showBottomSheet]);
 
-  // const sendOtpAndNavigate = async (
-  //   rawNumber: string,
-  //   displayNumber: string,
-  // ) => {
-  //   try {
-  //     setIsSendingOtp(true);
-
-  //     // Prepare mobile number for API (remove spaces, keep + and digits)
-  //     const cleanedNumber = displayNumber.replace(/[^\d+]/g, '');
-
-  //     // Use common postDataWithToken1 helper for API call
-  //     const payload = {
-  //       mobile: cleanedNumber,
-  //     };
-
-  //     const result: any = await postDataWithToken1(
-  //       payload,
-  //       'api/auth/send-otp-user',
-  //     );
-
-  //     if (result?.success) {
-  //       // OTP sent successfully → navigate to OTP screen
-  //       navigation.navigate('NewOtpScreen', {
-  //         mobileNumber: cleanedNumber,
-  //         phoneNumber: displayNumber,
-  //       });
-  //     } else {
-  //       const msg =
-  //         result?.message ||
-  //         result?.msg ||
-  //         'Failed to send OTP. Please try again.';
-  //       Alert.alert('Error', msg);
-  //     }
-  //   } catch (error: any) {
-  //     console.log('Error sending OTP:', error);
-  //     Alert.alert(
-  //       'Error',
-  //       error?.message || 'Something went wrong while sending OTP.',
-  //     );
-  //   } finally {
-  //     setIsSendingOtp(false);
-  //   }
-  // };
-
   const sendOtpAndNavigate = async (
     rawNumber: string,
     displayNumber: string,
   ) => {
-    navigation.navigate('NewOtpScreen',{
+    
+    // try {
+    //   setIsSendingOtp(true);
+    //   // Prepare mobile number for API (remove spaces, keep + and digits)
+    //   const cleanedNumber = displayNumber.replace(/[^\d+]/g, '');
+    //   // Use common postDataWithToken1 helper for API call
+    //   const payload = {
+    //     mobile: cleanedNumber,
+    //   };
+    //   const result: any = await postDataWithToken1(
+    //     payload,
+    //     'api/auth/send-otp-user',
+    //   );
+    //   if (result?.success) {
+    //     // OTP sent successfully → navigate to OTP screen
+    //     navigation.navigate('NewOtpScreen', {
+    //       mobileNumber: cleanedNumber,
+    //       phoneNumber: displayNumber,
+    //     });
+    //   } else {
+    //     const msg =
+    //       result?.message ||
+    //       result?.msg ||
+    //       'Failed to send OTP. Please try again.';
+    //     Alert.alert('Error', msg);
+    //   }
+    // } catch (error: any) {
+    //   console.log('Error sending OTP:', error);
+    //   Alert.alert(
+    //     'Error',
+    //     error?.message || 'Something went wrong while sending OTP.',
+    //   );
+    // } finally {
+    //   setIsSendingOtp(false);
+    // }
+
+    navigation.navigate('NewOtpScreen', {
       // mobileNumber: cleanedNumber,
       phoneNumber: displayNumber,
     });
   };
 
   const handleContinue = () => {
-    // Navigate to OTP screen or next step
-    // navigation.navigate('OtpScreen', {mobileNumber: `${countryCode} ${mobileNumber}`});
-    console.log('Continue with:', `${countryCode} ${mobileNumber}`);
-    sendOtpAndNavigate(`${countryCode} ${mobileNumber}`, `${countryCode} ${mobileNumber}`);
+    // Validate mobile number before sending OTP
+    if (mobileNumber && mobileNumber.trim().length === 10) {
+      const fullMobileForApi = `${countryCode}${mobileNumber}`; // e.g. +919999999999
+      const displayNumber = `${countryCode} ${mobileNumber}`; // e.g. +91 9999999999
+      sendOtpAndNavigate(fullMobileForApi, displayNumber);
+    } else {
+      Alert.alert('Error', 'Please enter a valid 10-digit mobile number.');
+    }
   };
 
   const handleSimSelect = (sim: any) => {
-    const number = sim.number.replace(countryCode, '').trim();
+    // Extract just the digits from the number
+    const fullNumber = sim.number.replace(/[^\d]/g, '');
+    const number = fullNumber.slice(-10); // Get last 10 digits
+    
+    // Extract country code if present
+    let finalCountryCode = countryCode;
+    if (fullNumber.length > 10) {
+      const code = fullNumber.slice(0, fullNumber.length - 10);
+      if (code) {
+        finalCountryCode = `+${code}`;
+        setCountryCode(finalCountryCode);
+      }
+    }
+    
     setMobileNumber(number);
     setShowBottomSheet(false);
+    
+    // Automatically send OTP and navigate to OTP screen
+    if (number && number.trim().length === 10) {
+      const displayNumber = `${finalCountryCode} ${number}`;
+      const fullMobileForApi = `${finalCountryCode}${number}`;
+      sendOtpAndNavigate(fullMobileForApi, displayNumber);
+    }
   };
 
   const handleUseAnotherNumber = () => {
@@ -155,8 +494,11 @@ const EnterMobileNumber = ({navigation}: {navigation: any}) => {
           <TouchableOpacity
             style={styles.continueButton}
             onPress={handleContinue}
-            activeOpacity={0.8}>
-            <Text style={styles.continueButtonText}>Continue</Text>
+            activeOpacity={0.8}
+            disabled={isSendingOtp}>
+            <Text style={styles.continueButtonText}>
+              {isSendingOtp ? 'Sending OTP...' : 'Continue'}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -187,30 +529,53 @@ const EnterMobileNumber = ({navigation}: {navigation: any}) => {
           <View style={styles.bottomSheetContent}>
             <Text style={styles.bottomSheetTitle}>Continue with</Text>
 
-            {simNumbers.map(sim => (
-              <TouchableOpacity
-                key={sim.id}
-                style={styles.simOption}
-                onPress={() => handleSimSelect(sim)}
-                activeOpacity={0.7}>
-                <View style={styles.simIconContainer}>
-                  <Text style={styles.simIcon}>📞</Text>
-                </View>
-                <View style={styles.simInfo}>
-                  <Text style={styles.simLabel}>{sim.label}</Text>
-                  <Text style={styles.simNumber}>{sim.number}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-
-            <TouchableOpacity
-              style={styles.anotherNumberLink}
-              onPress={handleUseAnotherNumber}
-              activeOpacity={0.7}>
-              <Text style={styles.anotherNumberText}>
-                Use another mobile number
-              </Text>
-            </TouchableOpacity>
+            {isLoadingSims ? (
+              <View style={styles.loadingContainer}>
+                <Text style={styles.loadingText}>Detecting SIM cards...</Text>
+              </View>
+            ) : simNumbers.length > 0 ? (
+              <>
+                {simNumbers.map(sim => (
+                  <TouchableOpacity
+                    key={sim.id}
+                    style={styles.simOption}
+                    onPress={() => handleSimSelect(sim)}
+                    activeOpacity={0.7}>
+                    <View style={styles.simIconContainer}>
+                      <Image 
+                        source={Images.phoneIcon} 
+                        style={styles.simIcon}
+                        resizeMode="contain"
+                      />
+                    </View>
+                    <View style={styles.simInfo}>
+                      <Text style={styles.simLabel}>{sim.label}</Text>
+                      <Text style={styles.simNumber}>{sim.number}</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+                <TouchableOpacity
+                  style={styles.anotherNumberLink}
+                  onPress={handleUseAnotherNumber}
+                  activeOpacity={0.7}>
+                  <Text style={styles.anotherNumberText}>
+                    Use another mobile number
+                  </Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <View style={styles.noSimContainer}>
+                <Text style={styles.noSimText}>No SIM cards detected</Text>
+                <TouchableOpacity
+                  style={styles.anotherNumberLink}
+                  onPress={handleUseAnotherNumber}
+                  activeOpacity={0.7}>
+                  <Text style={styles.anotherNumberText}>
+                    Enter mobile number manually
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         </Animated.View>
       </View>
@@ -223,16 +588,13 @@ export default EnterMobileNumber;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#F5F5F5',
   },
   contentArea: {
     backgroundColor: '#F5F5F5',
-    // borderTopLeftRadius: wp(8),
-    // borderTopRightRadius: wp(8),
     paddingHorizontal: wp(6),
     paddingTop: hp(4),
     paddingBottom: hp(3),
-    // marginTop: hp(8),
     flex: 1,
   },
   title: {
@@ -242,7 +604,7 @@ const styles = StyleSheet.create({
     marginBottom: hp(1),
   },
   description: {
-    fontSize: FSize.fs14,
+    fontSize: FSize.fs17,
     color: Colors.gray,
     marginBottom: hp(4),
     lineHeight: hp(2.5),
@@ -251,7 +613,7 @@ const styles = StyleSheet.create({
     marginBottom: hp(3),
   },
   label: {
-    fontSize: FSize.fs12,
+    fontSize: FSize.fs15,
     color: Colors.black,
     marginBottom: hp(1),
     fontWeight: '500',
@@ -266,15 +628,16 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
   },
   countryCode: {
-    fontSize: FSize.fs16,
+    fontSize: FSize.fs25,
     color: Colors.black,
     marginRight: wp(2),
     fontWeight: '500',
   },
   input: {
     flex: 1,
-    fontSize: FSize.fs16,
+    fontSize: FSize.fs25,
     color: Colors.black,
+    fontWeight: '500',
     paddingVertical: hp(1.5),
   },
   continueButton: {
@@ -338,7 +701,26 @@ const styles = StyleSheet.create({
     marginRight: wp(3),
   },
   simIcon: {
-    fontSize: wp(6),
+    width: wp(6),
+    height: wp(6),
+    tintColor: Colors.white,
+  },
+  loadingContainer: {
+    paddingVertical: hp(3),
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: FSize.fs14,
+    color: Colors.gray,
+  },
+  noSimContainer: {
+    paddingVertical: hp(2),
+    alignItems: 'center',
+  },
+  noSimText: {
+    fontSize: FSize.fs14,
+    color: Colors.gray,
+    marginBottom: hp(2),
   },
   simInfo: {
     flex: 1,
@@ -372,4 +754,3 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
 });
-

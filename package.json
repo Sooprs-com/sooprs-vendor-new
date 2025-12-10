@@ -12,7 +12,6 @@
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-google-signin/google-signin": "^16.0.0",
-    "@react-native-picker/picker": "^2.11.4",
     "@react-native/new-app-screen": "0.82.1",
     "@react-navigation/bottom-tabs": "^7.8.11",
     "@react-navigation/native": "^7.1.24",
@@ -22,10 +21,12 @@
     "react-native-gesture-handler": "^2.29.1",
     "react-native-image-picker": "^8.2.1",
     "react-native-linear-gradient": "^2.8.3",
+    "react-native-permissions": "^5.4.4",
     "react-native-reanimated": "^4.2.0",
     "react-native-responsive-screen": "^1.4.2",
     "react-native-safe-area-context": "^5.6.2",
     "react-native-screens": "^4.18.0",
+    "react-native-sim-data": "^3.0.0",
     "react-native-toast-message": "^2.3.3",
     "react-native-worklets": "^0.7.1"
   },
