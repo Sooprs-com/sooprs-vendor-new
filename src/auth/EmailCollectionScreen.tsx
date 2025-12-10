@@ -226,10 +226,19 @@ const EmailCollectionScreen = () => {
     // finally {
     //   setIsSubmitting(false);
     // }
-    (navigation as any).navigate('BottomTab', { 
-      email: email.trim(), 
-      ...params 
-    });
+    // (navigation as any).navigate('HomeVerificationScreen', { 
+    //   email: email.trim(), 
+    //   ...params 
+    // });
+    (navigation as any).replace("BottomTab", {
+  screen: "Home",
+  params: {
+    screen: "Verification",
+    email: email.trim(),
+    ...params
+  }
+});
+
 
 
   };

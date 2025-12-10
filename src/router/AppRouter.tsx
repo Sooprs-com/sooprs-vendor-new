@@ -5,6 +5,9 @@ import EnterMobileNumber from '../auth/EnterMobileNumber';
 import NewOtpScreen from '../auth/NewOtpScreen';
 import EmailCollectionScreen from '../auth/EmailCollectionScreen';
 import BottomTab from './BottomTab';
+import HomeVerificationScreen from '../Screen/Verification/HomeVerification';
+import RegistrationScreen from '../Screen/Home/Registration/RegistrationScreen';
+import AddPackagesScreen from '../Screen/AddPackage/AddPackagesScreen';
 // import WelcomeScreen from './auth/WelcomeScreen';
 // import ProfileSelection from './auth/ProfileSelection';
 // import Signup from './auth/Signup';
@@ -75,7 +78,13 @@ const AuthenticationRouter = () => {
       <Stack.Screen name="EnterMobileNumber" component={EnterMobileNumber} />
       <Stack.Screen name="NewOtpScreen" component={NewOtpScreen} />
       <Stack.Screen name="EmailCollectionScreen" component={EmailCollectionScreen} />
+          <Stack.Screen name="HomeVerificationScreen" component={HomeVerificationScreen} />
+          <Stack.Screen name="RegistrationScreen" component={RegistrationScreen} />
+        
+           <Stack.Screen name="AddPackagesScreen" component={AddPackagesScreen} />
+
       <Stack.Screen name="BottomTab" component={BottomTab} />
+    
       {/* <Stack.Screen name="ProfileSelection" component={ProfileSelection} />
       <Stack.Screen name="Signup" component={Signup} />
       <Stack.Screen name="Login" component={Login} />
