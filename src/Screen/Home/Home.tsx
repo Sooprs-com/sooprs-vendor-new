@@ -7,13 +7,17 @@ import {
   Image,
   SafeAreaView,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState, useCallback} from 'react';
+import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {hp, wp, GlobalCss} from '../../assets/commonCSS/GlobalCSS';
 import Colors from '../../assets/commonCSS/Colors';
 import Images from '../../assets/image';
 import FSize from '../../assets/commonCSS/FSize';
+import { getDataWithToken } from '../../services/mobile-api';
+import { mobile_siteConfig } from '../../services/mobile-siteConfig';
 
 const Home = () => {
+  const navigation = useNavigation();
   const [userName] = useState('Ankur');
   const [totalEarnings] = useState('10,550');
   const [activeTrips] = useState(8);
@@ -200,6 +204,36 @@ const Home = () => {
       </View>
     </View>
   );
+
+  const getUserDetails = async () => {
+    try {
+      const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
+      const data: any = await res.json();
+      console.log('User details data:::::', data);
+      
+      // Check if profile is completed
+      if (data?.success && data?.vendorDetail) {
+        const isProfileCompleted = data.vendorDetail.is_profile_completed;
+        
+        // If profile is not completed (0), replace with HomeVerification screen
+        if (isProfileCompleted === 0) {
+          (navigation as any).replace('HomeVerification');
+        }
+        // If profile is completed (1), stay on Home screen (already here)
+      }
+    } catch (err: any) {
+      console.log('Error fetching user details:::::', err);
+    }
+  };
+
+  // Check profile status when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      getUserDetails();
+    }, [])
+  );
+
+
 
   return (
     <SafeAreaView style={styles.container}>

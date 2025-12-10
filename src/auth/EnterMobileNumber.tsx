@@ -18,7 +18,7 @@ import Images from '../assets/image';
 import SimData from 'react-native-sim-data';
 import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import {NativeModules} from 'react-native';
-import {postDataWithToken1} from '../services/mobile-api';
+import {postData, postDataWithToken, postDataWithToken1} from '../services/mobile-api';
 
 const {SimPhoneNumberModule} = NativeModules;
 
@@ -383,45 +383,50 @@ const EnterMobileNumber = ({navigation, route}: {navigation: any; route?: any}) 
     displayNumber: string,
   ) => {
     
-    // try {
-    //   setIsSendingOtp(true);
-    //   // Prepare mobile number for API (remove spaces, keep + and digits)
-    //   const cleanedNumber = displayNumber.replace(/[^\d+]/g, '');
-    //   // Use common postDataWithToken1 helper for API call
-    //   const payload = {
-    //     mobile: cleanedNumber,
-    //   };
-    //   const result: any = await postDataWithToken1(
-    //     payload,
-    //     'api/auth/send-otp-user',
-    //   );
-    //   if (result?.success) {
-    //     // OTP sent successfully → navigate to OTP screen
-    //     navigation.navigate('NewOtpScreen', {
-    //       mobileNumber: cleanedNumber,
-    //       phoneNumber: displayNumber,
-    //     });
-    //   } else {
-    //     const msg =
-    //       result?.message ||
-    //       result?.msg ||
-    //       'Failed to send OTP. Please try again.';
-    //     Alert.alert('Error', msg);
-    //   }
-    // } catch (error: any) {
-    //   console.log('Error sending OTP:', error);
-    //   Alert.alert(
-    //     'Error',
-    //     error?.message || 'Something went wrong while sending OTP.',
-    //   );
-    // } finally {
-    //   setIsSendingOtp(false);
-    // }
+    try {
+      setIsSendingOtp(true);
+      // Prepare mobile number for API (remove +91 prefix if present)
+      let cleanedNumber = rawNumber.replace(/\+91/g, '').replace(/\s/g, '');
+      // Remove leading 91 if present (in case it's 919999999999)
+      if (cleanedNumber.startsWith('91') && cleanedNumber.length === 12) {
+        cleanedNumber = cleanedNumber.substring(2);
+      }
+      const payload = {
+        mobile: cleanedNumber,
+      };
+      console.log('payload:::::', payload);
+      const result: any = await postData(
+        payload, 
+        'auth/send-otp-user',
+      );
+      console.log('result:::::', result);
+      if (result?.success) {
+        console.log('OTP sent successfully',result);
+        navigation.navigate('NewOtpScreen', {
+          mobileNumber: cleanedNumber,
+          phoneNumber: displayNumber,
+        });
+      } else {
+        const msg =
+          result?.message ||
+          result?.msg ||
+          'Failed to send OTP. Please try again.';
+        Alert.alert('Error', msg);
+      }
+    } catch (error: any) {
+      console.log('Error sending OTP:', error);
+      Alert.alert(
+        'Error',
+        error?.message || 'Something went wrong while sending OTP.',
+      );
+    } finally {
+      setIsSendingOtp(false);
+    }
 
-    navigation.navigate('NewOtpScreen', {
-      // mobileNumber: cleanedNumber,
-      phoneNumber: displayNumber,
-    });
+    // navigation.navigate('NewOtpScreen', {
+    //   // mobileNumber: cleanedNumber,
+    //   phoneNumber: displayNumber,
+    // });
   };
 
   const handleContinue = () => {
@@ -456,7 +461,7 @@ const EnterMobileNumber = ({navigation, route}: {navigation: any; route?: any}) 
     // Automatically send OTP and navigate to OTP screen
     if (number && number.trim().length === 10) {
       const displayNumber = `${finalCountryCode} ${number}`;
-      const fullMobileForApi = `${finalCountryCode}${number}`;
+      const fullMobileForApi = `${number}`;
       sendOtpAndNavigate(fullMobileForApi, displayNumber);
     }
   };
