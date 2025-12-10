@@ -23,9 +23,14 @@ const HomeFlow = createNativeStackNavigator();
 
 const HomeFlowScreen = () => {
   return (
+<<<<<<< HEAD
     <HomeFlow.Navigator screenOptions={{ headerShown: false }}>
       <HomeFlow.Screen name="HomeVerification" component={HomeVerificationScreen} />
+=======
+    <HomeFlow.Navigator screenOptions={{ headerShown: false }}>   
+>>>>>>> d0bc64014f230252aa6e955d4056932c3b3fb20d
       <HomeFlow.Screen name="HomeMain" component={Home} />
+      <HomeFlow.Screen name="HomeVerification" component={HomeVerificationScreen} />
     </HomeFlow.Navigator>
   );
 };
@@ -70,7 +75,7 @@ const BottomTab = () => {
   const MyTab = ({state, descriptors, navigation}: any) => {
     return (
       <View style={styles.tabContainer}>
-        {state.routes.map((route, index) => {
+        {state.routes.map((route: any, index: number) => {
           const isFocused = state.index === index;
           const icon = tabConfigs[index]?.icon;
           // Handle tab press

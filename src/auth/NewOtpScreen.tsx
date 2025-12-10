@@ -14,6 +14,9 @@ import {hp, wp} from '../assets/commonCSS/GlobalCSS';
 import Colors from '../assets/commonCSS/Colors';
 import FSize from '../assets/commonCSS/FSize';
 import Toast from 'react-native-toast-message';
+import { postData, postDataWithToken } from '../services/mobile-api';
+import { mobile_siteConfig } from '../services/mobile-siteConfig';
+import { storeDataToAsyncStorage } from '../services/CommonFunction';
 // import {postDataWithToken1} from '../services/mobile-api';
 // import { mobile_siteConfig } from '../services/mobile-siteConfig';
 // import { storeDataToAsyncStorage } from '../services/CommonFunction';
@@ -104,79 +107,6 @@ const NewOtpScreen = () => {
     return;
   };
 
-  // const handleVerifyOtp = async () => {
-  //   // Check if all OTP fields are filled
-  //   if (otp.some(digit => digit === '')) {
-  //     showAlert('error', 'Error', 'Please fill all the OTP fields.');
-  //     return;
-  //   }
-
-  //   // Create OTP string from array
-  //   const otpString = otp.join('');
-  //   const phone = mobileNumber || phoneNumber;
-
-  //   if (!phone) {
-  //     showAlert('error', 'Error', 'Phone number is missing.');
-  //     return;
-  //   }
-
-  //   setIsVerifying(true);
-
-  //   try {
-  //     const payload = {
-  //       mobile: phone,
-  //       otp: otpString,
-  //     };
-
-  //     const result: any = await postDataWithToken1(payload, mobile_siteConfig.VERIFY_OTP_NEW);
-  //     console.log('result:::::', result);
-
-  //     if (result?.status === 400 || result?.status === 'error') {
-  //       showAlert('error', 'Error', result?.msg || result?.message || 'Invalid OTP. Please try again.');
-  //       setIsVerifying(false);
-  //       return;
-  //     }
-
-  //     // Success case
-  //     showAlert('success', 'Success', result?.msg || result?.message || 'OTP verified successfully');
-
-      
-      
-  //     // Navigate to Email Collection Screen
-  //     if(result?.isRegistered===false){
-  //     (navigation as any).navigate('EmailCollectionScreen', {
-  //       mobileNumber: phone,
-  //       phoneNumber: phone,
-  //     });
-  //   }
-  //   else{
-  //     await storeDataToAsyncStorage(mobile_siteConfig.TOKEN, result.token);
-  //     await storeDataToAsyncStorage(mobile_siteConfig.IS_LOGIN, 'TRUE');
-      
-  //     // Store additional user data if available
-  //     if (result?.user_id) {
-  //       await storeDataToAsyncStorage(mobile_siteConfig.UID, result.user_id);
-  //     }
-  //     if (result?.slug) {
-  //       await storeDataToAsyncStorage(mobile_siteConfig.SLUG, result.slug);
-  //     }
-  //     if (result?.email) {
-  //       await storeDataToAsyncStorage(mobile_siteConfig.EMAIL, result?.email);
-  //     }
-  //     (navigation as any).navigate('ClientBottomTab', { 
-  //       email: result?.email, 
-  //       ...params 
-  //     });
-  //   }
-  //   } catch (error) {
-  //     showAlert('error', 'Error', 'An error occurred while verifying OTP.');
-  //     console.error(error);
-  //   } finally {
-  //     setIsVerifying(false);
-  //   }
-  // };
-
-
   const handleVerifyOtp = async () => {
     // Check if all OTP fields are filled
     if (otp.some(digit => digit === '')) {
@@ -184,21 +114,94 @@ const NewOtpScreen = () => {
       return;
     }
 
+    // Create OTP string from array
+    const otpString = otp.join('');
+    const phone = mobileNumber || phoneNumber;
 
+    if (!phone) {
+      showAlert('error', 'Error', 'Phone number is missing.');
+      return;
+    }
 
-   
+    setIsVerifying(true);
 
-      
-      
+    try {
+      const payload = {
+        mobile: phone,
+        otp: otpString,
+      };
+
+      const result: any = await postData(payload, mobile_siteConfig.VERIFY_OTP_NEW);
+      console.log('result:::::', result);
+
+      if (result?.status === 400 || result?.status === 'error') {
+        showAlert('error', 'Error', result?.msg || result?.message || 'Invalid OTP. Please try again.');
+        setIsVerifying(false);
+        return;
+      }
+
+      // Success case
+      showAlert('success', 'Success', result?.msg || result?.message || 'OTP verified successfully');
+
       // Navigate to Email Collection Screen
-    
-      (navigation as any).navigate('EmailCollectionScreen', {
-        mobileNumber: "9990099000",
-        phoneNumber: "9990099000",
+      if(result?.isRegistered===false){
+      (navigation as any).navigate('RegistrationScreen', {
+        mobileNumber: phone,
+        phoneNumber: phone,
+        otp: otpString,
       });
-    // }
+    }
+
+    else if(result?.isRegistered===true && result?.user_type==="VENDOR"){
+      await storeDataToAsyncStorage(mobile_siteConfig.MOB_ACCESS_TOKEN_KEY, result.token);
+      await storeDataToAsyncStorage(mobile_siteConfig.IS_LOGIN, 'TRUE');
+      
+      // Store additional user data if available
+      if (result?.user_id) {
+        await storeDataToAsyncStorage(mobile_siteConfig.UID, result.user_id);
+      }
+      if (result?.slug) {
+        await storeDataToAsyncStorage(mobile_siteConfig.SLUG, result.slug);
+      }
+      if (result?.email) {
+        await storeDataToAsyncStorage(mobile_siteConfig.EMAIL, result?.email);
+      }
+      (navigation as any).navigate('BottomTab',{ 
+        email: result?.email, 
+        ...params 
+      });
+    }
+    } catch (error) {
+      showAlert('error', 'Error', 'An error occurred while verifying OTP.');
+      console.error(error);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+
+  // const handleVerifyOtp = async () => {
+  //   // Check if all OTP fields are filled
+  //   if (otp.some(digit => digit === '')) {
+  //     showAlert('error', 'Error', 'Please fill all the OTP fields.');
+  //     return;
+  //   }
+
+
+
    
-  }
+
+      
+      
+  //     // Navigate to Registration Screen
+  //     const phone = mobileNumber || phoneNumber || "9990099000";
+  //     (navigation as any).navigate('RegistrationScreen', {
+  //       mobileNumber: phone,
+  //       phoneNumber: phone,
+  //     });
+  //   // }
+   
+  // }
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />

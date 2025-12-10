@@ -735,35 +735,80 @@ import {
   SafeAreaView,
   ScrollView,
 } from 'react-native';
-import React from 'react';
-import {useNavigation} from '@react-navigation/native';
-import {hp, wp} from '../../assets/commonCSS/GlobalCSS';
+import React, {useEffect, useState, useCallback} from 'react';
+import {useNavigation, useFocusEffect} from '@react-navigation/native';
+import {hp, wp, GlobalCss} from '../../assets/commonCSS/GlobalCSS';
 import Colors from '../../assets/commonCSS/Colors';
 import Images from '../../assets/image';
 import FSize from '../../assets/commonCSS/FSize';
+import { getDataWithToken } from '../../services/mobile-api';
+import { mobile_siteConfig } from '../../services/mobile-siteConfig';
 
 const Home = () => {
   const navigation = useNavigation();
+  const [userName] = useState('Ankur');
+  const [totalEarnings] = useState('10,550');
+  const [activeTrips] = useState(8);
+  const [rating] = useState(4.9);
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        
+  const [leads] = useState([
+    {
+      id: '1',
+      pickupLocation: 'Manali Hill Station',
+      dropoffLocation: 'IGIT Airport',
+      expiresIn: '15 m',
+      estimatedDistance: '450 km',
+      pickupDate: '28 Dec 25',
+      pickupTime: '5:00 PM',
+      vehicleType: 'SEDAN',
+      customerName: 'Abhinav Pandey',
+      customerRating: 4.9,
+      customerPhone: '9777567656',
+      customerImage: Images.profileImage,
+      estimatedEarning: '₹4500',
+    },
+  ]);
 
-        {/* ================= HEADER ================= */}
-        <View style={styles.header}>
-          <Text style={styles.helloText}>Hello Ankur</Text>
+  const [ongoingOrders] = useState([
+    {
+      id: '1',
+      orderId: 'ORD-7829',
+      time: '10:30 AM',
+      status: 'ONGOING',
+      customerName: 'Abhinav Pandey',
+      paymentMethod: 'Cash',
+      pickupLocation: 'Uttam Nagar, Delhi',
+      dropLocation: 'Manali Mall Road',
+      price: '₹5,700',
+      customerImage: Images.profileImage,
+    },
+  ]);
 
-          <View style={styles.headerRight}>
-            <TouchableOpacity>
-              <Image source={Images.bellIcon} style={styles.bellIcon} />
-            </TouchableOpacity>
+  const renderSummaryCard = (
+    icon: any,
+    value: string,
+    label: string,
+    iconColor: string,
+  ) => (
+    <View style={styles.summaryCard}>
+      <Image source={icon} style={[styles.summaryIcon, {tintColor: iconColor}]} />
+      <Text style={styles.summaryValue}>{value}</Text>
+      <Text style={styles.summaryLabel}>{label}</Text>
+    </View>
+  );
 
-            <TouchableOpacity onPress={() => navigation.navigate('ProfileScreen' as never)}>
-              <Image source={Images.profileImage} style={styles.profileImg} />
-            </TouchableOpacity>
+  const renderLeadCard = (lead: any) => (
+    <View key={lead.id} style={styles.leadCard}>
+      {/* Top Section - Route Info Left, Expiry Right */}
+      <View style={styles.topSection}>
+        <View style={styles.routeLeftSection}>
+          <View style={styles.routeItem}>
+            <View style={styles.pickupDot} />
+            <View style={styles.routeTextContainer}>
+              <Text style={styles.routeLabel}>PICKUP</Text>
+              <Text style={styles.routeLocation}>{lead.pickupLocation}</Text>
+            </View>
           </View>
-        </View>
 
 
         <View style={styles.headerDivider} />
@@ -794,40 +839,142 @@ const Home = () => {
           </View>
         </View>
 
+        <View style={styles.phoneSection}>
+          <Text style={styles.phoneLabel}>Phone Number</Text>
+          <Text style={styles.phoneNumber}>{lead.customerPhone}</Text>
+        </View>
+      </View>
 
-        {/* ================= ADD PACKAGE LISTING ================= */}
-        <TouchableOpacity style={styles.addListingBtn}
-            onPress={() => navigation.navigate("AddPackagesScreen")}
->
-          <Text style={styles.addText}>+   Add New Package Listing</Text>
+      {/* Bottom Section - Earning Left, Buttons Right */}
+      <View style={styles.footerContainer}>
+        <View style={styles.earningContainer}>
+          <Text style={styles.earningLabel}>Est. Earning</Text>
+          <Text style={styles.earningAmount}>{lead.estimatedEarning}</Text>
+        </View>
+
+        <View style={styles.actionButtons}>
+          <TouchableOpacity style={styles.ignoreButton}>
+            <Text style={styles.ignoreButtonText}>Ignore</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.acceptButton}>
+            <Text style={styles.acceptButtonText}>Accept</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderOngoingOrderCard = (order: any) => (
+    <View key={order.id} style={styles.orderCard}>
+      <View style={styles.orderHeader}>
+        <View>
+          <Text style={styles.orderIdText}>Order ID: {order.orderId}</Text>
+          <Text style={styles.orderTimeText}>{order.time}</Text>
+        </View>
+        <View style={styles.statusBadge}>
+          <Text style={styles.statusText}>{order.status}</Text>
+        </View>
+      </View>
+
+      <View style={styles.orderCustomerSection}>
+        <Image source={order.customerImage} style={styles.orderCustomerImage} />
+        <View style={styles.orderCustomerInfo}>
+          <View style={styles.orderCustomerNameRow}>
+            <Text style={styles.orderCustomerName}>{order.customerName}</Text>
+            <Image source={Images.phoneIcon} style={styles.orderPhoneIcon} />
+          </View>
+          <Text style={styles.paymentMethodText}>{order.paymentMethod}</Text>
+        </View>
+      </View>
+
+      <View style={styles.orderLocationSection}>
+        <Text style={styles.orderLocationText}>
+          Pickup: {order.pickupLocation}
+        </Text>
+        <Text style={styles.orderLocationText}>
+          Drop: {order.dropLocation}
+        </Text>
+      </View>
+
+      <View style={styles.orderFooter}>
+        <Text style={styles.orderPrice}>{order.price}</Text>
+        <TouchableOpacity style={styles.navigateButton}>
+          <Image source={Images.sendIcon} style={styles.navigateIcon} />
+          <Text style={styles.navigateButtonText}>Navigate</Text>
         </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  const getUserDetails = async () => {
+    try {
+      const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
+      const data: any = await res.json();
+      console.log('User details data:::::', data);
+      
+      // Check if profile is completed
+      if (data?.success && data?.vendorDetail) {
+        const isProfileCompleted = data.vendorDetail.is_profile_completed;
+        
+        // If profile is not completed (0), replace with HomeVerification screen
+        if (isProfileCompleted === 0) {
+          (navigation as any).replace('HomeVerification');
+        }
+        // If profile is completed (1), stay on Home screen (already here)
+      }
+    } catch (err: any) {
+      console.log('Error fetching user details:::::', err);
+    }
+  };
+
+  // Check profile status when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      getUserDetails();
+    }, [])
+  );
 
 
-        {/* ================= REQUESTS TITLE ================= */}
-        <Text style={styles.reqTitle}>Requests</Text>
 
+  return (
+    <SafeAreaView style={styles.container}>
+         <View style={styles.header}>
+          <Text style={styles.greetingText}>Hello {userName}</Text>
+        </View>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}>
+        {/* Header with Greeting */}
+       
 
-        {/* ================= EACH REQUEST CARD ================= */}
-        {Array(3).fill(0).map((_, i) => (
-          <View key={i} style={styles.reqCard}>
+        {/* Summary Cards */}
+        <View style={styles.summaryCardsContainer}>
+          {renderSummaryCard(
+            Images.walletIcon,
+            `₹ ${totalEarnings}`,
+            'Total Earnings',
+            Colors.sooprsblue,
+          )}
+          {renderSummaryCard(
+            Images.carIcon,
+            activeTrips.toString(),
+            'Active Trips',
+            Colors.sooprsblue,
+          )}
+          {renderSummaryCard(
+            Images.starIcon,
+            rating.toString(),
+            'Rating',
+            Colors.sooprsblue,
+          )}
+        </View>
 
-            <Text style={styles.reqTitle2}>Delhi to Kanpur Sedan Cab</Text>
-
-            <Text style={styles.reqDesc}>
-              The customer wants to book an outstation cab for a Delhi to
-              Mathura trip and is expecting a smooth ride, punctual driver,
-              and a clean vehicle.
-            </Text>
-             <View style={styles.Desc}>
-
-               <Text style={[styles.reqDesc, {marginTop: 10}]}>Pickup Date:</Text>
-              <Text style={styles.reqDate}> 28 Dec 25</Text>
-             </View>
-           
-            <View style={styles.reqBtnRow}>
-              <TouchableOpacity style={styles.ignoreBtn}>
-                <Text style={styles.ignoreText}>Ignore</Text>
-              </TouchableOpacity>
+        {/* Add New Package Listing Button */}
+        <TouchableOpacity style={styles.addPackageButton}>
+          <Image source={Images.addIcon} style={styles.addIcon} />
+          <Text style={styles.addPackageText}>Add New Package Listing</Text>
+        </TouchableOpacity>
 
               <TouchableOpacity style={styles.acceptBtn}>
                 <Text style={styles.acceptText}>Accept</Text>
