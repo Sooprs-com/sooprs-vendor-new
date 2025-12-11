@@ -85,9 +85,10 @@ const AuthenticationRouter = () => {
       <Stack.Screen name="EmailCollectionScreen" component={EmailCollectionScreen} />
           <Stack.Screen name="HomeVerificationScreen" component={HomeVerificationScreen} />
           <Stack.Screen name="RegistrationScreen" component={RegistrationScreen} />
-          <Stack.Screen name="CompleteProfileScreen" component={CompleteProfileScreen} />
+          
            <Stack.Screen name="AddPackagesScreen" component={AddPackagesScreen} />
            <Stack.Screen name="CabRideReviewScreen" component={CabRideReviewScreen} />
+           <Stack.Screen name="CompleteProfileScreen" component={CompleteProfileScreen} />
            <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
            <Stack.Screen name="PackageDetailsScreen" component={PackageDetailsScreen} />
       <Stack.Screen name="BottomTab" component={BottomTab} />

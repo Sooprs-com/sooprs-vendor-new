@@ -17,7 +17,12 @@ const HomeFlow = createNativeStackNavigator();
 
 const HomeFlowScreen = () => {
   return (
-    <HomeFlow.Navigator screenOptions={{ headerShown: false }}>   
+
+    <HomeFlow.Navigator screenOptions={{ headerShown: false }}>
+      {/* <HomeFlow.Screen name="HomeVerification" component={HomeVerificationScreen} /> */}
+
+   
+
       <HomeFlow.Screen name="HomeMain" component={Home} />
       <HomeFlow.Screen name="HomeVerification" component={HomeVerificationScreen} />
       {/* <HomeFlow.Screen name="CompleteProfile" component={CompleteProfileScreen} /> */}

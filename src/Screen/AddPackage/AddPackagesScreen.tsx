@@ -9,40 +9,30 @@ import {
   SafeAreaView,
   Alert,
   Platform,
+  PermissionsAndroid,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {useNavigation} from '@react-navigation/native';
-import * as ImagePicker from 'react-native-image-picker';
+import {launchImageLibrary, ImagePickerResponse, MediaType} from 'react-native-image-picker';
+import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import {hp, wp} from '../../assets/commonCSS/GlobalCSS';
 import Colors from '../../assets/commonCSS/Colors';
 import FSize from '../../assets/commonCSS/FSize';
 import Images from '../../assets/image';
-
-interface ImageData {
-  uri: string;
-  isThumbnail: boolean;
-  isDefault: boolean;
-}
+import { postDataWithToken, getDataWithToken } from '../../services/mobile-api';
+import { mobile_siteConfig } from '../../services/mobile-siteConfig';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AddPackagesScreen = () => {
   const navigation = useNavigation();
 
-  const [packageName, setPackageName] = useState(
-    'Healing & Wellness Retreat - Rishikesh 5N/6D',
-  );
-  const [shortDescription, setShortDescription] = useState(
-    'Detox your mind & body with yoga, meditation, Ayurveda therapies & Ganga-side healing experience in the foothills of the Himalayas.',
-  );
-  const [longDescription, setLongDescription] = useState(
-    'A transformative wellness journey with daily yoga & meditation sessions, Ayurvedic massage & spa treatments, sound healing, mindfulness workshops, Ganga Aarti experience, organic meals, Himalayan trekking & river-side relaxation. Perfect for stress relief, burnout recovery & inner peace seekers. Includes luxury wellness resort stay, private instructor & full retreat coordination.',
-  );
+  const [packageName, setPackageName] = useState('');
+  const [shortDescription, setShortDescription] = useState('');
+  const [longDescription, setLongDescription] = useState('');
 
   // Inclusions
   const [inclusionsInput, setInclusionsInput] = useState('');
-  const [inclusionsTags, setInclusionsTags] = useState([
-    'Pickup & Drop',
-    'Himalayan Trek',
-  ]);
+  const [inclusionsTags, setInclusionsTags] = useState<string[]>([]);
   const inclusionsOptions = [
     'Daily Yoga & Meditation Sessions',
     'Ayurvedic Spa & Massage Treatments',
@@ -51,10 +41,7 @@ const AddPackagesScreen = () => {
 
   // Exclusions
   const [exclusionsInput, setExclusionsInput] = useState('');
-  const [exclusionsTags, setExclusionsTags] = useState([
-    'Personal Shopping',
-    'Adventure Sports',
-  ]);
+  const [exclusionsTags, setExclusionsTags] = useState<string[]>([]);
   const exclusionsOptions = [
     'Photography & Videography',
     'Private Ayurveda Doctor Consultation',
@@ -62,29 +49,60 @@ const AddPackagesScreen = () => {
 
   // Amenities
   const [amenitiesInput, setAmenitiesInput] = useState('');
-  const [amenitiesTags, setAmenitiesTags] = useState([
-    'Herbal Tea Lounge',
-    'Food Menu',
-  ]);
+  const [amenitiesTags, setAmenitiesTags] = useState<string[]>([]);
   const amenitiesOptions = [
     'Herbal Tea Lounge',
     '24x7 Wellness Support',
     'In-house Ayurveda Center',
   ];
 
+  // Policy
+  const [policyInput, setPolicyInput] = useState('');
+  const [policyTags, setPolicyTags] = useState<string[]>([]);
+  const policyOptions = [
+    'Refund',
+    'No Refund',
+    'Cancellation',
+  ];
+
   // Location and Pricing
   const [location1, setLocation1] = useState('');
   const [location2, setLocation2] = useState('');
   const [basePrice, setBasePrice] = useState('');
+
   const [discountPrice, setDiscountPrice] = useState('');
   const [chargesPerDay, setChargesPerDay] = useState('');
+  const [categoryId, setCategoryId] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Images
-  const [images, setImages] = useState<ImageData[]>([
-    {uri: '', isThumbnail: true, isDefault: false},
-    {uri: '', isThumbnail: false, isDefault: false},
-    {uri: '', isThumbnail: false, isDefault: false},
-  ]);
+  // Images - Thumbnail (1 image) and Default (max 4 images)
+  const [thumbnailImage, setThumbnailImage] = useState<string>('');
+  const [defaultImages, setDefaultImages] = useState<string[]>([]);
+
+  // Fetch vendor profile to get category_id
+  const getVendorProfile = async () => {
+    try {
+      const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
+      const data = await res.json();
+      console.log('Vendor profile data:::::', data);
+      
+      if (data?.success && data?.vendorDetail) {
+        // Set category_id from vendor profile
+        if (data.vendorDetail.category_id) {
+          setCategoryId(String(data.vendorDetail.category_id));
+          console.log('Category ID set from vendor profile:', data.vendorDetail.category_id);
+        } else {
+          console.log('Category ID not found in vendor profile');
+        }
+      }
+    } catch (error) {
+      console.log('error fetching vendor profile:::::', error);
+    }
+  };
+
+  useEffect(() => {
+    getVendorProfile();
+  }, []);
 
   const addTag = (
     tags: string[],
@@ -116,49 +134,57 @@ const AddPackagesScreen = () => {
     }
   };
 
-  const pickImage = (index: number) => {
+  const requestStoragePermission = async (): Promise<boolean> => {
+    if (Platform.OS === 'android') {
+      if (Platform.Version >= 33) {
+        // Android 13+ (API 33+)
+        const result = await request(PERMISSIONS.ANDROID.READ_MEDIA_IMAGES);
+        return result === RESULTS.GRANTED;
+      } else {
+        // Android 12 and below
+        const result = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        );
+        return result === PermissionsAndroid.RESULTS.GRANTED;
+      }
+    }
+    return true; // iOS permissions are handled automatically
+  };
+
+  const pickThumbnailImage = async () => {
     try {
-      if (!ImagePicker || !ImagePicker.launchImageLibrary) {
-        Alert.alert('Error', 'Image picker is not available. Please rebuild the app.');
-        console.log('ImagePicker not available');
+      const hasPermission = await requestStoragePermission();
+      
+      if (!hasPermission) {
+        Alert.alert(
+          'Permission Required',
+          'Please grant storage permission to select images.',
+        );
         return;
       }
 
-      const options: any = {
-        mediaType: 'photo',
-        quality: 0.8,
-        includeBase64: false,
-        maxHeight: 2000,
+      const options = {
+        mediaType: 'photo' as MediaType,
+        quality: 0.8 as const,
         maxWidth: 2000,
+        maxHeight: 2000,
       };
 
-      ImagePicker.launchImageLibrary(options, (response: ImagePicker.ImagePickerResponse) => {
+      launchImageLibrary(options, (response: ImagePickerResponse) => {
         if (response.didCancel) {
-          console.log('User cancelled image picker');
           return;
         }
         
-        if (response.errorCode) {
-          let errorMessage = 'Failed to pick image';
-          if (response.errorCode === 'permission') {
-            errorMessage = 'Permission denied. Please allow photo library access in settings.';
-          } else if (response.errorCode === 'others') {
-            errorMessage = response.errorMessage || 'Unknown error occurred';
-          }
-          Alert.alert('Error', errorMessage);
-          console.log('ImagePicker Error: ', response.errorMessage);
+        if (response.errorMessage) {
+          Alert.alert('Error', response.errorMessage);
           return;
         }
 
-        if (response.assets && response.assets.length > 0 && response.assets[0].uri) {
-          const newImages = [...images];
-          newImages[index] = {
-            ...newImages[index],
-            uri: response.assets[0].uri,
-          };
-          setImages(newImages);
-        } else {
-          Alert.alert('Error', 'No image selected');
+        if (response.assets && response.assets.length > 0) {
+          const imageUri = response.assets[0].uri;
+          if (imageUri) {
+            setThumbnailImage(imageUri);
+          }
         }
       });
     } catch (error) {
@@ -167,26 +193,203 @@ const AddPackagesScreen = () => {
     }
   };
 
-  const removeImage = (index: number) => {
-    const newImages = [...images];
-    newImages[index] = {uri: '', isThumbnail: false, isDefault: false};
-    setImages(newImages);
+  const pickDefaultImage = async () => {
+    try {
+      const remainingSlots = 4 - defaultImages.length;
+      if (remainingSlots <= 0) {
+        Alert.alert('Limit Reached', 'You can upload maximum 4 default images.');
+        return;
+      }
+
+      const hasPermission = await requestStoragePermission();
+      
+      if (!hasPermission) {
+        Alert.alert(
+          'Permission Required',
+          'Please grant storage permission to select images.',
+        );
+        return;
+      }
+
+      const options = {
+        mediaType: 'photo' as MediaType,
+        quality: 0.8 as const,
+        maxWidth: 2000,
+        maxHeight: 2000,
+        selectionLimit: remainingSlots, // Allow selecting multiple images up to remaining slots
+        includeBase64: false,
+      };
+
+      launchImageLibrary(options, (response: ImagePickerResponse) => {
+        if (response.didCancel) {
+          return;
+        }
+        
+        if (response.errorMessage) {
+          Alert.alert('Error', response.errorMessage);
+          return;
+        }
+
+        if (response.assets && response.assets.length > 0) {
+          // Get all selected image URIs
+          const selectedImages = response.assets
+            .map(asset => asset.uri)
+            .filter((uri): uri is string => uri !== undefined);
+          
+          // Strictly enforce the limit - only add images up to remaining slots
+          const imagesToAdd = selectedImages.slice(0, remainingSlots);
+          
+          if (imagesToAdd.length > 0) {
+            setDefaultImages([...defaultImages, ...imagesToAdd]);
+            
+            // Show alert if user selected more than allowed
+            if (selectedImages.length > remainingSlots) {
+              Alert.alert(
+                'Limit Reached', 
+                `Only ${remainingSlots} image(s) added. Maximum limit is 4 images.`
+              );
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.log('ImagePicker Exception: ', error);
+      Alert.alert('Error', 'Failed to open image picker');
+    }
+  };
+  const createPackage = async () => {
+    try {
+      // Validation
+      if (!packageName.trim()) {
+        Alert.alert('Error', 'Please enter package name');
+        return;
+      }
+      if (!shortDescription.trim()) {
+        Alert.alert('Error', 'Please enter short description');
+        return;
+      }
+      if (!longDescription.trim()) {
+        Alert.alert('Error', 'Please enter long description');
+        return;
+      }
+      if (!basePrice.trim()) {
+        Alert.alert('Error', 'Please enter base price');
+        return;
+      }
+      if (!location1.trim()) {
+        Alert.alert('Error', 'Please enter location 1');
+        return;
+      }
+      if (!categoryId) {
+        Alert.alert('Error', 'Category ID not found. Please try again.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Check if thumbnail image is uploaded
+      if (!thumbnailImage) {
+        Alert.alert('Error', 'Please upload thumbnail image');
+        return;
+      }
+
+      setIsSubmitting(true);
+
+      // Get vendor_id from AsyncStorage
+      const vendorId = await AsyncStorage.getItem(mobile_siteConfig.UID);
+      console.log('vendorId:::::', vendorId);
+      if (!vendorId) {
+        Alert.alert('Error', 'Vendor ID not found. Please login again.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Create FormData
+      const formData = new FormData();
+
+      // Add text fields
+      formData.append('name', packageName.trim());
+      formData.append('short_description', shortDescription.trim());
+      formData.append('long_description', longDescription.trim());
+      formData.append('category_id', categoryId);
+      formData.append('vendor_id', vendorId);
+      formData.append('base_price', basePrice.trim());
+      formData.append('discount_price', discountPrice.trim() || '0');
+      formData.append('location1', location1.trim());
+      formData.append('location2', location2.trim() || '');
+      formData.append('status', '1');
+
+      // Add inclusions as JSON array string
+      formData.append('included', JSON.stringify(inclusionsTags));
+
+      // Add exclusions as JSON array string
+      formData.append('not_included', JSON.stringify(exclusionsTags));
+
+      // Add amenities as JSON array string
+      formData.append('amenities', JSON.stringify(amenitiesTags));
+
+      // Add policy as JSON array string
+      formData.append('policy', JSON.stringify(policyTags));
+      
+      // Add thumbnail image
+      const thumbnailFileName = thumbnailImage.split('/').pop() || 'thumbnail.jpg';
+      const thumbnailFileType = thumbnailFileName.split('.').pop() || 'jpg';
+      formData.append('thumbnail_image', {
+        uri: Platform.OS === 'android' ? thumbnailImage : thumbnailImage.replace('file://', ''),
+        type: `image/${thumbnailFileType}`,
+        name: thumbnailFileName,
+      } as any);
+
+      // Add default images (max 4)
+      defaultImages.forEach((imageUri, index) => {
+        const fileName = imageUri.split('/').pop() || `image_${index}.jpg`;
+        const fileType = fileName.split('.').pop() || 'jpg';
+        formData.append('other_images', {
+          uri: Platform.OS === 'android' ? imageUri : imageUri.replace('file://', ''),
+          type: `image/${fileType}`,
+          name: fileName,
+        } as any);
+      });
+
+      console.log('Package FormData:', formData);
+      
+      // Call create package API
+      const result: any = await postDataWithToken(formData, mobile_siteConfig.CREATE_PACKAGE);
+      console.log('Create package result:::::', result);
+
+      // Check for error responses
+      if (result?.status === 400 || result?.status === 'error' || (result?.success === false)) {
+        Alert.alert('Error', result?.msg || result?.message || 'Failed to create package');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Check if package creation was successful
+      if (result?.success === true || result?.status === 'success') {
+        Alert.alert('Success', result?.message || result?.msg || 'Package created successfully', [
+          {
+            text: 'OK',
+            onPress: () => {
+              navigation.goBack();
+            },
+          },
+        ]);
+      } else {
+        Alert.alert('Error', result?.msg || result?.message || 'Failed to create package');
+      }
+    } catch (error: any) {
+      console.log('Create package error:::::', error);
+      Alert.alert('Error', error?.message || 'An error occurred while creating package');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  const removeThumbnailImage = () => {
+    setThumbnailImage('');
   };
 
-  const toggleThumbnail = (index: number) => {
-    const newImages = images.map((img, i) => ({
-      ...img,
-      isThumbnail: i === index,
-    }));
-    setImages(newImages);
-  };
-
-  const toggleDefault = (index: number) => {
-    const newImages = images.map((img, i) => ({
-      ...img,
-      isDefault: i === index,
-    }));
-    setImages(newImages);
+  const removeDefaultImage = (index: number) => {
+    const newImages = defaultImages.filter((_, i) => i !== index);
+    setDefaultImages(newImages);
   };
 
   const renderTagSection = (
@@ -202,48 +405,51 @@ const AddPackagesScreen = () => {
   ) => (
     <View style={styles.section}>
       <Text style={styles.label}>{label}</Text>
-      <TextInput
-        style={styles.input}
-        placeholder={`e.g ${label === 'INCLUSIONS' ? 'Healing workshops' : label === 'EXCLUSIONS' ? 'Airfare' : 'Spa & Sauna'}`}
-        value={input}
-        onChangeText={setInput}
-        onSubmitEditing={() => addTag(tags, setTags, input, setInput)}
-        multiline={false}
-      />
-
-      {/* Tags */}
-      {tags.length > 0 && (
-        <View style={styles.tagsContainer}>
-          {tags.map((tag: string, index: number) => (
-            <View
-              key={index}
-              style={[styles.tag, {backgroundColor: tagColor}]}>
-              <Text style={[styles.tagText, {color: tagTextColor}]}>
-                {tag}
-              </Text>
-              <TouchableOpacity
-                onPress={() => removeTag(tags, setTags, index)}
-                style={[
-                  styles.tagRemove,
-                  {backgroundColor: removeIconColor},
-                ]}>
-                <Text
-                  style={[
-                    styles.tagRemoveText,
-                    {
-                      color:
-                        tagColor === Colors.sooprslight
-                          ? Colors.white
-                          : Colors.grey,
-                    },
-                  ]}>
-                  ×
-                </Text>
-              </TouchableOpacity>
+      <View style={styles.inputContainer}>
+        <View style={styles.inputWithTagsContainer}>
+          <TextInput
+            style={styles.inputWithTags}
+            placeholder={`e.g ${label === 'INCLUSIONS' ? 'Healing workshops' : label === 'EXCLUSIONS' ? 'Airfare' : label === 'POLICY' ? 'Refund policy' : 'Spa & Sauna'}`}
+            value={input}
+            onChangeText={setInput}
+            onSubmitEditing={() => addTag(tags, setTags, input, setInput)}
+            multiline={false}
+          />
+          {/* Tags inside input box */}
+          {tags.length > 0 && (
+            <View style={styles.tagsInsideInput}>
+              {tags.map((tag: string, index: number) => (
+                <View
+                  key={index}
+                  style={[styles.tagInsideInput, {backgroundColor: tagColor}]}>
+                  <Text style={[styles.tagTextInsideInput, {color: tagTextColor}]}>
+                    {tag}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => removeTag(tags, setTags, index)}
+                    style={[
+                      styles.tagRemoveInsideInput,
+                      {backgroundColor: removeIconColor},
+                    ]}>
+                    <Text
+                      style={[
+                        styles.tagRemoveTextInsideInput,
+                        {
+                          color:
+                            tagColor === Colors.sooprslight
+                              ? Colors.white
+                              : Colors.grey,
+                        },
+                      ]}>
+                      ×
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
             </View>
-          ))}
+          )}
         </View>
-      )}
+      </View>
 
       {/* Add Options */}
       {options && options.length > 0 && (
@@ -290,6 +496,7 @@ const AddPackagesScreen = () => {
           value={packageName}
           onChangeText={setPackageName}
           placeholder="Enter package name"
+          placeholderTextColor={Colors.grey}
         />
 
         {/* SHORT DESCRIPTION */}
@@ -299,6 +506,7 @@ const AddPackagesScreen = () => {
           value={shortDescription}
           onChangeText={setShortDescription}
           placeholder="Enter short description"
+          placeholderTextColor={Colors.grey}
           multiline
           numberOfLines={4}
         />
@@ -310,9 +518,23 @@ const AddPackagesScreen = () => {
           value={longDescription}
           onChangeText={setLongDescription}
           placeholder="Enter long description"
+          placeholderTextColor={Colors.grey}
           multiline
           numberOfLines={6}
         />
+
+        {/* POLICY */}
+        {renderTagSection(
+          'POLICY',
+          policyInput,
+          setPolicyInput,
+          policyTags,
+          setPolicyTags,
+          policyOptions,
+          Colors.sooprslight,
+          Colors.black,
+          Colors.sooprsblue,
+        )}
 
         {/* INCLUSIONS */}
         {renderTagSection(
@@ -335,9 +557,9 @@ const AddPackagesScreen = () => {
           exclusionsTags,
           setExclusionsTags,
           exclusionsOptions,
-          Colors.lightgrey1,
+          Colors.sooprslight,
           Colors.black,
-          Colors.grey,
+          Colors.sooprsblue,
         )}
 
         {/* AMENITIES */}
@@ -348,54 +570,67 @@ const AddPackagesScreen = () => {
           amenitiesTags,
           setAmenitiesTags,
           amenitiesOptions,
-          Colors.lightgrey1,
+          Colors.sooprslight,
           Colors.black,
-          Colors.grey,
+          Colors.sooprsblue,
         )}
 
-        {/* Location 1 */}
-        <Text style={styles.label}>Location 1</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. Rishikesh"
-          value={location1}
-          onChangeText={setLocation1}
-        />
+        {/* Location 1 & Location 2 */}
+        <View style={styles.rowContainer}>
+          <View style={styles.colContainer}>
+            <Text style={styles.label}>Location 1</Text>
+            <TextInput
+              style={styles.colInput}
+              placeholder="e.g. Rishikesh"
+              placeholderTextColor={Colors.grey}
+              value={location1}
+              onChangeText={setLocation1}
+            />
+          </View>
+          <View style={styles.colContainer}>
+            <Text style={styles.label}>Location 2</Text>
+            <TextInput
+              style={styles.colInput}
+              placeholder="e.g. Rishikesh"
+              placeholderTextColor={Colors.grey}
+              value={location2}
+              onChangeText={setLocation2}
+            />
+          </View>
+        </View>
 
-        {/* Location 2 */}
-        <Text style={styles.label}>Location 2</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. Rishikesh"
-          value={location2}
-          onChangeText={setLocation2}
-        />
-
-        {/* Base Price */}
-        <Text style={styles.label}>Base Price</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your base price"
-          value={basePrice}
-          onChangeText={setBasePrice}
-          keyboardType="numeric"
-        />
-
-        {/* Discount Price */}
-        <Text style={styles.label}>Discount Price</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. 5"
-          value={discountPrice}
-          onChangeText={setDiscountPrice}
-          keyboardType="numeric"
-        />
+        {/* Base Price & Discount Price */}
+        <View style={styles.rowContainer}>
+          <View style={styles.colContainer}>
+            <Text style={styles.label}>Base Price</Text>
+            <TextInput
+              style={styles.colInput}
+              placeholder="Enter your base price"
+              placeholderTextColor={Colors.grey}
+              value={basePrice}
+              onChangeText={setBasePrice}
+              keyboardType="numeric"
+            />
+          </View>
+          <View style={styles.colContainer}>
+            <Text style={styles.label}>Discount Price</Text>
+            <TextInput
+              style={styles.colInput}
+              placeholder="e.g. 5"
+              placeholderTextColor={Colors.grey}
+              value={discountPrice}
+              onChangeText={setDiscountPrice}
+              keyboardType="numeric"
+            />
+          </View>
+        </View>
 
         {/* Charges/Day */}
         <Text style={styles.label}>Charges/Day</Text>
         <TextInput
           style={styles.input}
           placeholder="e.g. 4"
+          placeholderTextColor={Colors.grey}
           value={chargesPerDay}
           onChangeText={setChargesPerDay}
           keyboardType="numeric"
@@ -405,135 +640,74 @@ const AddPackagesScreen = () => {
         <Text style={styles.label}>
           Upload Photos<Text style={styles.required}>*</Text>
         </Text>
-        <View style={styles.uploadContainer}>
-          {images.map((image, index) => (
-            <View key={index} style={styles.uploadSlot}>
-              {image.uri ? (
+        
+        <View style={styles.imagesRowContainer}>
+          {/* Thumbnail Image (1 image) - Left Side */}
+          <View style={styles.thumbnailContainer}>
+            <Text style={styles.subLabel}>Thumbnail</Text>
+            <View style={styles.uploadSlot}>
+              {thumbnailImage ? (
                 <>
-                  <Image source={{uri: image.uri}} style={styles.uploadedImage} />
+                  <Image source={{uri: thumbnailImage}} style={styles.uploadedImage} />
                   <TouchableOpacity
                     style={styles.removeButton}
-                    onPress={() => removeImage(index)}>
+                    onPress={removeThumbnailImage}>
+                    <Image source={Images.deleteIcon} style={styles.removeIcon} />
                     <Text style={styles.removeText}>Remove</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.checkboxRow}
-                    onPress={() => toggleThumbnail(index)}>
-                    <View
-                      style={[
-                        styles.checkbox,
-                        image.isThumbnail && styles.checkboxChecked,
-                      ]}>
-                      {image.isThumbnail && (
-                        <Image
-                          source={Images.checkedCheckBox}
-                          style={styles.checkboxIcon}
-                        />
-                      )}
-                    </View>
-                    <Text style={styles.checkboxLabel}>Set as Thumbnail</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.checkboxRow}
-                    onPress={() => toggleDefault(index)}>
-                    <View
-                      style={[
-                        styles.checkbox,
-                        image.isDefault && styles.checkboxChecked,
-                      ]}>
-                      {image.isDefault && (
-                        <Image
-                          source={Images.checkedCheckBox}
-                          style={styles.checkboxIcon}
-                        />
-                      )}
-                    </View>
-                    <Text style={styles.checkboxLabel}>Set as Default</Text>
                   </TouchableOpacity>
                 </>
               ) : (
-                <>
-                  <TouchableOpacity
-                    style={styles.uploadArea}
-                    onPress={() => pickImage(index)}>
-                    <Image
-                      source={Images.imageIcon}
-                      style={styles.uploadIcon}
-                    />
-                    <Text style={styles.uploadText}>No Photo Uploaded</Text>
-                    <TouchableOpacity
-                      style={styles.addButton}
-                      onPress={() => pickImage(index)}>
-                      <Text style={styles.addButtonText}>+ Add</Text>
-                    </TouchableOpacity>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.checkboxRow}
-                    onPress={() => toggleDefault(index)}>
-                    <View
-                      style={[
-                        styles.checkbox,
-                        image.isDefault && styles.checkboxChecked,
-                      ]}>
-                      {image.isDefault && (
-                        <Image
-                          source={Images.checkedCheckBox}
-                          style={styles.checkboxIcon}
-                        />
-                      )}
-                    </View>
-                    <Text style={styles.checkboxLabel}>Set as Default</Text>
-                  </TouchableOpacity>
-                </>
+                <TouchableOpacity
+                  style={styles.uploadArea}
+                  onPress={pickThumbnailImage}>
+                  <Image source={Images.imageIcon} style={styles.uploadIcon} />
+                  <Text style={styles.uploadText}>Upload Thumbnail</Text>
+                </TouchableOpacity>
               )}
             </View>
-          ))}
-        </View>
+          </View>
 
-        {/* Image Guidelines */}
-        <Text style={styles.label}>Image Guidelines</Text>
-        <View style={styles.guidelinesContainer}>
-          <View style={styles.guidelineItem}>
-            <View style={styles.guidelineImage}>
-              <Text style={styles.guidelinePlaceholder}>Image</Text>
-            </View>
-            <View style={styles.guidelineCheck}>
-              <Text style={styles.guidelineCheckText}>✓</Text>
-            </View>
-            <Text style={styles.guidelineLabel}>Clear Picture</Text>
-          </View>
-          <View style={styles.guidelineItem}>
-            <View style={styles.guidelineImage}>
-              <Text style={styles.guidelinePlaceholder}>Image</Text>
-            </View>
-            <View style={styles.guidelineCross}>
-              <Text style={styles.guidelineCrossText}>×</Text>
-            </View>
-            <Text style={styles.guidelineLabel}>Blurred Photo</Text>
-          </View>
-          <View style={styles.guidelineItem}>
-            <View style={styles.guidelineImage}>
-              <Text style={styles.guidelinePlaceholder}>Image</Text>
-            </View>
-            <View style={styles.guidelineCross}>
-              <Text style={styles.guidelineCrossText}>×</Text>
-            </View>
-            <Text style={styles.guidelineLabel}>Blurred Photo</Text>
-          </View>
-          <View style={styles.guidelineItem}>
-            <View style={styles.guidelineImage}>
-              <Text style={styles.guidelinePlaceholder}>Image</Text>
-            </View>
-            <View style={styles.guidelineCross}>
-              <Text style={styles.guidelineCrossText}>×</Text>
-            </View>
-            <Text style={styles.guidelineLabel}>Watermark</Text>
+          {/* Default Images (max 4 images) - Right Side */}
+          <View style={styles.defaultImagesContainer}>
+            <Text style={styles.subLabel}>Default (Max 4)</Text>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={true}
+              style={styles.horizontalScrollView}
+              contentContainerStyle={styles.defaultImagesRow}>
+              {defaultImages.map((imageUri, index) => (
+                <View key={index} style={styles.defaultImageSlot}>
+                  <Image source={{uri: imageUri}} style={styles.uploadedImage} />
+                  <TouchableOpacity
+                    style={styles.removeButton}
+                    onPress={() => removeDefaultImage(index)}>
+                    <Image source={Images.deleteIcon} style={styles.removeIcon} />
+                    <Text style={styles.removeText}>Remove</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+              {defaultImages.length < 4 && (
+                <View style={styles.defaultImageSlot}>
+                  <TouchableOpacity
+                    style={styles.uploadArea}
+                    onPress={pickDefaultImage}>
+                    <Image source={Images.imageIcon} style={styles.uploadIcon} />
+                    <Text style={styles.uploadText}>+ Add</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </ScrollView>
           </View>
         </View>
 
         {/* Submit Button */}
-        <TouchableOpacity style={styles.submitBtn}>
-          <Text style={styles.submitText}>Add Package</Text>
+        <TouchableOpacity 
+          style={[styles.submitBtn, isSubmitting && styles.submitBtnDisabled]} 
+          onPress={createPackage}
+          disabled={isSubmitting}>
+          <Text style={styles.submitText}>
+            {isSubmitting ? 'Creating Package...' : 'Add Package'}
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -575,19 +749,47 @@ const styles = StyleSheet.create({
     marginTop: hp(2),
     color: Colors.black,
   },
+  subLabel: {
+    fontSize: FSize.fs12,
+    fontWeight: '500',
+    marginLeft: wp(5),
+    marginTop: hp(1),
+    color: Colors.grey,
+  },
   required: {
     color: 'red',
   },
-  input: {
+  rowContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     width: '90%',
     alignSelf: 'center',
+  },
+  colContainer: {
+    width: '47%',
+  },
+  colInput: {
+    width: '100%',
     borderWidth: 1,
-    borderColor: Colors.lightgrey2,
+    borderColor: '#A2A2A2',
     borderRadius: wp(2),
     paddingVertical: hp(1.8),
     paddingHorizontal: wp(3),
     marginTop: hp(0.8),
     fontSize: FSize.fs14,
+    color: Colors.grey,
+  },
+  input: {
+    width: '90%',
+    alignSelf: 'center',
+    borderWidth: 1,
+    borderColor: '#A2A2A2',
+    borderRadius: wp(2),
+    paddingVertical: hp(1.8),
+    paddingHorizontal: wp(3),
+    marginTop: hp(0.8),
+    fontSize: FSize.fs14,
+    color: Colors.grey,
   },
   textArea: {
     minHeight: hp(10),
@@ -597,11 +799,62 @@ const styles = StyleSheet.create({
   section: {
     marginTop: hp(1),
   },
+  inputContainer: {
+    width: '90%',
+    alignSelf: 'center',
+  },
+  inputWithTagsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#A2A2A2',
+    borderRadius: wp(2),
+    paddingVertical: hp(1),
+    paddingHorizontal: wp(3),
+    marginTop: hp(0.8),
+    minHeight: hp(5),
+    flexWrap: 'wrap',
+  },
+  inputWithTags: {
+    flex: 1,
+    fontSize: FSize.fs14,
+    minWidth: wp(30),
+    padding: 0,
+  },
+  tagsInsideInput: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    marginLeft: wp(2),
+  },
+  tagInsideInput: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: wp(5),
+    paddingVertical: hp(0.4),
+    paddingHorizontal: wp(2.5),
+    marginRight: wp(1.5),
+    marginBottom: hp(0.3),
+  },
+  tagTextInsideInput: {
+    fontSize: FSize.fs12,
+    marginRight: wp(1),
+  },
+  tagRemoveInsideInput: {
+    width: wp(3.5),
+    height: wp(3.5),
+    borderRadius: wp(1.75),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tagRemoveTextInsideInput: {
+    fontSize: FSize.fs12,
+    fontWeight: '600',
+  },
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    width: '90%',
-    alignSelf: 'center',
+    width: '100%',
     marginTop: hp(1),
   },
   tag: {
@@ -648,22 +901,51 @@ const styles = StyleSheet.create({
     fontSize: FSize.fs13,
     fontWeight: '500',
   },
-  uploadContainer: {
+  imagesRowContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     width: '90%',
     alignSelf: 'center',
     marginTop: hp(1),
+    justifyContent: 'space-between',
+  },
+  thumbnailContainer: {
+    width: '35%',
+    alignItems: 'center',
+    marginRight: wp(3),
+  },
+  defaultImagesContainer: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
+  horizontalScrollView: {
+    width: '100%',
+  },
+  defaultImagesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingRight: wp(2),
+  },
+  defaultImageSlot: {
+    width: wp(20),
+    marginRight: wp(2),
+    alignItems: 'center',
+    flexShrink: 0,
   },
   uploadSlot: {
-    width: '30%',
+    width: '100%',
+    alignItems: 'center',
+  },
+  uploadSlotActions: {
+    width: '100%',
+    marginTop: hp(0.5),
+    alignItems: 'center',
   },
   uploadArea: {
     width: '100%',
     aspectRatio: 1,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: Colors.lightgrey2,
+    borderColor: '#A2A2A2',
     borderRadius: wp(2),
     backgroundColor: Colors.lightgrey1,
     alignItems: 'center',
@@ -673,7 +955,7 @@ const styles = StyleSheet.create({
   uploadIcon: {
     width: wp(8),
     height: wp(8),
-    tintColor: Colors.sooprsblue,
+    // tintColor: Colors.,
     marginBottom: hp(0.5),
   },
   uploadText: {
@@ -687,6 +969,7 @@ const styles = StyleSheet.create({
     paddingVertical: hp(0.5),
     paddingHorizontal: wp(3),
     borderRadius: wp(2),
+    marginTop: hp(0.5),
   },
   addButtonText: {
     color: Colors.white,
@@ -700,8 +983,15 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.lightgrey1,
   },
   removeButton: {
-    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
     marginTop: hp(0.5),
+  },
+  removeIcon: {
+    width: wp(4),
+    height: wp(4),
+    tintColor: 'red',
+    marginRight: wp(1),
   },
   removeText: {
     fontSize: FSize.fs12,
@@ -711,7 +1001,7 @@ const styles = StyleSheet.create({
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: hp(0.5),
+    justifyContent: 'center',
   },
   checkbox: {
     width: wp(4),
@@ -736,65 +1026,6 @@ const styles = StyleSheet.create({
     fontSize: FSize.fs11,
     color: Colors.black,
   },
-  guidelinesContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '90%',
-    alignSelf: 'center',
-    marginTop: hp(1),
-  },
-  guidelineItem: {
-    alignItems: 'center',
-    width: '23%',
-  },
-  guidelineImage: {
-    width: '100%',
-    aspectRatio: 1,
-    backgroundColor: Colors.lightgrey1,
-    borderRadius: wp(2),
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.lightgrey2,
-  },
-  guidelinePlaceholder: {
-    fontSize: FSize.fs10,
-    color: Colors.grey,
-  },
-  guidelineCheck: {
-    width: wp(5),
-    height: wp(5),
-    borderRadius: wp(2.5),
-    backgroundColor: '#4CAF50',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: hp(0.5),
-  },
-  guidelineCheckText: {
-    color: Colors.white,
-    fontSize: FSize.fs12,
-    fontWeight: '700',
-  },
-  guidelineCross: {
-    width: wp(5),
-    height: wp(5),
-    borderRadius: wp(2.5),
-    backgroundColor: 'red',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: hp(0.5),
-  },
-  guidelineCrossText: {
-    color: Colors.white,
-    fontSize: FSize.fs14,
-    fontWeight: '700',
-  },
-  guidelineLabel: {
-    fontSize: FSize.fs10,
-    color: Colors.black,
-    marginTop: hp(0.5),
-    textAlign: 'center',
-  },
   submitBtn: {
     width: '90%',
     alignSelf: 'center',
@@ -803,6 +1034,10 @@ const styles = StyleSheet.create({
     borderRadius: wp(3),
     marginTop: hp(3),
     marginBottom: hp(4),
+  },
+  submitBtnDisabled: {
+    backgroundColor: Colors.grey,
+    opacity: 0.6,
   },
   submitText: {
     textAlign: 'center',
