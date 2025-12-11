@@ -193,6 +193,7 @@ manageDetailsIcone:require('./images/ManageDetails.png'),
   CalenderIcon:require('./images/timer.png'),
   carIcon:require('./Icons/Car.png'),
   UserRoundIcon:require('./Icons/user-round.png'),
+  editButton:require('./images/editbutton.png'),
 };
 
 export default Images;

@@ -64,6 +64,69 @@ export async function postDataWithToken(data: any, urlPath: string) {
   });
 }
 
+export async function postDataWithTokenBase2(data: any, urlPath: string) {
+  let token = await AsyncStorage.getItem(
+    mobile_siteConfig.MOB_ACCESS_TOKEN_KEY
+  );
+
+  console.log('token::::::::::', token);
+  console.log("=== postDataWithTokenBase2 === ", mobile_siteConfig.BASE_URL2 + urlPath);
+  const isFormData = data instanceof FormData;
+  return new Promise((resolve, reject) => {
+    fetch(mobile_siteConfig.BASE_URL2 + urlPath, {
+      method: "POST",
+      mode: "cors", 
+      credentials: "same-origin",
+      headers: {
+        ...(isFormData ? {} : {"Content-Type": "application/json"}), // Only set Content-Type for non-FormData
+        Origin: "localhost",
+        authorization: "Bearer " + token,
+      },
+      body: isFormData ? data : JSON.stringify(data),
+    })
+      .then((response) => response.json())
+      .then((json) => {
+        resolve(json);
+      })
+      .catch((error) => {
+        console.log(`=== ERROR === ${urlPath}`, error);
+        reject(error);
+      });
+  });
+}
+
+export async function postDataWithToken1(data: any, urlPath: string) {
+  let token = await AsyncStorage.getItem(
+    mobile_siteConfig.MOB_ACCESS_TOKEN_KEY
+  );
+
+  console.log('token::::::::::', token);
+  console.log("=== postDataWithToken === ", mobile_siteConfig.BASE_URL2 + urlPath);
+  const isFormData = data instanceof FormData;
+  return new Promise((resolve, reject) => {
+    fetch(mobile_siteConfig.BASE_URL + urlPath, {
+      method: "POST",
+      mode: "cors",
+      // cache: "no-cache",
+      credentials: "same-origin",
+      headers: {
+        ...(isFormData ? {} : {"Content-Type": "application/json"}), // Only set Content-Type for non-FormData
+        Origin: "localhost",
+        authorization: "Bearer " + token,
+      },
+      body: isFormData ? data : JSON.stringify(data),
+    })
+      .then((response) => response.json())
+      .then((json) => {
+        resolve(json);
+      })
+      .catch((error) => {
+        console.log(`=== ERROR === ${urlPath}`, error);
+        reject(error);
+      });
+  });
+}
+
 export async function getData(urlPath: string) {
   console.log('=== getData URL ===', mobile_siteConfig.BASE_URL + urlPath);
   let accessTokenKey = await AsyncStorage.getItem(
@@ -160,6 +223,34 @@ export async function PutDataWithToken(data: any, urlPath: string) {
       })
       .catch(error => {
         console.log('=== ERROR ===', error);
+        reject(error);
+      });
+  });
+}
+
+export async function putDataWithTokenFormData(data: any, urlPath: string) {
+  let token = await AsyncStorage.getItem(mobile_siteConfig.MOB_ACCESS_TOKEN_KEY);
+  console.log('token::::::::::', token);
+  console.log("=== putDataWithTokenFormData === ", mobile_siteConfig.BASE_URL + urlPath);
+  const isFormData = data instanceof FormData;
+  return new Promise((resolve, reject) => {
+    fetch(mobile_siteConfig.BASE_URL + urlPath, {
+      method: "PUT",
+      mode: "cors",
+      credentials: "same-origin",
+      headers: {
+        ...(isFormData ? {} : {"Content-Type": "application/json"}), // Only set Content-Type for non-FormData
+        Origin: "localhost",
+        authorization: "Bearer " + token,
+      },
+      body: isFormData ? data : JSON.stringify(data),
+    })
+      .then((response) => response.json())
+      .then((json) => {
+        resolve(json);
+      })
+      .catch((error) => {
+        console.log(`=== ERROR === ${urlPath}`, error);
         reject(error);
       });
   });

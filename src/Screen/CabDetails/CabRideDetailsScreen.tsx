@@ -12,6 +12,7 @@ import {
   FlatList,
   Dimensions,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Colors from '../../assets/commonCSS/Colors';
@@ -30,6 +31,8 @@ const CabRideReviewScreen = ({route}: any) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [packageData, setPackageData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isActive, setIsActive] = useState(true);
+  const toggleAnim = useRef(new Animated.Value(1)).current;
 
   // Get image URI helper function
   const getImageUri = (imagePath: string | null): any => {
@@ -64,6 +67,12 @@ const CabRideReviewScreen = ({route}: any) => {
         console.log("Package details", res);
         if (res?.success && res?.package) {
           setPackageData(res);
+          // Set initial status (1 = active, 0 = inactive)
+          const status = res.package.status;
+          const initialActive = status === 1 || status === '1' || status === true;
+          setIsActive(initialActive);
+          // Set initial animation value
+          toggleAnim.setValue(initialActive ? 1 : 0);
         }
       })
       .catch((err: any) => {
@@ -73,6 +82,7 @@ const CabRideReviewScreen = ({route}: any) => {
         setLoading(false);
       });
   };
+
 
   useEffect(() => {
     packageDetails();
@@ -135,9 +145,21 @@ const CabRideReviewScreen = ({route}: any) => {
               <Image source={Images.backArrow} style={styles.backIcon} />
             </TouchableOpacity>
             <View style={{ flex: 1 }} />
-            <TouchableOpacity style={styles.shareButton}>
-              <Image source={Images.referIcon} style={styles.shareIcon} />
+            <TouchableOpacity 
+              style={styles.editButton}
+              onPress={() => {
+                console.log('Edit button clicked - Package data:', pkg);
+                console.log('Package ID:', pkg?.id || pkg?.package_id);
+                (navigation as any).navigate('AddPackagesScreen', { 
+                  packageData: pkg,
+                  isEditMode: true 
+                });
+              }}>
+              <Image source={Images.editButton} style={styles.editIcon} />
             </TouchableOpacity>
+            {/* <TouchableOpacity style={styles.shareButton}>
+              <Image source={Images.referIcon} style={styles.shareIcon} />
+            </TouchableOpacity> */}
           </View>
 
           {/* CAROUSEL DOTS */}
@@ -164,8 +186,43 @@ const CabRideReviewScreen = ({route}: any) => {
         <View style={styles.contentCard}>
           <View style={styles.titleRow}>
             <Text style={styles.serviceTitle}>{pkg.name || 'Package Name'}</Text>
-            <TouchableOpacity style={styles.shareButtonCard}>
-              <Image source={Images.referIcon} style={styles.shareIconCard} />
+            {/* STATUS TOGGLE */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => {
+                const newActive = !isActive;
+                setIsActive(newActive);
+                Animated.spring(toggleAnim, {
+                  toValue: newActive ? 1 : 0,
+                  useNativeDriver: true,
+                  tension: 100,
+                  friction: 8,
+                }).start();
+              }}
+              style={[
+                styles.statusToggle,
+                {
+                  backgroundColor: isActive ? Colors.sooprsblue : '#F44336',
+                }
+              ]}>
+              <Text style={styles.statusToggleText}>
+                {isActive ? 'Active' : 'Inactive'}
+              </Text>
+              <Animated.View
+                style={[
+                  styles.statusToggleKnob,
+                  {
+                    transform: [
+                      {
+                        translateX: toggleAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [-wp(20), 0], // Move from left (inactive) to right (active)
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              />
             </TouchableOpacity>
           </View>
 
@@ -420,6 +477,22 @@ const styles = StyleSheet.create({
     tintColor: Colors.white,
   },
 
+  editButton: {
+    width: wp(10),
+    height: wp(10),
+    justifyContent: 'center',
+    alignItems: 'center',
+    // backgroundColor:Colors.sooprsblue,
+    borderRadius: wp(5),
+    marginRight: wp(2),
+  },
+
+  editIcon: {
+    width: wp(8),
+    height: wp(8),
+    // tintColor: Colors.white,
+  },
+
   carouselDots: {
     position: 'absolute',
     bottom: hp(6),
@@ -475,6 +548,55 @@ const styles = StyleSheet.create({
     fontSize: FSize.fs12,
     color: Colors.white,
     fontWeight: '700',
+  },
+
+  /* STATUS TOGGLE */
+  statusToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: wp(3),
+    paddingVertical: hp(0.8),
+    borderRadius: wp(10),
+    width: wp(27),
+    height: hp(5),
+    position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+
+  statusToggleText: {
+    fontSize: FSize.fs13,
+    color: Colors.white,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    zIndex: 1,
+    flex: 1,
+    textAlign: 'center',
+  },
+
+  statusToggleKnob: {
+    width: wp(5.5),
+    height: wp(5.5),
+    borderRadius: wp(2.75),
+    backgroundColor: Colors.white,
+    position: 'absolute',
+    right: wp(1),
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+    zIndex: 2,
   },
 
   /* CONTENT CARD */

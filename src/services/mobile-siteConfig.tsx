@@ -6,6 +6,7 @@ export const mobile_siteConfig = {
   SLUG: 'user_slug',
   EMAIL: 'user_email',
   BASE_URL: 'https://sooprs.com/api/',
+  BASE_URL2: 'https://sooprs.com/api2/public/index.php/',
   MOB_ACCESS_TOKEN_KEY: "token",
 
 
@@ -18,7 +19,11 @@ export const mobile_siteConfig = {
 
   GET_USER_DETAILS:"user/vendor/get-vendor-profile",
   GET_PACKAGES:"user/vendor/all-vendor-packages",
-  GET_PACKAGE_DETAILS:"user/vendor/package-by-slug/"
+  GET_PACKAGE_DETAILS:"user/vendor/package-by-slug/",
+  CREATE_PACKAGE:"user/vendor/create-vendor-package",
+  UPDATE_PACKAGE:"user/vendor/update-vendor-package",
+  FILTER_LEADS_ALL:"filter-leads-all",
+  GET_CONTACT_LIST:"get-contact-list"
 
 };
 
