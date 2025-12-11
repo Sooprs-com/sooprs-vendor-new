@@ -6,122 +6,208 @@ import {
   TouchableOpacity,
   Image,
   SafeAreaView,
+  Alert,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
+import { useNavigation } from '@react-navigation/native';
+// @ts-ignore
+import Clipboard from '@react-native-clipboard/clipboard';
 import {hp, wp, GlobalCss} from '../../assets/commonCSS/GlobalCSS';
 import Colors from '../../assets/commonCSS/Colors';
 import Images from '../../assets/image';
 import FSize from '../../assets/commonCSS/FSize';
+import { getDataWithToken } from '../../services/mobile-api';
+import { mobile_siteConfig } from '../../services/mobile-siteConfig';
 
-interface Order {
-  id: string;
-  orderId: string;
-  time: string;
-  status: 'ONGOING' | 'COMPLETED' | 'CANCELLED';
-  customerName: string;
-  paymentMethod: string;
-  pickupLocation: string;
-  dropLocation: string;
-  price: string;
-  customerImage: any;
+interface ApiOrder {
+  order_id: number;
+  order_id_generated: string;
+  order_type: string;
+  package_id: number;
+  user_id: number;
+  package_name: string;
+  package_price: number;
+  coupon_code: string | null;
+  coupon_price: number;
+  final_pay_amount: number;
+  remening_amount: number;
+  payment_order_id: string;
+  order_status: 'CONFIRMED' | 'COMPLETED' | 'PENDING' | 'CANCELLED';
+  payment_status: string;
+  order_created_at: string;
+  user_details: {
+    name: string;
+    email: string;
+    mobile: string;
+  };
+  order_details?: {
+    name: string;
+    mobile: string;
+    email: string;
+    date: string;
+  };
+  trip_details?: {
+    user_name: string;
+    user_email: string;
+    user_mobile: string;
+    pickup_location: string;
+    drop_location: string;
+    starting_date: string;
+    end_date: string | null;
+    trip_type: string;
+  };
 }
 
 const Order = () => {
-  const [activeTab, setActiveTab] = useState<'ONGOING' | 'COMPLETED' | 'CANCELLED'>('ONGOING');
+  const navigation = useNavigation();
+  const [activeTab, setActiveTab] = useState<'ONGOING' | 'COMPLETED' | 'PENDING' | 'CANCELLED'>('ONGOING');
+  const [allOrders, setAllOrders] = useState<ApiOrder[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [ongoingOrders] = useState<Order[]>([
-    {
-      id: '1',
-      orderId: 'ORD-7829',
-      time: '10:30 AM',
-      status: 'ONGOING',
-      customerName: 'Abhinav Pandey',
-      paymentMethod: 'Cash',
-      pickupLocation: 'Uttam Nagar, Delhi',
-      dropLocation: 'Manali Mall Road',
-      price: '₹5,700',
-      customerImage: Images.profileImage,
-    },
-    {
-      id: '2',
-      orderId: 'ORD-7830',
-      time: '11:45 AM',
-      status: 'ONGOING',
-      customerName: 'Abhinav Pandey',
-      paymentMethod: 'Cash',
-      pickupLocation: 'Uttam Nagar, Delhi',
-      dropLocation: 'Manali Mall Road',
-      price: '₹5,700',
-      customerImage: Images.profileImage,
-    },
-  ]);
-
-  const [completedOrders] = useState<Order[]>([]);
-  const [cancelledOrders] = useState<Order[]>([]);
+  const getAllOrders = () => {
+    setLoading(true);
+    getDataWithToken({}, mobile_siteConfig.GET_ALL_ORDERS)
+      .then((res: any) => res.json())
+      .then((res: any) => {
+        console.log("All orders", res);
+        if (res.success && res.data) {
+          setAllOrders(res.data);
+        }
+        setLoading(false);
+      })
+      .catch((err: any) => {
+        console.log("error in all orders", err);
+        setLoading(false);
+      });
+  };
+  
+  useEffect(() => {
+    getAllOrders();
+  }, []);
 
   const getOrdersByStatus = () => {
     switch (activeTab) {
       case 'ONGOING':
-        return ongoingOrders;
+        return allOrders.filter(order => order.order_status === 'CONFIRMED');
       case 'COMPLETED':
-        return completedOrders;
+        return allOrders.filter(order => order.order_status === 'COMPLETED');
+      case 'PENDING':
+        return allOrders.filter(order => order.order_status === 'PENDING');
       case 'CANCELLED':
-        return cancelledOrders;
+        return allOrders.filter(order => order.order_status === 'CANCELLED');
       default:
-        return ongoingOrders;
+        return [];
     }
   };
 
-  const renderOrderCard = (order: Order) => (
-    <View key={order.id} style={styles.orderCard}>
-      {/* Top Row - Order ID, Time, Status Badge */}
-      <View style={styles.orderHeader}>
-        <View>
-          <Text style={styles.orderIdText}>Order ID: {order.orderId}</Text>
-          <Text style={styles.orderTimeText}>{order.time}</Text>
-        </View>
-        <View style={styles.statusBadge}>
-          <Text style={styles.statusText}>{order.status}</Text>
-        </View>
-      </View>
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const formattedHours = hours % 12 || 12;
+    const formattedMinutes = minutes.toString().padStart(2, '0');
+    return `${formattedHours}:${formattedMinutes} ${ampm}`;
+  };
 
-      {/* Customer Details */}
-      <View style={styles.orderCustomerSection}>
-        <Image source={order.customerImage} style={styles.orderCustomerImage} />
-        <View style={styles.orderCustomerInfo}>
-          <View style={styles.orderCustomerNameRow}>
-            <Text style={styles.orderCustomerName}>{order.customerName}</Text>
-            <TouchableOpacity style={styles.phoneButton}>
-              <Image source={Images.phoneIcon} style={styles.orderPhoneIcon} />
+  const formatPrice = (price: number) => {
+    return `₹${price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    Clipboard.setString(text);
+    Alert.alert('Copied', `${label} copied to clipboard`);
+  };
+
+  const calculateDiscount = (packagePrice: number, couponPrice: number, finalAmount: number) => {
+    if (couponPrice > 0) {
+      return packagePrice - finalAmount;
+    }
+    return 0;
+  };
+
+  const renderOrderCard = (order: ApiOrder) => {
+    const discountAmount = calculateDiscount(order.package_price, order.coupon_price, order.final_pay_amount);
+    const hasCoupon = order.coupon_code && order.coupon_code.trim() !== '';
+
+    return (
+      <View key={order.order_id.toString()} style={styles.orderCard}>
+        {/* Top Header - Order ID with Copy Icon and Payment Status Badge */}
+        <View style={styles.orderHeader}>
+          <View style={styles.orderIdContainer}>
+            <Text style={styles.orderIdText}>Order ID: {order.order_id_generated}</Text>
+            <TouchableOpacity 
+              onPress={() => copyToClipboard(order.order_id_generated, 'Order ID')}
+              style={styles.copyButton}>
+              {/* <Image source={Images.copyIcon} style={styles.copyIcon} /> */}
             </TouchableOpacity>
           </View>
-          <Text style={styles.paymentMethodText}>{order.paymentMethod}</Text>
+          <View style={[
+            styles.paymentStatusBadge,
+            order.payment_status === 'PAID' && { backgroundColor: '#4CAF50' },
+            order.payment_status === 'UNPAID' && { backgroundColor: '#FF9800' },
+          ]}>
+            <Text style={styles.paymentStatusText}>✓ {order.payment_status}</Text>
+          </View>
+        </View>
+
+        {/* Package Title */}
+        <Text style={styles.packageTitle}>{order.package_name}</Text>
+
+        {/* Pricing Details Section */}
+        <View style={styles.pricingSection}>
+          {/* Package Price */}
+          <View style={styles.priceRow}>
+            <Text style={styles.priceLabel}>Package Price:</Text>
+            <Text style={styles.priceValue}>{formatPrice(order.package_price)}</Text>
+          </View>
+
+          {/* Coupon/Discount Section */}
+          {hasCoupon && (
+            <View style={styles.couponRow}>
+              <View style={styles.couponCodeContainer}>
+                <Text style={styles.couponCodeText}>{order.coupon_code}</Text>
+              </View>
+              <Text style={styles.discountAmount}>- {formatPrice(discountAmount)}</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Financial Summary */}
+        <View style={styles.financialSummary}>
+          <View style={styles.priceRow}>
+            <Text style={styles.finalAmountLabel}>Final Amount:</Text>
+            <Text style={styles.finalAmountValue}>{formatPrice(order.final_pay_amount)}</Text>
+          </View>
+          <View style={styles.priceRow}>
+            <Text style={styles.remainingLabel}>Remaining Amount:</Text>
+            <Text style={styles.remainingValue}>{formatPrice(order.remening_amount)}</Text>
+          </View>
+        </View>
+
+        {/* Divider */}
+        <View style={styles.divider} />
+
+        {/* Bottom Footer - Payment Order ID and View Details */}
+        <View style={styles.footer}>
+          <View style={styles.paymentOrderIdContainer}>
+            <Text style={styles.paymentOrderIdText}>Payment Order ID: {order.payment_order_id}</Text>
+            <TouchableOpacity 
+              onPress={() => copyToClipboard(order.payment_order_id, 'Payment Order ID')}
+              style={styles.copyButton}>
+              {/* <Image source={Images.copyIcon} style={styles.copyIcon} /> */}
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity 
+            style={styles.viewDetailsButton}
+            onPress={() => (navigation as any).navigate('PackageDetailsScreen', { order_id: order.order_id })}>
+            <Text style={styles.viewDetailsText}>View Details</Text>
+            {/* <Image source={Images.chevRight} style={styles.chevRightIcon} /> */}
+          </TouchableOpacity>
         </View>
       </View>
-
-      {/* Location Details */}
-      <View style={styles.orderLocationSection}>
-        <Text style={styles.orderLocationText}>
-          Pickup: <Text style={styles.locationBold}>{order.pickupLocation}</Text>
-        </Text>
-        <Text style={styles.orderLocationText}>
-          Drop: <Text style={styles.locationBold}>{order.dropLocation}</Text>
-        </Text>
-      </View>
-
-      {/* Price and Navigate Button */}
-      <View style={styles.orderFooter}>
-        <View style={styles.priceContainer}>
-          <Text style={styles.priceLabel}>Price</Text>
-          <Text style={styles.orderPrice}>{order.price}</Text>
-        </View>
-        <TouchableOpacity style={styles.navigateButton}>
-          <Image source={Images.sendIcon} style={styles.navigateIcon} />
-          <Text style={styles.navigateButtonText}>Navigate</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -143,6 +229,18 @@ const Order = () => {
             Ongoing
           </Text>
           {activeTab === 'ONGOING' && <View style={styles.tabUnderline} />}
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'PENDING' && styles.activeTab]}
+          onPress={() => setActiveTab('PENDING')}>
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === 'PENDING' && styles.activeTabText,
+            ]}>
+            Pending
+          </Text>
+          {activeTab === 'PENDING' && <View style={styles.tabUnderline} />}
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'COMPLETED' && styles.activeTab]}
@@ -175,7 +273,11 @@ const Order = () => {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
-        {getOrdersByStatus().length > 0 ? (
+        {loading ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>Loading orders...</Text>
+          </View>
+        ) : getOrdersByStatus().length > 0 ? (
           getOrdersByStatus().map(order => renderOrderCard(order))
         ) : (
           <View style={styles.emptyContainer}>
@@ -193,7 +295,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.white,
-    paddingTop: hp(3),
+    paddingTop: hp(2),
   },
   header: {
     paddingHorizontal: wp(6),
@@ -264,122 +366,150 @@ const styles = StyleSheet.create({
   orderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: hp(1.5),
+  },
+  orderIdContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   orderIdText: {
     fontSize: FSize.fs13,
     fontWeight: '500',
-    color: Colors.gray,
-    marginBottom: hp(0.3),
+    color: Colors.black,
   },
-  orderTimeText: {
-    fontSize: FSize.fs12,
-    color: Colors.gray,
+  copyButton: {
+    marginLeft: wp(2),
+    padding: wp(1),
   },
-  statusBadge: {
-    backgroundColor: Colors.sooprsblue,
-    paddingHorizontal: wp(4),
-    paddingVertical: hp(0.5),
+  copyIcon: {
+    width: wp(4),
+    height: wp(4),
+    tintColor: Colors.sooprsblue,
+  },
+  paymentStatusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: wp(3),
+    paddingVertical: hp(0.6),
     borderRadius: wp(2),
   },
-  statusText: {
+  paymentStatusText: {
     fontSize: FSize.fs11,
     fontWeight: '700',
     color: Colors.white,
     textTransform: 'uppercase',
   },
-  orderCustomerSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: hp(1.5),
-  },
-  orderCustomerImage: {
-    width: wp(12),
-    height: wp(12),
-    borderRadius: wp(6),
-    marginRight: wp(3),
-  },
-  orderCustomerInfo: {
-    flex: 1,
-  },
-  orderCustomerNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: hp(0.3),
-  },
-  orderCustomerName: {
-    fontSize: FSize.fs15,
+  packageTitle: {
+    fontSize: FSize.fs16,
     fontWeight: '700',
     color: Colors.black,
+    marginBottom: hp(1.5),
+    lineHeight: hp(2.2),
   },
-  phoneButton: {
-    width: wp(10),
-    height: wp(10),
-    borderRadius: wp(5),
-    backgroundColor: '#E8F5E9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  orderPhoneIcon: {
-    width: wp(5),
-    height: wp(5),
-    tintColor: '#4CAF50',
-  },
-  paymentMethodText: {
-    fontSize: FSize.fs12,
-    color: Colors.gray,
-  },
-  orderLocationSection: {
+  pricingSection: {
     marginBottom: hp(1.5),
   },
-  orderLocationText: {
-    fontSize: FSize.fs13,
-    color: Colors.black,
-    marginBottom: hp(0.3),
-    fontWeight: '500',
-  },
-  locationBold: {
-    fontWeight: '700',
-    color: Colors.black,
-  },
-  orderFooter: {
+  priceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  priceContainer: {
-    flex: 1,
+    alignItems: 'center',
+    marginBottom: hp(0.8),
   },
   priceLabel: {
-    fontSize: FSize.fs11,
-    color: Colors.gray,
-    marginBottom: hp(0.3),
+    fontSize: FSize.fs13,
+    fontWeight: '500',
+    color: Colors.black,
   },
-  orderPrice: {
-    fontSize: FSize.fs18,
+  priceValue: {
+    fontSize: FSize.fs13,
+    fontWeight: '500',
+    color: Colors.black,
+  },
+  couponRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: hp(0.5),
+  },
+  couponCodeContainer: {
+    borderWidth: 1,
+    borderColor: Colors.sooprsblue,
+    borderStyle: 'dashed',
+    borderRadius: wp(2),
+    paddingHorizontal: wp(3),
+    paddingVertical: hp(0.5),
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  couponCodeText: {
+    fontSize: FSize.fs12,
+    fontWeight: '600',
+    color: Colors.sooprsblue,
+  },
+  discountAmount: {
+    fontSize: FSize.fs13,
+    fontWeight: '600',
+    color: '#4CAF50',
+  },
+  financialSummary: {
+    marginBottom: hp(1.5),
+  },
+  finalAmountLabel: {
+    fontSize: FSize.fs14,
     fontWeight: '700',
     color: Colors.black,
   },
-  navigateButton: {
+  finalAmountValue: {
+    fontSize: FSize.fs14,
+    fontWeight: '700',
+    color: Colors.black,
+  },
+  remainingLabel: {
+    fontSize: FSize.fs13,
+    fontWeight: '500',
+    color: Colors.black,
+  },
+  remainingValue: {
+    fontSize: FSize.fs13,
+    fontWeight: '500',
+    color: Colors.black,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.lightgrey2,
+    marginVertical: hp(1.5),
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  paymentOrderIdContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.sooprsblue,
-    paddingHorizontal: wp(5),
-    paddingVertical: hp(1.2),
-    borderRadius: wp(2.5),
+    flex: 1,
   },
-  navigateIcon: {
-    width: wp(4),
-    height: wp(4),
-    marginRight: wp(1.5),
-    tintColor: Colors.white,
+  paymentOrderIdText: {
+    fontSize: FSize.fs12,
+    fontWeight: '500',
+    color: Colors.black,
   },
-  navigateButtonText: {
+  viewDetailsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  viewDetailsText: {
     fontSize: FSize.fs13,
     fontWeight: '600',
-    color: Colors.white,
+    color: Colors.sooprsblue,
+    marginRight: wp(1),
+  },
+  chevRightIcon: {
+    width: wp(3),
+    height: wp(3),
+    tintColor: Colors.sooprsblue,
   },
   emptyContainer: {
     alignItems: 'center',

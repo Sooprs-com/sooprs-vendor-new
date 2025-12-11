@@ -395,14 +395,19 @@ const styles = StyleSheet.create({
     height: wp(10),
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: "white",
+    elevation:2,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
     borderRadius: wp(5),
   },
 
   backIcon: {
     width: wp(6),
     height: wp(6),
-    tintColor: Colors.white,
+    tintColor: Colors.black,
   },
 
   shareButton: {

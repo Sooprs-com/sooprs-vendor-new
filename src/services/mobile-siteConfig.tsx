@@ -18,7 +18,9 @@ export const mobile_siteConfig = {
 
   GET_USER_DETAILS:"user/vendor/get-vendor-profile",
   GET_PACKAGES:"user/vendor/all-vendor-packages",
-  GET_PACKAGE_DETAILS:"user/vendor/package-by-slug/"
+  GET_PACKAGE_DETAILS:"user/vendor/package-by-slug/",
+  GET_ALL_ORDERS:"user/vendor/all-orders",
+  GET_ORDER_DETAILS:"user/vendor/orders-detail-by-order_id/"
 
 };
 
