@@ -15,7 +15,8 @@ export const mobile_siteConfig = {
 
   GET_ALL_CATEGORIES: 'auth/get-all-categories',
 
-  GET_USER_DETAILS:"user/vendor/get-vendor-profile"
+  GET_USER_DETAILS:"user/vendor/get-vendor-profile",
+  CREATE_PACKAGE:"user/vendor/create-vendor-package"
 
 };
 

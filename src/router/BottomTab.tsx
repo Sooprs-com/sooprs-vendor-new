@@ -10,12 +10,7 @@ import Leads from '../Screen/Leads/Leads';
 import Project from '../Screen/Projects/Project';
 import Order from '../Screen/Orders/Order';
 import HomeVerificationScreen from '../Screen/Verification/HomeVerification';
-// import Projects from '../ProfessionalScreens/Projects/Projects';
-// import AssignedProjects from '../ProfessionalScreens/Projects/AssignedProjects';
-// import {useSelector} from 'react-redux';
-// import ContactDetailScreen from './ContactDetailsScreen';
-// import HomeDrawer from '../ProfessionalScreens/Home/HomeDrawer';
-// import GigDrawer from '../UserScreens/Gigs/GigDrawer';
+
 const iconSize = Math.min(wp(7), hp(4));
 
 
@@ -23,12 +18,12 @@ const HomeFlow = createNativeStackNavigator();
 
 const HomeFlowScreen = () => {
   return (
-<<<<<<< HEAD
+
     <HomeFlow.Navigator screenOptions={{ headerShown: false }}>
-      <HomeFlow.Screen name="HomeVerification" component={HomeVerificationScreen} />
-=======
-    <HomeFlow.Navigator screenOptions={{ headerShown: false }}>   
->>>>>>> d0bc64014f230252aa6e955d4056932c3b3fb20d
+      {/* <HomeFlow.Screen name="HomeVerification" component={HomeVerificationScreen} /> */}
+
+   
+
       <HomeFlow.Screen name="HomeMain" component={Home} />
       <HomeFlow.Screen name="HomeVerification" component={HomeVerificationScreen} />
     </HomeFlow.Navigator>

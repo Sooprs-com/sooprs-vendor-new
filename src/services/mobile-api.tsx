@@ -39,6 +39,7 @@ export async function postDataWithToken(data: any, urlPath: string) {
 
   console.log('token::::::::::', token);
   console.log("=== postDataWithToken === ", mobile_siteConfig.BASE_URL + urlPath);
+  const isFormData = data instanceof FormData;
   return new Promise((resolve, reject) => {
     fetch(mobile_siteConfig.BASE_URL + urlPath, {
       method: "POST",
@@ -46,11 +47,11 @@ export async function postDataWithToken(data: any, urlPath: string) {
       // cache: "no-cache",
       credentials: "same-origin",
       headers: {
-        "Content-Type": "application/json",
+        ...(isFormData ? {} : {"Content-Type": "application/json"}), // Only set Content-Type for non-FormData
         Origin: "localhost",
         authorization: "Bearer " + token,
       },
-      body: JSON.stringify(data),
+      body: isFormData ? data : JSON.stringify(data),
     })
       .then((response) => response.json())
       .then((json) => {

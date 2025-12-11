@@ -157,14 +157,14 @@ const NewOtpScreen = () => {
       await storeDataToAsyncStorage(mobile_siteConfig.IS_LOGIN, 'TRUE');
       
       // Store additional user data if available
-      if (result?.user_id) {
-        await storeDataToAsyncStorage(mobile_siteConfig.UID, result.user_id);
+      if (result?.user?.id) {
+        await storeDataToAsyncStorage(mobile_siteConfig.UID, String(result.user.id));
       }
-      if (result?.slug) {
-        await storeDataToAsyncStorage(mobile_siteConfig.SLUG, result.slug);
+      if (result?.user?.slug) {
+        await storeDataToAsyncStorage(mobile_siteConfig.SLUG, result.user.slug);
       }
-      if (result?.email) {
-        await storeDataToAsyncStorage(mobile_siteConfig.EMAIL, result?.email);
+      if (result?.user?.email) {
+        await storeDataToAsyncStorage(mobile_siteConfig.EMAIL, result.user.email);
       }
       (navigation as any).navigate('BottomTab',{ 
         email: result?.email, 
