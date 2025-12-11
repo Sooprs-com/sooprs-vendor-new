@@ -3,19 +3,15 @@ import {
   StyleSheet,
   Text,
   View,
-  TouchableOpacity,
-  Image,
-  ScrollView,
   SafeAreaView,
   FlatList,
   ActivityIndicator,
 } from "react-native";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { hp, wp } from "../../assets/commonCSS/GlobalCSS";
 import Colors from "../../assets/commonCSS/Colors";
 import FSize from "../../assets/commonCSS/FSize";
-import Images from "../../assets/image";
 import { postDataWithTokenBase2, getDataWithToken } from "../../services/mobile-api";
 import { mobile_siteConfig } from "../../services/mobile-siteConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -31,51 +27,61 @@ const MyLeadsScreen = () => {
 
   const getVendorId = async () => {
     try {
-      // Try to get vendor_id from AsyncStorage first
-      let id = await AsyncStorage.getItem(mobile_siteConfig.UID);
+      // Always get vendor_id from API to ensure we have the correct ID
+      console.log('🔍 Step 1: Fetching vendor ID from API...');
+      const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
+      const data: any = await res.json();
+      console.log('📋 User Details API Response:', JSON.stringify(data, null, 2));
       
-      if (!id) {
-        // If not in AsyncStorage, get from user details API
-        const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
-        const data: any = await res.json();
-        if (data?.success && data?.vendorDetail?.id) {
-          id = String(data.vendorDetail.id);
-          await AsyncStorage.setItem(mobile_siteConfig.UID, id);
-        }
+      let id = null;
+      
+      if (data?.success && data?.vendorDetail?.id) {
+        id = String(data.vendorDetail.id);
+        // Update AsyncStorage with correct ID
+        await AsyncStorage.setItem(mobile_siteConfig.UID, id);
+        console.log('✅ Vendor ID from API:', id);
+        console.log('✅ Vendor ID saved to AsyncStorage:', id);
+      } else {
+        // Fallback: try AsyncStorage if API fails
+        id = await AsyncStorage.getItem(mobile_siteConfig.UID);
+        console.log('⚠️ Vendor ID not in API response, using AsyncStorage:', id);
       }
       
       if (id) {
         setVendorId(id);
+        console.log('✅ Final Vendor ID:', id);
         return id;
       }
+      console.log('❌ No Vendor ID found');
       return null;
     } catch (error) {
-      console.log('Error getting vendor ID:', error);
+      console.log('❌ Error getting vendor ID from API, trying AsyncStorage...');
+      // Fallback to AsyncStorage if API call fails
+      const id = await AsyncStorage.getItem(mobile_siteConfig.UID);
+      if (id) {
+        console.log('✅ Using Vendor ID from AsyncStorage (fallback):', id);
+        setVendorId(id);
+        return id;
+      }
+      console.log('❌ Error getting vendor ID:', error);
       return null;
     }
   };
 
   const getContactList = async (page: number = 1, append: boolean = false) => {
-    // Prevent duplicate API calls
-    if (isFetching) {
-      console.log('Already fetching contacts, skipping duplicate call');
+    // Always get fresh vendor ID from API to ensure correct ID
+    console.log('🔍 Step 2: Fetching vendor ID...');
+    const id = await getVendorId();
+    
+    if (!id) {
+      console.log('❌ Vendor ID not found - cannot fetch contacts');
+      setLoadingContacts(false);
+      setLoadingMore(false);
       return;
     }
-
-    // Ensure vendor ID is available
-    let currentVendorId = vendorId;
-    if (!currentVendorId) {
-      const id = await getVendorId();
-      if (!id) {
-        console.log('Vendor ID not found - cannot fetch contacts');
-        setLoadingContacts(false);
-        setLoadingMore(false);
-        setIsFetching(false);
-        return;
-      }
-      currentVendorId = id;
-      setVendorId(id);
-    }
+    
+    const currentVendorId = id;
+    console.log('✅ Using Vendor ID:', currentVendorId);
 
     try {
       setIsFetching(true);
@@ -91,14 +97,22 @@ const MyLeadsScreen = () => {
       formData.append('page', String(page));
       formData.append('limit', '20');
 
-      console.log('Fetching contact list with:', {
-        id: currentVendorId,
-        page: page,
-        limit: 20
-      });
+      console.log('📤 Step 3: API Request Details:');
+      console.log('   - Endpoint:', mobile_siteConfig.BASE_URL2 + mobile_siteConfig.GET_CONTACT_LIST);
+      console.log('   - FormData id:', currentVendorId);
+      console.log('   - FormData page:', page);
+      console.log('   - FormData limit: 20');
 
       const result: any = await postDataWithTokenBase2(formData, mobile_siteConfig.GET_CONTACT_LIST);
-      // console.log('Contact list API response (page', page, '):::::', JSON.stringify(result, null, 2));
+      
+      console.log('📥 Step 4: API Response:');
+      console.log('   - Full Response:', JSON.stringify(result, null, 2));
+      console.log('   - Response Status:', result?.status);
+      console.log('   - Response Message:', result?.msg);
+      console.log('   - Has result.data:', !!result?.data);
+      console.log('   - Has result.data.records:', !!result?.data?.records);
+      console.log('   - result.data.records type:', Array.isArray(result?.data?.records) ? 'Array' : typeof result?.data?.records);
+      console.log('   - result.data.records length:', result?.data?.records?.length || 0);
 
       let newContacts: any[] = [];
 
@@ -106,228 +120,213 @@ const MyLeadsScreen = () => {
       // Check for result.data.records (actual API response structure)
       if (result?.data?.records && Array.isArray(result.data.records)) {
         newContacts = result.data.records;
+        console.log('✅ Step 5: Extracted from result.data.records');
       } else if (result?.success !== undefined) {
         // Response has success field
         if (result.success && Array.isArray(result?.data)) {
           newContacts = result.data;
+          console.log('✅ Step 5: Extracted from result.data (with success)');
         } else if (result.success && Array.isArray(result?.contacts)) {
           newContacts = result.contacts;
+          console.log('✅ Step 5: Extracted from result.contacts');
         } else if (result.success && Array.isArray(result?.list)) {
           newContacts = result.list;
+          console.log('✅ Step 5: Extracted from result.list');
         } else if (Array.isArray(result?.data)) {
           newContacts = result.data;
+          console.log('✅ Step 5: Extracted from result.data');
+        } else {
+          console.log('⚠️ Step 5: No array found in success response');
         }
       } else if (Array.isArray(result?.data)) {
         newContacts = result.data;
+        console.log('✅ Step 5: Extracted from result.data');
       } else if (Array.isArray(result?.contacts)) {
         newContacts = result.contacts;
+        console.log('✅ Step 5: Extracted from result.contacts');
       } else if (Array.isArray(result?.list)) {
         newContacts = result.list;
+        console.log('✅ Step 5: Extracted from result.list');
       } else if (Array.isArray(result)) {
         newContacts = result;
+        console.log('✅ Step 5: Extracted from result (direct array)');
+      } else {
+        console.log('❌ Step 5: No valid array found in response');
+        console.log('   - Response keys:', Object.keys(result || {}));
       }
 
-      // console.log('Extracted contacts:', newContacts.length, 'items');
+      console.log('📊 Step 6: Final Extracted Contacts:');
+      console.log('   - Count:', newContacts.length);
+      if (newContacts.length > 0) {
+        console.log('   - First contact:', JSON.stringify(newContacts[0], null, 2));
+      }
 
       if (append) {
-        // Append new contacts to existing ones, avoiding duplicates
+        // Append new contacts to existing ones
         setContacts(prevContacts => {
-          const existingIds = new Set(prevContacts.map(c => 
-            c.id?.toString() || c.contact_id?.toString() || `${c.created_at}_${c.name}`
-          ));
-          const uniqueNewContacts = newContacts.filter(c => {
-            const contactId = c.id?.toString() || c.contact_id?.toString() || `${c.created_at}_${c.name}`;
-            return !existingIds.has(contactId);
-          });
-          return [...prevContacts, ...uniqueNewContacts];
+          const updated = [...prevContacts, ...newContacts];
+          console.log('📝 Step 7: Appended contacts. Total:', updated.length);
+          return updated;
         });
       } else {
         // Replace contacts for first page
         setContacts(newContacts);
+        console.log('📝 Step 7: Set contacts. Total:', newContacts.length);
       }
 
       // Check if there are more pages
       if (newContacts.length < 20) {
         setHasMore(false);
+        console.log('📄 Step 8: No more pages (less than 20 items)');
       } else {
         setHasMore(true);
+        console.log('📄 Step 8: More pages available');
       }
 
     } catch (error: any) {
-      console.log('Error fetching contact list:::::', error);
-      console.log('Error details:', error?.message, error?.stack);
+      console.log('❌ Step ERROR: Error fetching contact list');
+      console.log('   - Error:', error);
+      console.log('   - Error Message:', error?.message);
+      console.log('   - Error Stack:', error?.stack);
       if (!append) {
         setContacts([]);
       }
     } finally {
       setLoadingContacts(false);
       setLoadingMore(false);
-      setIsFetching(false);
+      console.log('✅ Step FINAL: Loading states reset');
     }
   };
 
   const loadMoreContacts = useCallback(() => {
-    if (!loadingMore && hasMore && !loadingContacts && vendorId) {
+    if (!loadingMore && hasMore && !loadingContacts) {
       const nextPage = currentPage + 1;
       setCurrentPage(nextPage);
       getContactList(nextPage, true);
     }
-  }, [loadingMore, hasMore, loadingContacts, vendorId, currentPage]);
+  }, [loadingMore, hasMore, loadingContacts, currentPage]);
 
   // Fetch contacts when screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      let isMounted = true;
-      
-      const fetchData = async () => {
-        const id = await getVendorId();
-        if (isMounted && id) {
-          setVendorId(id);
-          setCurrentPage(1);
-          setHasMore(true);
-          // Call directly without setTimeout for better performance
-          await getContactList(1, false);
-        } else if (isMounted) {
-          console.log('Failed to get vendor ID on screen focus');
-          setLoadingContacts(false);
-        }
-      };
-      
-      fetchData();
-      
-      return () => {
-        isMounted = false;
-      };
+      setCurrentPage(1);
+      setHasMore(true);
+      // getContactList will fetch vendor ID internally from API
+      getContactList(1, false);
     }, [])
+  );
+
+  const renderContactCard = ({ item: contact }: { item: any }) => (
+    <View style={styles.card}>
+      {/* TITLE */}
+      <Text style={styles.title}>
+        {contact.project_title || contact.pickup_location || contact.pickupLocation || 'Project Title'} 
+        {contact.pickup_location || contact.pickupLocation ? ` to ${contact.dropoff_location || contact.dropoffLocation || 'Dropoff'} ${contact.vehicle_type || contact.vehicleType || ''} Cab` : ''}
+      </Text>
+
+      {/* DESCRIPTION */}
+      <Text style={styles.desc}>
+        {contact.description || contact.desc || contact.project_title || 'The customer wants to book a cab trip.'}
+      </Text>
+
+      {/* BUDGET INFO */}
+      {contact.min_budget && contact.max_budget_amount && (
+        <Text style={styles.pickup}>
+          Budget: <Text style={styles.pickupBold}>₹{contact.min_budget} - ₹{contact.max_budget_amount}</Text>
+        </Text>
+      )}
+
+      {/* CREATED DATE */}
+      {contact.created_at && (
+        <Text style={styles.pickup}>
+          Created: <Text style={styles.pickupBold}>
+            {new Date(contact.created_at).toLocaleDateString('en-IN', { 
+              day: 'numeric', 
+              month: 'short', 
+              year: 'numeric' 
+            })}
+          </Text>
+        </Text>
+      )}
+
+      <View style={styles.cardDivider} />
+      
+      {/* USER ROW */}
+      <View style={styles.userRow}>
+        {/* LEFT USER INFO */}
+        <View style={styles.userLeft}>
+          <View>
+            <Text style={styles.userName}>
+              Name: <Text style={styles.userNameValue}>
+                {contact.name || contact.user_name || contact.userName || 'Customer'}
+              </Text>
+            </Text>
+
+            {contact.city && (
+              <Text style={styles.cityText}>
+                {contact.city}
+              </Text>
+            )}
+          </View>
+        </View>
+
+        {/* RIGHT PHONE NUMBER */}
+        <View style={styles.phoneRight}>
+          <Text style={styles.phoneLabel}>Phone Number</Text>
+          <Text style={styles.phoneValue} numberOfLines={1}>
+            {contact.phone || contact.phone_number || contact.phoneNumber || contact.encrypted_mobile || 'N/A'}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderHeader = () => (
+    <>
+      <Text style={styles.headerTitle}>My Leads ({contacts.length})</Text>
+      <View style={styles.headerDivider} />
+    </>
+  );
+
+  const renderFooter = () => {
+    if (loadingMore && hasMore) {
+      return (
+        <View style={styles.loadingMoreContainer}>
+          <ActivityIndicator size="small" color={Colors.sooprsblue} />
+          <Text style={styles.loadingMoreText}>Loading more...</Text>
+        </View>
+      );
+    }
+    return <View style={{ height: hp(5) }} />;
+  };
+
+  const renderEmpty = () => (
+    <View style={styles.emptyContainer}>
+      <Text style={styles.emptyText}>No contacts available</Text>
+    </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-
-        {/* HEADER */}
-        <Text style={styles.headerTitle}>My Leads ({contacts.length})</Text>
-
-        <View style={styles.headerDivider} />
-
-        {/* CONTACTS LIST */}
-        {loadingContacts ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors.sooprsblue} />
-            <Text style={styles.loadingText}>Loading contacts...</Text>
-          </View>
-        ) : contacts.length > 0 ? (
-          <FlatList
-            data={contacts}
-            keyExtractor={(item, index) => {
-              // Create a unique key combining multiple fields to ensure uniqueness
-              const id = item.id?.toString();
-              const contactId = item.contact_id?.toString();
-              const timestamp = item.created_at || '';
-              const name = item.name || item.user_name || '';
-              
-              // Use ID if available, otherwise create composite key
-              if (id) {
-                return `contact_${id}_${index}`;
-              } else if (contactId) {
-                return `contact_${contactId}_${index}`;
-              } else {
-                // Fallback: combine multiple fields with index for uniqueness
-                return `contact_${timestamp}_${name}_${index}`;
-              }
-            }}
-            removeClippedSubviews={true}
-            maxToRenderPerBatch={10}
-            updateCellsBatchingPeriod={50}
-            initialNumToRender={10}
-            windowSize={10}
-            renderItem={({ item: contact, index }) => (
-              <View style={styles.card}>
-                {/* TITLE */}
-                <Text style={styles.title}>
-                  {contact.project_title || contact.pickup_location || contact.pickupLocation || 'Project Title'} 
-                  {contact.pickup_location || contact.pickupLocation ? ` to ${contact.dropoff_location || contact.dropoffLocation || 'Dropoff'} ${contact.vehicle_type || contact.vehicleType || ''} Cab` : ''}
-                </Text>
-
-                {/* DESCRIPTION */}
-                <Text style={styles.desc}>
-                  {contact.description || contact.desc || contact.project_title || 'The customer wants to book a cab trip.'}
-                </Text>
-
-                {/* BUDGET INFO */}
-                {contact.min_budget && contact.max_budget_amount && (
-                  <Text style={styles.pickup}>
-                    Budget: <Text style={styles.pickupBold}>₹{contact.min_budget} - ₹{contact.max_budget_amount}</Text>
-                  </Text>
-                )}
-
-                {/* CREATED DATE */}
-                {contact.created_at && (
-                  <Text style={styles.pickup}>
-                    Created: <Text style={styles.pickupBold}>
-                      {new Date(contact.created_at).toLocaleDateString('en-IN', { 
-                        day: 'numeric', 
-                        month: 'short', 
-                        year: 'numeric' 
-                      })}
-                    </Text>
-                  </Text>
-                )}
-
-                <View style={styles.cardDivider} />
-                
-                {/* USER ROW */}
-                <View style={styles.userRow}>
-                  {/* LEFT USER INFO */}
-                  <View style={styles.userLeft}>
-                    <Image 
-                      source={contact.profile_image || contact.profileImage ? { uri: contact.profile_image || contact.profileImage } : Images.profileImage} 
-                      style={styles.avatar} 
-                    />
-
-                    <View>
-                      <Text style={styles.userName}>
-                        {contact.name || contact.user_name || contact.userName || 'Customer'}
-                      </Text>
-
-                      {contact.city && (
-                        <Text style={styles.cityText}>
-                          {contact.city}
-                        </Text>
-                      )}
-                    </View>
-                  </View>
-
-                  {/* RIGHT PHONE NUMBER */}
-                  <View style={styles.phoneRight}>
-                    <Text style={styles.phoneLabel}>Phone Number</Text>
-                    <Text style={styles.phoneValue}>
-                      {contact.phone || contact.phone_number || contact.phoneNumber || contact.encrypted_mobile || 'N/A'}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            )}
-            onEndReached={loadMoreContacts}
-            onEndReachedThreshold={0.5}
-            ListFooterComponent={() => 
-              loadingMore ? (
-                <View style={styles.loadingMoreContainer}>
-                  <ActivityIndicator size="small" color={Colors.sooprsblue} />
-                  <Text style={styles.loadingMoreText}>Loading more...</Text>
-                </View>
-              ) : null
-            }
-            scrollEnabled={false}
-          />
-        ) : (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No contacts available</Text>
-          </View>
-        )}
-
-        <View style={{ height: hp(10) }} />
-      </ScrollView>
+      {loadingContacts ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.sooprsblue} />
+          <Text style={styles.loadingText}>Loading contacts...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={contacts}
+          keyExtractor={(item, index) => item.id?.toString() || item.contact_id?.toString() || index.toString()}
+          renderItem={renderContactCard}
+          ListHeaderComponent={renderHeader}
+          ListFooterComponent={renderFooter}
+          ListEmptyComponent={renderEmpty}
+          onEndReached={loadMoreContacts}
+          onEndReachedThreshold={0.5}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={contacts.length === 0 ? { flexGrow: 1 } : {}}
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -402,16 +401,15 @@ const styles = StyleSheet.create({
   userLeft: {
     flexDirection: "row",
     alignItems: "center",
-  },
-
-  avatar: {
-    width: wp(10),
-    height: wp(10),
-    borderRadius: wp(5),
-    marginRight: wp(2),
+    flex: 1,
   },
 
   userName: {
+    fontSize: FSize.fs13,
+    fontWeight: "700",
+    color: Colors.black,
+  },
+  userNameValue: {
     fontSize: FSize.fs13,
     fontWeight: "700",
     color: Colors.black,
@@ -443,6 +441,8 @@ ratingText: {
 
   phoneRight: {
     alignItems: "flex-end",
+    flexShrink: 0,
+    marginLeft: wp(2),
   },
 
   phoneLabel: {
@@ -466,6 +466,8 @@ cardDivider: {
     fontWeight: "600",
     color: Colors.blackgray,
     marginTop: hp(0.3),
+    flexShrink: 0,
+    maxWidth: wp(45),
   },
   loadingContainer: {
     padding: wp(5),
