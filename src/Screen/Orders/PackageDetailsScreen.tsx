@@ -10,6 +10,7 @@ import {
   StatusBar,
   Alert,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 // @ts-ignore
@@ -19,13 +20,15 @@ import Colors from '../../assets/commonCSS/Colors';
 import Images from '../../assets/image';
 import FSize from '../../assets/commonCSS/FSize';
 import { mobile_siteConfig } from '../../services/mobile-siteConfig';
-import { getDataWithToken } from '../../services/mobile-api';
+import { getDataWithToken, PutDataWithToken } from '../../services/mobile-api';
+
+type OrderStatus = 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED';
 
 interface OrderDetailsResponse {
   order_id: number;
   order_id_generated: string;
   order_type: string;
-  order_status: 'CONFIRMED' | 'COMPLETED' | 'PENDING' | 'CANCELLED';
+  order_status: OrderStatus;
   payment_status: string;
   order_created_at: string;
   package: {
@@ -61,6 +64,11 @@ const PackageDetailsScreen = () => {
   const routeParams = route.params as { order_id: number };
   const [orderData, setOrderData] = useState<OrderDetailsResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<OrderStatus | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const orderStatusOptions: OrderStatus[] = ['PENDING', 'CONFIRMED', 'REJECTED', 'CANCELLED', 'COMPLETED'];
 
   const formatPrice = (price: number) => {
     return `₹${price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -141,9 +149,63 @@ const PackageDetailsScreen = () => {
         return { bg: '#FFF3E0', border: '#FF9800', text: '#FF9800' };
       case 'CANCELLED':
         return { bg: '#FFEBEE', border: '#F44336', text: '#F44336' };
+      case 'REJECTED':
+        return { bg: '#FFEBEE', border: '#F44336', text: '#F44336' };
       default:
         return { bg: '#F5F5F5', border: '#9E9E9E', text: '#9E9E9E' };
     }
+  };
+
+  const handleStatusClick = () => {
+    setSelectedStatus(orderData?.order_status || null);
+    setModalVisible(true);
+  };
+
+  const handleStatusSelect = (status: OrderStatus) => {
+    setSelectedStatus(status);
+  };
+
+  const handleSubmitStatus = () => {
+    if (!selectedStatus) {
+      Alert.alert('Error', 'Please select a status');
+      return;
+    }
+
+    if (selectedStatus === orderData?.order_status) {
+      Alert.alert('Info', 'Status is already set to ' + selectedStatus);
+      setModalVisible(false);
+      return;
+    }
+
+    setSubmitting(true);
+    
+    PutDataWithToken(
+      { order_status: selectedStatus },
+      `user/vendor/update-order-status-vendor/${routeParams.order_id}`
+    )
+      .then((res: any) => {
+        console.log('Status update response', res);
+        if (res?.success) {
+          Alert.alert('Success', 'Order status updated successfully');
+          setModalVisible(false);
+          // Refresh order details
+          getOrderDetailsApi();
+        } else {
+          Alert.alert('Error', res?.message || 'Failed to update order status');
+        }
+      })
+      .catch((err: any) => {
+        console.log('Error updating status', err);
+        Alert.alert('Error', 'Failed to update order status');
+      })
+      .finally(() => {
+        setSubmitting(false);
+      });
+  };
+
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    setSelectedStatus(null);
   };
 
   const getPaymentStatusColor = (status: string) => {
@@ -237,11 +299,13 @@ const PackageDetailsScreen = () => {
           <View style={styles.statusRow}>
             <View style={styles.statusContainer}>
               <Text style={styles.statusLabel}>Order Status</Text>
-              <View style={[styles.statusBadge, { backgroundColor: statusColors.bg, borderColor: statusColors.border }]}>
+              <TouchableOpacity 
+                onPress={handleStatusClick}
+                style={[styles.statusBadge, { backgroundColor: statusColors.bg, borderColor: statusColors.border }]}>
                 <Text style={[styles.statusText, { color: statusColors.text }]}>
                   {orderData.order_status === 'CONFIRMED' ? 'PROCESSING' : orderData.order_status}
                 </Text>
-              </View>
+              </TouchableOpacity>
             </View>
             <View style={styles.statusContainer}>
               <Text style={styles.statusLabel}>Payment Status</Text>
@@ -347,6 +411,66 @@ const PackageDetailsScreen = () => {
           )}
         </View>
       </ScrollView>
+
+      {/* Status Selection Modal */}
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={handleCloseModal}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Order Status</Text>
+              <TouchableOpacity onPress={handleCloseModal} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalScrollView}>
+              {orderStatusOptions.map((status) => {
+                const isSelected = selectedStatus === status;
+                const statusColor = getStatusColor(status);
+                return (
+                  <TouchableOpacity
+                    key={status}
+                    style={[
+                      styles.statusOption,
+                      isSelected && { backgroundColor: statusColor.bg, borderColor: statusColor.border },
+                    ]}
+                    onPress={() => handleStatusSelect(status)}>
+                    <Text
+                      style={[
+                        styles.statusOptionText,
+                        isSelected && { color: statusColor.text, fontWeight: '700' },
+                      ]}>
+                      {status}
+                    </Text>
+                    {isSelected && (
+                      <View style={[styles.checkmark, { backgroundColor: statusColor.text }]}>
+                        <Text style={styles.checkmarkText}>✓</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
+                onPress={handleSubmitStatus}
+                disabled={submitting || !selectedStatus}>
+                {submitting ? (
+                  <ActivityIndicator size="small" color={Colors.white} />
+                ) : (
+                  <Text style={styles.submitButtonText}>Submit</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -557,5 +681,96 @@ const styles = StyleSheet.create({
     marginTop: hp(2),
     fontSize: FSize.fs14,
     color: Colors.gray,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: wp(5),
+    borderTopRightRadius: wp(5),
+    maxHeight: hp(70),
+    paddingBottom: hp(2),
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: wp(5),
+    paddingVertical: hp(2),
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.lightgrey2,
+  },
+  modalTitle: {
+    fontSize: FSize.fs18,
+    fontWeight: '700',
+    color: Colors.black,
+  },
+  closeButton: {
+    width: wp(8),
+    height: wp(8),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    fontSize: FSize.fs20,
+    color: Colors.gray,
+    fontWeight: '600',
+  },
+  modalScrollView: {
+    maxHeight: hp(40),
+    paddingHorizontal: wp(5),
+  },
+  statusOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: hp(1.5),
+    paddingHorizontal: wp(4),
+    marginVertical: hp(0.5),
+    borderRadius: wp(2),
+    borderWidth: 1,
+    borderColor: Colors.lightgrey2,
+    backgroundColor: Colors.white,
+  },
+  statusOptionText: {
+    fontSize: FSize.fs15,
+    color: Colors.black,
+    fontWeight: '500',
+  },
+  checkmark: {
+    width: wp(6),
+    height: wp(6),
+    borderRadius: wp(3),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkmarkText: {
+    color: Colors.white,
+    fontSize: FSize.fs12,
+    fontWeight: '700',
+  },
+  modalFooter: {
+    paddingHorizontal: wp(5),
+    paddingTop: hp(2),
+    borderTopWidth: 1,
+    borderTopColor: Colors.lightgrey2,
+  },
+  submitButton: {
+    backgroundColor: Colors.sooprsblue,
+    paddingVertical: hp(1.5),
+    borderRadius: wp(2),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  submitButtonDisabled: {
+    opacity: 0.6,
+  },
+  submitButtonText: {
+    color: Colors.white,
+    fontSize: FSize.fs16,
+    fontWeight: '700',
   },
 });

@@ -27,6 +27,7 @@ const MyLeadsScreen = () => {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [vendorId, setVendorId] = useState<string | null>(null);
+  const [isFetching, setIsFetching] = useState(false);
 
   const getVendorId = async () => {
     try {
@@ -55,6 +56,12 @@ const MyLeadsScreen = () => {
   };
 
   const getContactList = async (page: number = 1, append: boolean = false) => {
+    // Prevent duplicate API calls
+    if (isFetching) {
+      console.log('Already fetching contacts, skipping duplicate call');
+      return;
+    }
+
     // Ensure vendor ID is available
     let currentVendorId = vendorId;
     if (!currentVendorId) {
@@ -63,6 +70,7 @@ const MyLeadsScreen = () => {
         console.log('Vendor ID not found - cannot fetch contacts');
         setLoadingContacts(false);
         setLoadingMore(false);
+        setIsFetching(false);
         return;
       }
       currentVendorId = id;
@@ -70,6 +78,7 @@ const MyLeadsScreen = () => {
     }
 
     try {
+      setIsFetching(true);
       if (append) {
         setLoadingMore(true);
       } else {
@@ -89,7 +98,7 @@ const MyLeadsScreen = () => {
       });
 
       const result: any = await postDataWithTokenBase2(formData, mobile_siteConfig.GET_CONTACT_LIST);
-      console.log('Contact list API response (page', page, '):::::', JSON.stringify(result, null, 2));
+      // console.log('Contact list API response (page', page, '):::::', JSON.stringify(result, null, 2));
 
       let newContacts: any[] = [];
 
@@ -118,11 +127,20 @@ const MyLeadsScreen = () => {
         newContacts = result;
       }
 
-      console.log('Extracted contacts:', newContacts.length, 'items');
+      // console.log('Extracted contacts:', newContacts.length, 'items');
 
       if (append) {
-        // Append new contacts to existing ones
-        setContacts(prevContacts => [...prevContacts, ...newContacts]);
+        // Append new contacts to existing ones, avoiding duplicates
+        setContacts(prevContacts => {
+          const existingIds = new Set(prevContacts.map(c => 
+            c.id?.toString() || c.contact_id?.toString() || `${c.created_at}_${c.name}`
+          ));
+          const uniqueNewContacts = newContacts.filter(c => {
+            const contactId = c.id?.toString() || c.contact_id?.toString() || `${c.created_at}_${c.name}`;
+            return !existingIds.has(contactId);
+          });
+          return [...prevContacts, ...uniqueNewContacts];
+        });
       } else {
         // Replace contacts for first page
         setContacts(newContacts);
@@ -144,36 +162,42 @@ const MyLeadsScreen = () => {
     } finally {
       setLoadingContacts(false);
       setLoadingMore(false);
+      setIsFetching(false);
     }
   };
 
-  const loadMoreContacts = () => {
+  const loadMoreContacts = useCallback(() => {
     if (!loadingMore && hasMore && !loadingContacts && vendorId) {
       const nextPage = currentPage + 1;
       setCurrentPage(nextPage);
       getContactList(nextPage, true);
     }
-  };
+  }, [loadingMore, hasMore, loadingContacts, vendorId, currentPage]);
 
   // Fetch contacts when screen comes into focus
   useFocusEffect(
     useCallback(() => {
+      let isMounted = true;
+      
       const fetchData = async () => {
         const id = await getVendorId();
-        if (id) {
+        if (isMounted && id) {
           setVendorId(id);
           setCurrentPage(1);
           setHasMore(true);
-          // Small delay to ensure vendorId state is updated
-          setTimeout(() => {
-            getContactList(1, false);
-          }, 100);
-        } else {
+          // Call directly without setTimeout for better performance
+          await getContactList(1, false);
+        } else if (isMounted) {
           console.log('Failed to get vendor ID on screen focus');
           setLoadingContacts(false);
         }
       };
+      
       fetchData();
+      
+      return () => {
+        isMounted = false;
+      };
     }, [])
   );
 
@@ -195,8 +219,29 @@ const MyLeadsScreen = () => {
         ) : contacts.length > 0 ? (
           <FlatList
             data={contacts}
-            keyExtractor={(item, index) => item.id?.toString() || item.contact_id?.toString() || index.toString()}
-            renderItem={({ item: contact }) => (
+            keyExtractor={(item, index) => {
+              // Create a unique key combining multiple fields to ensure uniqueness
+              const id = item.id?.toString();
+              const contactId = item.contact_id?.toString();
+              const timestamp = item.created_at || '';
+              const name = item.name || item.user_name || '';
+              
+              // Use ID if available, otherwise create composite key
+              if (id) {
+                return `contact_${id}_${index}`;
+              } else if (contactId) {
+                return `contact_${contactId}_${index}`;
+              } else {
+                // Fallback: combine multiple fields with index for uniqueness
+                return `contact_${timestamp}_${name}_${index}`;
+              }
+            }}
+            removeClippedSubviews={true}
+            maxToRenderPerBatch={10}
+            updateCellsBatchingPeriod={50}
+            initialNumToRender={10}
+            windowSize={10}
+            renderItem={({ item: contact, index }) => (
               <View style={styles.card}>
                 {/* TITLE */}
                 <Text style={styles.title}>
@@ -290,7 +335,10 @@ const MyLeadsScreen = () => {
 export default MyLeadsScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.white },
+  container: { flex: 1, 
+    backgroundColor: Colors.white,
+    paddingTop: hp(3),
+  },
 
   headerTitle: {
     fontSize: FSize.fs16,

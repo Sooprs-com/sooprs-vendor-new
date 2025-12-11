@@ -20,7 +20,7 @@ import { mobile_siteConfig } from '../../services/mobile-siteConfig';
 
 const Home = () => {
   const navigation = useNavigation();
-  const [userName, setUserName] = useState('Ankur');
+  const [userName, setUserName] = useState('');
   const [totalEarnings, setTotalEarnings] = useState('10,550');
   const [activeTrips, setActiveTrips] = useState(8);
   const [rating, setRating] = useState(4.9);
@@ -30,11 +30,15 @@ const Home = () => {
   const [categoryId, setCategoryId] = useState<string>('1');
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [status, setStatus] = useState<any>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [expandedLeads, setExpandedLeads] = useState<Set<string | number>>(new Set());
+  const [loadingUserDetails, setLoadingUserDetails] = useState(true);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
 
   const getUserDetails = async () => {
     try {
+      setLoadingUserDetails(true);
       const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
       const data: any = await res.json();
       console.log('User details data:::::', data);
@@ -43,9 +47,21 @@ const Home = () => {
       if (data?.success && data?.vendorDetail) {
         const isProfileCompleted = data.vendorDetail.is_profile_completed;
         
+        // Set stats data
+        if (data.stats) {
+          setStatus(data.stats);
+        }
+        
         // Update user name from API response
         if (data.vendorDetail.name) {
           setUserName(data.vendorDetail.name);
+        } else {
+          setUserName('User');
+        }
+        
+        // Set profile image from API response
+        if (data.vendorDetail.image) {
+          setProfileImage(data.vendorDetail.image);
         }
         
         // Get category_id from vendor profile
@@ -61,6 +77,9 @@ const Home = () => {
       }
     } catch (err: any) {
       console.log('Error fetching user details:::::', err);
+      setUserName('User');
+    } finally {
+      setLoadingUserDetails(false);
     }
   };
 
@@ -157,6 +176,27 @@ const Home = () => {
     }, [])
   );
 
+  // Get image URI helper function
+  const getImageUri = (imagePath: string | null): any => {
+    if (imagePath) {
+      // const baseUrl = mobile_siteConfig.BASE_URL.replace('/api/', '');
+      return { uri:  imagePath };
+    }
+    return Images.profileImage;
+  };
+
+  // Show loader while user details are loading
+  if (loadingUserDetails) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.userDetailsLoadingContainer}>
+          <ActivityIndicator size="large" color={Colors.sooprsblue} />
+          <Text style={styles.userDetailsLoadingText}>Loading user details...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
     <ScrollView showsVerticalScrollIndicator={false}>
@@ -164,7 +204,7 @@ const Home = () => {
 
       {/* ================= HEADER ================= */}
       <View style={styles.header}>
-        <Text style={styles.helloText}>Hello Ankur</Text>
+        <Text style={styles.helloText}>Hello {userName || 'User'}</Text>
 
         <View style={styles.headerRight}>
           <TouchableOpacity>
@@ -172,7 +212,7 @@ const Home = () => {
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => navigation.navigate('ProfileScreen' as never)}>
-            <Image source={Images.profileImage} style={styles.profileImg} />
+            <Image source={getImageUri(profileImage)} style={styles.profileImg} />
           </TouchableOpacity>
         </View>
       </View>
@@ -188,22 +228,22 @@ const Home = () => {
         {/* Earnings */}
         <View style={styles.statCard}>
           <Image source={Images.walletIcon} style={styles.statIcon} />
-          <Text style={styles.statValue}>₹ 10,550</Text>
-          <Text style={styles.statLabel}>Total Earnings</Text>
+          <Text style={styles.statValue}>₹ {status?.wallet_balance || '0'}</Text>
+          <Text style={styles.statLabel}>Wallet Balance</Text>
         </View>
 
         {/* Active Trips */}
         <View style={styles.statCard}>
           <Image source={Images.activeTripIcon} style={styles.statIcon} />
-          <Text style={styles.statValue}>8</Text>
-          <Text style={styles.statLabel}>Active Trips</Text>
+          <Text style={styles.statValue}>{status?.total_orders || '0'}</Text>
+          <Text style={styles.statLabel}>Total Orders</Text>
         </View>
 
         {/* Rating */}
         <View style={styles.statCard}>
           <Image source={Images.ratingStar} style={styles.statIcon} />
-          <Text style={styles.statValue}>4.9</Text>
-          <Text style={styles.statLabel}>Rating</Text>
+          <Text style={styles.statValue}>{status?.total_leads || '0'}</Text>
+          <Text style={styles.statLabel}>Total leads</Text>
         </View>
       </View>
 
@@ -334,8 +374,8 @@ const styles = StyleSheet.create({
    
   },
   profileImg: {
-    width: wp(8),
-    height: wp(8),
+    width: wp(6),
+    height: wp(6),
     borderRadius: wp(5),
   },
 headerDivider: {
@@ -407,7 +447,9 @@ headerDivider: {
   reqCard: {
     marginHorizontal: wp(5),
     backgroundColor: Colors.white,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: Colors.lightgrey2,
+    // elevation: 3,
     marginTop: hp(2),
     padding: wp(4),
     borderRadius: wp(3),
@@ -500,5 +542,16 @@ headerDivider: {
     fontSize: FSize.fs12,
     color: Colors.sooprsblue,
     fontWeight: '600',
+  },
+  userDetailsLoadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: hp(20),
+  },
+  userDetailsLoadingText: {
+    fontSize: FSize.fs14,
+    color: Colors.grey,
+    marginTop: hp(2),
   },
 });
