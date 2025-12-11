@@ -32,24 +32,33 @@ const MyLeadsScreen = () => {
     try {
       // Try to get vendor_id from AsyncStorage first
       let id = await AsyncStorage.getItem(mobile_siteConfig.UID);
+      console.log('🔍 Step 1: Vendor ID from AsyncStorage:', id);
       
       if (!id) {
+        console.log('⚠️ Vendor ID not in AsyncStorage, fetching from API...');
         // If not in AsyncStorage, get from user details API
         const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
         const data: any = await res.json();
+        console.log('📋 User Details API Response:', JSON.stringify(data, null, 2));
+        
         if (data?.success && data?.vendorDetail?.id) {
           id = String(data.vendorDetail.id);
           await AsyncStorage.setItem(mobile_siteConfig.UID, id);
+          console.log('✅ Vendor ID saved to AsyncStorage:', id);
+        } else {
+          console.log('❌ Vendor ID not found in API response');
         }
       }
       
       if (id) {
         setVendorId(id);
+        console.log('✅ Final Vendor ID:', id);
         return id;
       }
+      console.log('❌ No Vendor ID found');
       return null;
     } catch (error) {
-      console.log('Error getting vendor ID:', error);
+      console.log('❌ Error getting vendor ID:', error);
       return null;
     }
   };
@@ -57,16 +66,20 @@ const MyLeadsScreen = () => {
   const getContactList = async (page: number = 1, append: boolean = false) => {
     // Ensure vendor ID is available
     let currentVendorId = vendorId;
+    console.log('🔍 Step 2: Current vendorId state:', currentVendorId);
+    
     if (!currentVendorId) {
+      console.log('⚠️ Vendor ID not in state, fetching...');
       const id = await getVendorId();
       if (!id) {
-        console.log('Vendor ID not found - cannot fetch contacts');
+        console.log('❌ Vendor ID not found - cannot fetch contacts');
         setLoadingContacts(false);
         setLoadingMore(false);
         return;
       }
       currentVendorId = id;
       setVendorId(id);
+      console.log('✅ Vendor ID set to state:', currentVendorId);
     }
 
     try {
@@ -82,14 +95,22 @@ const MyLeadsScreen = () => {
       formData.append('page', String(page));
       formData.append('limit', '20');
 
-      console.log('Fetching contact list with:', {
-        id: currentVendorId,
-        page: page,
-        limit: 20
-      });
+      console.log('📤 Step 3: API Request Details:');
+      console.log('   - Endpoint:', mobile_siteConfig.BASE_URL2 + mobile_siteConfig.GET_CONTACT_LIST);
+      console.log('   - FormData id:', currentVendorId);
+      console.log('   - FormData page:', page);
+      console.log('   - FormData limit: 20');
 
       const result: any = await postDataWithTokenBase2(formData, mobile_siteConfig.GET_CONTACT_LIST);
-      console.log('Contact list API response (page', page, '):::::', JSON.stringify(result, null, 2));
+      
+      console.log('📥 Step 4: API Response:');
+      console.log('   - Full Response:', JSON.stringify(result, null, 2));
+      console.log('   - Response Status:', result?.status);
+      console.log('   - Response Message:', result?.msg);
+      console.log('   - Has result.data:', !!result?.data);
+      console.log('   - Has result.data.records:', !!result?.data?.records);
+      console.log('   - result.data.records type:', Array.isArray(result?.data?.records) ? 'Array' : typeof result?.data?.records);
+      console.log('   - result.data.records length:', result?.data?.records?.length || 0);
 
       let newContacts: any[] = [];
 
@@ -97,53 +118,81 @@ const MyLeadsScreen = () => {
       // Check for result.data.records (actual API response structure)
       if (result?.data?.records && Array.isArray(result.data.records)) {
         newContacts = result.data.records;
+        console.log('✅ Step 5: Extracted from result.data.records');
       } else if (result?.success !== undefined) {
         // Response has success field
         if (result.success && Array.isArray(result?.data)) {
           newContacts = result.data;
+          console.log('✅ Step 5: Extracted from result.data (with success)');
         } else if (result.success && Array.isArray(result?.contacts)) {
           newContacts = result.contacts;
+          console.log('✅ Step 5: Extracted from result.contacts');
         } else if (result.success && Array.isArray(result?.list)) {
           newContacts = result.list;
+          console.log('✅ Step 5: Extracted from result.list');
         } else if (Array.isArray(result?.data)) {
           newContacts = result.data;
+          console.log('✅ Step 5: Extracted from result.data');
+        } else {
+          console.log('⚠️ Step 5: No array found in success response');
         }
       } else if (Array.isArray(result?.data)) {
         newContacts = result.data;
+        console.log('✅ Step 5: Extracted from result.data');
       } else if (Array.isArray(result?.contacts)) {
         newContacts = result.contacts;
+        console.log('✅ Step 5: Extracted from result.contacts');
       } else if (Array.isArray(result?.list)) {
         newContacts = result.list;
+        console.log('✅ Step 5: Extracted from result.list');
       } else if (Array.isArray(result)) {
         newContacts = result;
+        console.log('✅ Step 5: Extracted from result (direct array)');
+      } else {
+        console.log('❌ Step 5: No valid array found in response');
+        console.log('   - Response keys:', Object.keys(result || {}));
       }
 
-      console.log('Extracted contacts:', newContacts.length, 'items');
+      console.log('📊 Step 6: Final Extracted Contacts:');
+      console.log('   - Count:', newContacts.length);
+      if (newContacts.length > 0) {
+        console.log('   - First contact:', JSON.stringify(newContacts[0], null, 2));
+      }
 
       if (append) {
         // Append new contacts to existing ones
-        setContacts(prevContacts => [...prevContacts, ...newContacts]);
+        setContacts(prevContacts => {
+          const updated = [...prevContacts, ...newContacts];
+          console.log('📝 Step 7: Appended contacts. Total:', updated.length);
+          return updated;
+        });
       } else {
         // Replace contacts for first page
         setContacts(newContacts);
+        console.log('📝 Step 7: Set contacts. Total:', newContacts.length);
       }
 
       // Check if there are more pages
       if (newContacts.length < 20) {
         setHasMore(false);
+        console.log('📄 Step 8: No more pages (less than 20 items)');
       } else {
         setHasMore(true);
+        console.log('📄 Step 8: More pages available');
       }
 
     } catch (error: any) {
-      console.log('Error fetching contact list:::::', error);
-      console.log('Error details:', error?.message, error?.stack);
+      console.log('❌ Step ERROR: Error fetching contact list');
+      console.log('   - Error:', error);
+      console.log('   - Error Message:', error?.message);
+      console.log('   - Error Stack:', error?.stack);
       if (!append) {
         setContacts([]);
       }
     } finally {
       setLoadingContacts(false);
       setLoadingMore(false);
+      console.log('✅ Step FINAL: Loading states reset');
     }
   };
 
