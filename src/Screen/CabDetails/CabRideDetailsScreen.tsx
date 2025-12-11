@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,206 +9,280 @@ import {
   StatusBar,
   TextInput,
   Alert,
+  FlatList,
+  Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Colors from '../../assets/commonCSS/Colors';
 import { hp, wp } from '../../assets/commonCSS/GlobalCSS';
 import FSize from '../../assets/commonCSS/FSize';
 import Images from '../../assets/image';
+import { getDataWithToken } from '../../services/mobile-api';
+import { mobile_siteConfig } from '../../services/mobile-siteConfig';
 
-const CabRideReviewScreen = () => {
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+const CabRideReviewScreen = ({route}: any) => {
+  const { data } = route.params;
   const navigation = useNavigation();
+  const carouselRef = useRef<FlatList>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [packageData, setPackageData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  // STATIC DUMMY DATA
-  const pickupLocation = "Delhi";
-  const pickupCity = "Delhi";
-  const destinationLocation = "Manali";
-  const destinationCity = "Manali";
+  // Get image URI helper function
+  const getImageUri = (imagePath: string | null): any => {
+    if (imagePath) {
+      const baseUrl = mobile_siteConfig.BASE_URL.replace('/api/', '');
+      return { uri: baseUrl + imagePath };
+    }
+    return Images.profileImage; // Default image
+  };
 
-  const tripDate = "15 December";
-  const people = "4";
-  const rating = 4.5;
-  const reviews = 150;
+  // Get carousel images from package data
+  const getCarouselImages = () => {
+    if (!packageData?.package) return [Images.profileImage];
+    
+    const images = [];
+    if (packageData.package.thumbnail_image) {
+      images.push(getImageUri(packageData.package.thumbnail_image));
+    }
+    if (packageData.package.other_images && Array.isArray(packageData.package.other_images)) {
+      packageData.package.other_images.forEach((img: string) => {
+        images.push(getImageUri(img));
+      });
+    }
+    return images.length > 0 ? images : [Images.profileImage];
+  };
 
-  const carName = "Mahindra SUV";
-  const seats = "4 Seats";
-  const ac = "AC";
+  const packageDetails = () => {
+    setLoading(true);
+    getDataWithToken({}, mobile_siteConfig.GET_PACKAGE_DETAILS + data.slug)
+      .then((res: any) => res.json())
+      .then((res: any) => {
+        console.log("Package details", res);
+        if (res?.success && res?.package) {
+          setPackageData(res);
+        }
+      })
+      .catch((err: any) => {
+        console.log("error in package details", err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
 
-  const totalPrice = 5499;
+  useEffect(() => {
+    packageDetails();
+  }, []);
 
-  const amenities = ["AC", "Music System", "Charging Point"];
-  const included = ["Driver charges", "Fuel charges", "Toll tax included"];
-  const notIncluded = ["Parking charges", "Extra KM charges"];
 
-  const [travellerName, setTravellerName] = useState("");
-  const [travellerMobile, setTravellerMobile] = useState("");
-  const [travellerEmail, setTravellerEmail] = useState("");
+  const onCarouselScroll = (event: any) => {
+    const slideIndex = Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+    setCurrentImageIndex(slideIndex);
+  };
+
+
+  const renderCarouselItem = ({ item }: any) => (
+    <Image 
+      source={item} 
+      style={styles.carouselImage} 
+      resizeMode="cover"
+      defaultSource={Images.profileImage}
+    />
+  );
+
+  // Show loading state
+  if (loading || !packageData?.package) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color={Colors.sooprsblue} />
+        <Text style={styles.loadingText}>Loading package details...</Text>
+      </View>
+    );
+  }
+
+  const pkg = packageData.package;
+  const carouselImages = getCarouselImages();
+
+
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
-      {/* HEADER */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Image source={Images.backArrow} style={styles.backIcon} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Review your ride</Text>
-        <View style={{ width: wp(10) }} />
-      </View>
-
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-
-        {/* TRIP CARD */}
-        <View style={styles.tripCard}>
-          <View style={styles.tripRow}>
-            <View style={styles.timelineColumn}>
-              <View style={styles.pickupDotOuter}>
-                <View style={styles.pickupDotInner} />
-              </View>
-
-              <View style={styles.timelineLine} />
-
-              <Image
-                source={Images.locationIcon}
-                style={styles.dropIcon}
-                resizeMode="contain"
-              />
-            </View>
-
-            <View style={styles.tripDetailsColumn}>
-              <Text style={styles.labelText}>PICKUP</Text>
-              <Text style={styles.locationTitle}>{pickupLocation}</Text>
-              <Text style={styles.locationSubtitle}>{pickupCity}</Text>
-
-              <View style={styles.separator} />
-
-              <Text style={styles.labelText}>DROPOFF</Text>
-              <Text style={styles.locationTitle}>{destinationLocation}</Text>
-              <Text style={styles.locationSubtitle}>{destinationCity}</Text>
-            </View>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        
+        {/* IMAGE CAROUSEL */}
+        <View style={styles.carouselContainer}>
+          <FlatList
+            ref={carouselRef}
+            data={carouselImages}
+            renderItem={renderCarouselItem}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onScroll={onCarouselScroll}
+            scrollEventThrottle={16}
+            keyExtractor={(item, index) => index.toString()}
+          />
+          
+          {/* HEADER OVERLAY */}
+          <View style={styles.headerOverlay}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Image source={Images.backArrow} style={styles.backIcon} />
+            </TouchableOpacity>
+            <View style={{ flex: 1 }} />
+            <TouchableOpacity style={styles.shareButton}>
+              <Image source={Images.referIcon} style={styles.shareIcon} />
+            </TouchableOpacity>
           </View>
 
-          <View style={styles.tripMetaRow}>
-            <View style={styles.metaItem}>
-              <View style={styles.metaIconContainer}>
-                <Image
-                  source={Images.CalenderIcon}
-                  style={styles.metaIcon}
-                  resizeMode="contain"
-                />
-              </View>
-              <View>
-                <Text style={styles.metaLabel}>Date</Text>
-                <Text style={styles.metaValue}>{tripDate}</Text>
-              </View>
-            </View>
+          {/* CAROUSEL DOTS */}
+          <View style={styles.carouselDots}>
+            {carouselImages.map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.dot,
+                  index === currentImageIndex && styles.activeDot,
+                ]}
+              />
+            ))}
+          </View>
 
-            <View style={styles.metaItem}>
-              <View style={styles.metaIconContainer}>
-                <Image
-                  source={Images.UserRoundIcon}
-                  style={styles.metaIcon}
-                  resizeMode="contain"
-                />
-              </View>
-              <View>
-                <Text style={styles.metaLabel}>People</Text>
-                <Text style={styles.metaValue}>{people}</Text>
-              </View>
-            </View>
+          {/* RATING OVERLAY */}
+          <View style={styles.ratingOverlay}>
+            <Image source={Images.starIcon} style={styles.ratingStarIcon} />
+            <Text style={styles.ratingValue}>4.9</Text>
           </View>
         </View>
 
-        {/* CAB CARD */}
-        <View style={styles.cabCard}>
-          <View style={styles.cabHeaderRow}>
-            <View style={styles.premiumBadge}>
-              <Text style={styles.premiumText}>PREMIUM</Text>
-            </View>
-
-            <View style={styles.cabRatingRow}>
-              <Image
-                source={Images.starIcon}
-                style={styles.cabStarIcon}
-                resizeMode="contain"
-              />
-              <Text style={styles.cabRatingText}>{rating} ({reviews})</Text>
-            </View>
+        {/* WHITE CONTENT CARD */}
+        <View style={styles.contentCard}>
+          <View style={styles.titleRow}>
+            <Text style={styles.serviceTitle}>{pkg.name || 'Package Name'}</Text>
+            <TouchableOpacity style={styles.shareButtonCard}>
+              <Image source={Images.referIcon} style={styles.shareIconCard} />
+            </TouchableOpacity>
           </View>
 
-          <View style={styles.cabMainRow}>
-            <View style={styles.cabTitleColumn}>
-              <Text style={styles.cabName}>{carName}</Text>
-
-              <View style={styles.cabFeaturesRow}>
-                <View style={styles.cabFeatureItem}>
-                  <Image
-                    source={Images.UserRoundIcon}
-                    style={styles.cabFeatureIcon}
-                  />
-                  <Text style={styles.cabFeatureText}>{seats}</Text>
-                </View>
-
-                <View style={styles.cabFeatureItem}>
-                  <Image
-                    source={Images.carIcon}
-                    style={[styles.cabFeatureIcon, { tintColor: Colors.gray }]}
-                  />
-                  <Text style={styles.cabFeatureText}>{ac}</Text>
-                </View>
-              </View>
-            </View>
-
-            <Image
-              source={Images.carIcon}
-              style={styles.cabImage}
-              resizeMode="contain"
-            />
+          <View style={styles.locationRow}>
+            <Image source={Images.locationIcon} style={styles.locationIcon} />
+            <Text style={styles.locationText}>{pkg.location1 || 'Location'}</Text>
           </View>
+
+          <Text style={styles.description}>
+            {pkg.long_description || pkg.short_description || 'No description available'}
+          </Text>
         </View>
 
         {/* AMENITIES */}
-        <View style={styles.amenitiesSectionWrapper}>
-          <Text style={styles.amenitiesTitle}>Amenities</Text>
-          <View style={styles.amenitiesContainer}>
-            {amenities.map((amenity, index) => (
-              <View key={index} style={styles.amenityBox}>
-                <View style={styles.amenityDot} />
-                <Text style={styles.amenityText}>{amenity}</Text>
-              </View>
-            ))}
+        {pkg.amenities && pkg.amenities.length > 0 && (
+          <View style={styles.amenitiesSectionWrapper}>
+            <Text style={styles.amenitiesTitle}>Amenities</Text>
+            <View style={styles.amenitiesContainer}>
+              {pkg.amenities.map((amenity: string, index: number) => (
+                <View key={index} style={styles.amenityBox}>
+                  <View style={styles.amenityDot} />
+                  <Text style={styles.amenityText}>{amenity}</Text>
+                </View>
+              ))}
+            </View>
           </View>
-        </View>
+        )}
 
         {/* INCLUSIONS */}
-        <View style={styles.inclusionsSectionWrapper}>
-          <Text style={styles.inclusionsTitle}>Inclusions</Text>
-          <View style={styles.inclusionsSection}>
-            {included.map((item, index) => (
-              <View key={index} style={styles.inclusionRow}>
-                <View style={styles.greenDot} />
-                <Text style={styles.inclusionText}>{item}</Text>
-              </View>
-            ))}
+        {pkg.included && pkg.included.length > 0 && (
+          <View style={styles.inclusionsSectionWrapper}>
+            <Text style={styles.inclusionsTitle}>Inclusions</Text>
+            <View style={styles.inclusionsSection}>
+              {pkg.included.map((item: string, index: number) => (
+                <View key={index} style={styles.inclusionRow}>
+                  <View style={styles.greenDot} />
+                  <Text style={styles.inclusionText}>{item}</Text>
+                </View>
+              ))}
+            </View>
           </View>
-        </View>
+        )}
 
         {/* EXCLUSIONS */}
-        <View style={styles.exclusionsSectionWrapper}>
-          <Text style={styles.exclusionsTitle}>Exclusions</Text>
-          <View style={styles.exclusionsSection}>
-            {notIncluded.map((item, index) => (
-              <View key={index} style={styles.exclusionRow}>
-                <View style={styles.redDot} />
-                <Text style={styles.exclusionText}>{item}</Text>
-              </View>
-            ))}
+        {pkg.not_included && pkg.not_included.length > 0 && (
+          <View style={styles.exclusionsSectionWrapper}>
+            <Text style={styles.exclusionsTitle}>Exclusions</Text>
+            <View style={styles.exclusionsSection}>
+              {pkg.not_included.map((item: string, index: number) => (
+                <View key={index} style={styles.exclusionRow}>
+                  <View style={styles.redDot} />
+                  <Text style={styles.exclusionText}>{item}</Text>
+                </View>
+              ))}
+            </View>
           </View>
-        </View>
+        )}
+
+        {/* BOOKING POLICY */}
+        {pkg.policy && pkg.policy.length > 0 && (
+          <View style={styles.policySectionWrapper}>
+            <Text style={styles.policyTitle}>Booking Policy</Text>
+            <View style={styles.policySection}>
+              {pkg.policy.map((policyItem: string, index: number) => {
+                // Parse policy item to extract label and value
+                console.log("policyItem",policyItem);
+                  return (
+                    <View key={index} style={styles.policyRow}>
+                      <Text style={styles.grayBullet}>•</Text>
+                      <Text style={styles.policyText}>{policyItem}</Text>
+                    </View>
+                  );
+
+              })}
+            </View>
+          </View>
+        )}
+
+        {/* FARE BREAKUP */}
+        {pkg.fare_breakup && (
+          <View style={styles.fareBreakupSectionWrapper}>
+            <Text style={styles.fareBreakupTitle}>Fare Breakup</Text>
+            <View style={styles.fareBreakupSection}>
+              <View style={styles.fareRow}>
+                <Text style={styles.fareLabel}>Base Fare:</Text>
+                <Text style={styles.fareAmount}>
+                  ₹{parseFloat(pkg.fare_breakup.base_price || 0).toLocaleString('en-IN')}
+                </Text>
+              </View>
+              {pkg.fare_breakup.discount_price && (
+                <View style={styles.fareRow}>
+                  <Text style={styles.fareLabel}>Discount Price:</Text>
+                  <Text style={styles.fareAmount}>
+                    ₹{parseFloat(pkg.fare_breakup.discount_price).toLocaleString('en-IN')}
+                  </Text>
+                </View>
+              )}
+              {pkg.fare_breakup.gst_amount && (
+                <View style={styles.fareRow}>
+                  <Text style={styles.fareLabel}>GST Amount ({pkg.fare_breakup.gst_percentage || '5%'}):</Text>
+                  <Text style={styles.fareAmount}>
+                    ₹{parseFloat(pkg.fare_breakup.gst_amount).toLocaleString('en-IN')}
+                  </Text>
+                </View>
+              )}
+              <View style={[styles.fareRow, styles.totalFareRow]}>
+                <Text style={styles.totalFareLabel}>To Pay:</Text>
+                <Text style={styles.totalFareAmount}>
+                  ₹{parseFloat(pkg.fare_breakup.grand_total || pkg.effective_price || 0).toLocaleString('en-IN')}
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* TRAVELLER DETAILS */}
-        <View style={styles.travellerSection}>
+        {/* <View style={styles.travellerSection}>
           <Text style={styles.travellerTitle}>Traveller Details</Text>
 
           <View style={styles.travellerCard}>
@@ -248,11 +322,11 @@ const CabRideReviewScreen = () => {
               />
             </View>
           </View>
-        </View>
+        </View> */}
       </ScrollView>
 
       {/* BOTTOM BAR */}
-      <View style={styles.bottomBar}>
+      {/* <View style={styles.bottomBar}>
         <View style={styles.paymentOptionsContainer}>
           <View style={styles.radioOuterPayment}>
             <View style={styles.radioInnerPayment} />
@@ -266,7 +340,7 @@ const CabRideReviewScreen = () => {
         >
           <Text style={styles.payButtonText}>Proceed to Pay</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
     </View>
   );
 };
@@ -274,148 +348,200 @@ const CabRideReviewScreen = () => {
 export default CabRideReviewScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.white },
+  container: { flex: 1, backgroundColor: '#F5F5F5' },
 
-  header: {
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  loadingText: {
+    marginTop: hp(2),
+    fontSize: FSize.fs14,
+    color: Colors.gray,
+  },
+
+  scrollView: { flex: 1, backgroundColor: "rgba(255, 255, 255, 1)"},
+
+  scrollContent: { paddingBottom: hp(18) },
+
+  /* CAROUSEL */
+  carouselContainer: {
+    width: SCREEN_WIDTH,
+    height: hp(35),
+    position: 'relative',
+  },
+
+  carouselImage: {
+    width: SCREEN_WIDTH,
+    height: hp(35),
+  },
+
+  headerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: hp(6),
+    paddingBottom: hp(2),
+    paddingHorizontal: wp(4),
+    zIndex: 10,
+  },
+
+  backButton: {
+    width: wp(10),
+    height: wp(10),
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: wp(5),
+  },
+
+  backIcon: {
+    width: wp(6),
+    height: wp(6),
+    tintColor: Colors.white,
+  },
+
+  shareButton: {
+    width: wp(10),
+    height: wp(10),
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: wp(5),
+  },
+
+  shareIcon: {
+    width: wp(5),
+    height: wp(5),
+    tintColor: Colors.white,
+  },
+
+  carouselDots: {
+    position: 'absolute',
+    bottom: hp(6),
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+
+  dot: {
+    width: wp(2),
+    height: wp(2),
+    borderRadius: wp(1),
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    marginHorizontal: wp(1),
+  },
+
+  activeDot: {
+    backgroundColor: Colors.white,
+    width: wp(4),
+  },
+
+  ratingOverlay: {
+    position: 'absolute',
+    bottom: hp(6),
+    right: wp(4),
+    backgroundColor: 'rgba(1, 123, 78, 1)',
+    paddingHorizontal: wp(2),
+    paddingVertical: hp(.2),
+    borderRadius: wp(2),
+    flexDirection: 'row',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+
+  ratingText: {
+    fontSize: FSize.fs11,
+    color: Colors.white,
+    fontWeight: '600',
+    marginRight: wp(1),
+  },
+
+  ratingStarIcon: {
+    width: wp(3),
+    height: wp(3),
+    tintColor: 'white',
+    marginRight: wp(1),
+  },
+
+  ratingValue: {
+    fontSize: FSize.fs12,
+    color: Colors.white,
+    fontWeight: '700',
+  },
+
+  /* CONTENT CARD */
+  contentCard: {
+    backgroundColor: "rgba(255, 255, 255, 1)",
+    borderTopLeftRadius: wp(6),
+    borderTopRightRadius: wp(6),
+    marginTop: -hp(3),
+    paddingTop: hp(3),
+    paddingHorizontal: wp(4),
+    paddingBottom: hp(2),
+    zIndex: 5,
+  },
+
+  titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: hp(3.5),
-    paddingBottom: hp(1.5),
-    paddingHorizontal: wp(4),
+    marginBottom: hp(1),
   },
 
-  backButton: { width: wp(10), height: wp(10), justifyContent: 'center' },
-
-  backIcon: { width: wp(6), height: wp(6), tintColor: Colors.black },
-
-  headerTitle: {
-    fontSize: FSize.fs18,
+  serviceTitle: {
+    fontSize: FSize.fs24,
     fontWeight: '700',
     color: Colors.black,
+    flex: 1,
   },
 
-  scrollView: { flex: 1 },
-
-  scrollContent: { paddingHorizontal: wp(4), paddingBottom: hp(18) },
-
-  /* TRIP CARD */
-  tripCard: {
-    borderRadius: wp(3),
-    borderWidth: 1,
-    borderColor: Colors.lightGrey,
-    padding: wp(4),
-    backgroundColor: '#F8F9FB',
-    marginBottom: hp(2),
-  },
-
-  tripRow: { flexDirection: 'row' },
-
-  timelineColumn: { alignItems: 'center', marginRight: wp(3) },
-
-  pickupDotOuter: {
-    width: wp(4.5),
-    height: wp(4.5),
-    borderRadius: wp(2.25),
-    backgroundColor: Colors.sooprsblue,
+  shareButtonCard: {
+    width: wp(8),
+    height: wp(8),
     justifyContent: 'center',
     alignItems: 'center',
   },
 
-  pickupDotInner: {
-    width: wp(2.2),
-    height: wp(2.2),
-    borderRadius: wp(1.1),
-    backgroundColor: Colors.white,
+  shareIconCard: {
+    width: wp(5),
+    height: wp(5),
+    tintColor: Colors.gray,
   },
 
-  timelineLine: {
-    width: 1,
-    height: hp(5),
-    backgroundColor: Colors.lightGrey,
-    marginVertical: hp(0.5),
-  },
-
-  dropIcon: { width: wp(4), height: wp(4), tintColor: Colors.sooprsblue },
-
-  tripDetailsColumn: { flex: 1 },
-
-  labelText: { fontSize: FSize.fs11, color: Colors.gray, fontWeight: '600' },
-
-  locationTitle: { fontSize: FSize.fs16, fontWeight: '700', color: Colors.black },
-
-  locationSubtitle: { fontSize: FSize.fs13, color: Colors.gray, marginBottom: hp(1) },
-
-  separator: { height: 1, backgroundColor: Colors.lightGrey, marginVertical: hp(1) },
-
-  tripMetaRow: {
+  locationRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: hp(1.5),
-  },
-
-  metaItem: { flexDirection: 'row', alignItems: 'center' },
-
-  metaIconContainer: {
-    width: wp(9),
-    height: wp(9),
-    borderRadius: wp(2),
-    backgroundColor: '#E8F0FF',
-    justifyContent: 'center',
     alignItems: 'center',
-    marginRight: wp(2),
+    marginBottom: hp(1.5),
   },
 
-  metaIcon: { width: wp(4.5), height: wp(4.5), tintColor: Colors.sooprsblue },
-
-  metaLabel: { fontSize: FSize.fs12, color: Colors.gray },
-
-  metaValue: { fontSize: FSize.fs14, fontWeight: '700', color: Colors.black },
-
-  /* CAB CARD */
-  cabCard: {
-    borderRadius: wp(3),
-    borderWidth: 1,
-    borderColor: Colors.lightGrey,
-    padding: wp(4),
-    marginBottom: hp(2),
+  locationIcon: {
+    width: wp(4),
+    height: wp(4),
+    tintColor: Colors.sooprsblue,
+    marginRight: wp(1.5),
   },
 
-  cabHeaderRow: { flexDirection: 'row', justifyContent: 'space-between' },
-
-  premiumBadge: {
-    backgroundColor: Colors.black,
-    paddingHorizontal: wp(3),
-    paddingVertical: hp(0.7),
-    borderRadius: wp(2),
+  locationText: {
+    fontSize: FSize.fs14,
+    color: Colors.gray,
   },
 
-  premiumText: { fontSize: FSize.fs11, color: Colors.white, fontWeight: '600' },
-
-  cabRatingRow: { flexDirection: 'row', alignItems: 'center' },
-
-  cabStarIcon: { width: wp(3.5), height: wp(3.5), tintColor: '#FFD700' },
-
-  cabRatingText: { fontSize: FSize.fs12, color: Colors.black, marginLeft: wp(1) },
-
-  cabMainRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: hp(1.5) },
-
-  cabTitleColumn: { flex: 1 },
-
-  cabName: { fontSize: FSize.fs18, fontWeight: '700', color: Colors.black },
-
-  cabFeaturesRow: { flexDirection: 'row', marginTop: hp(0.5) },
-
-  cabFeatureItem: { flexDirection: 'row', alignItems: 'center', marginRight: wp(4) },
-
-  cabFeatureIcon: { width: wp(4), height: wp(4), marginRight: wp(1) },
-
-  cabFeatureText: { fontSize: FSize.fs13, color: Colors.gray },
-
-  cabImage: { width: wp(28), height: wp(15) },
+  description: {
+    fontSize: FSize.fs14,
+    color: Colors.black,
+    lineHeight: hp(2.5),
+  },
 
   /* AMENITIES */
-  amenitiesSectionWrapper: { marginBottom: hp(2) },
+  amenitiesSectionWrapper: { marginBottom: hp(2), paddingHorizontal: wp(4),backgroundColor: "rgba(255, 255, 255, 1)"},
 
   amenitiesTitle: { fontSize: FSize.fs16, fontWeight: '700', marginBottom: hp(1) },
 
@@ -443,7 +569,7 @@ const styles = StyleSheet.create({
   amenityText: { fontSize: FSize.fs14, color: Colors.black },
 
   /* INCLUSIONS */
-  inclusionsSectionWrapper: { marginBottom: hp(2) },
+  inclusionsSectionWrapper: { marginBottom: hp(2), paddingHorizontal: wp(4), backgroundColor: "rgba(255, 255, 255, 1)"},
 
   inclusionsTitle: { fontSize: FSize.fs16, fontWeight: '700', marginBottom: hp(1) },
 
@@ -467,7 +593,7 @@ const styles = StyleSheet.create({
   inclusionText: { fontSize: FSize.fs14, color: Colors.black },
 
   /* EXCLUSIONS */
-  exclusionsSectionWrapper: { marginBottom: hp(2) },
+  exclusionsSectionWrapper: { marginBottom: hp(2), paddingHorizontal: wp(4), backgroundColor: "rgba(255, 255, 255, 1)"},
 
   exclusionsTitle: { fontSize: FSize.fs16, fontWeight: '700', marginBottom: hp(1) },
 
@@ -490,8 +616,99 @@ const styles = StyleSheet.create({
 
   exclusionText: { fontSize: FSize.fs14, color: Colors.black },
 
+  /* POLICY */
+  policySectionWrapper: { marginBottom: hp(2), paddingHorizontal: wp(4), backgroundColor: "rgba(255, 255, 255, 1)" },
+
+  policyTitle: { fontSize: FSize.fs16, fontWeight: '700', marginBottom: hp(1) },
+
+  policySection: {
+    borderWidth: 1,
+    borderColor: Colors.lightGrey,
+    borderRadius: wp(3),
+    padding: wp(3),
+  },
+
+  policyRow: { flexDirection: 'row', alignItems: 'flex-start', marginVertical: hp(0.5) },
+
+  policyItemRow: {
+    flexDirection: 'row',
+    marginVertical: hp(0.8),
+    alignItems: 'flex-start',
+  },
+
+  policyLabel: {
+    fontSize: FSize.fs14,
+    color: Colors.black,
+    fontWeight: '600',
+    marginRight: wp(1),
+  },
+
+  policyValue: {
+    fontSize: FSize.fs14,
+    color: Colors.black,
+    flex: 1,
+  },
+
+  grayBullet: {
+    fontSize: FSize.fs20,
+    color: Colors.gray,
+    marginRight: wp(2),
+    lineHeight: hp(2),
+  },
+
+  policyText: { fontSize: FSize.fs14, color: Colors.black, flex: 1, lineHeight: hp(2.2) },
+
+  /* FARE BREAKUP */
+  fareBreakupSectionWrapper: { marginBottom: hp(2), paddingHorizontal: wp(4), backgroundColor: "rgba(255, 255, 255, 1)" },
+
+  fareBreakupTitle: { fontSize: FSize.fs16, fontWeight: '700', marginBottom: hp(1) },
+
+  fareBreakupSection: {
+    borderWidth: 1,
+    borderColor: Colors.lightGrey,
+    borderRadius: wp(3),
+    padding: wp(3),
+  },
+
+  fareRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: hp(0.8),
+  },
+
+  fareLabel: {
+    fontSize: FSize.fs14,
+    color: Colors.black,
+  },
+
+  fareAmount: {
+    fontSize: FSize.fs14,
+    color: Colors.black,
+    fontWeight: '600',
+  },
+
+  totalFareRow: {
+    marginTop: hp(1),
+    paddingTop: hp(1),
+    borderTopWidth: 1,
+    borderTopColor: Colors.lightGrey,
+  },
+
+  totalFareLabel: {
+    fontSize: FSize.fs16,
+    color: Colors.black,
+    fontWeight: '700',
+  },
+
+  totalFareAmount: {
+    fontSize: FSize.fs18,
+    color: Colors.black,
+    fontWeight: '700',
+  },
+
   /* TRAVELLER */
-  travellerSection: { marginBottom: hp(2) },
+  travellerSection: { marginBottom: hp(2), paddingHorizontal: wp(4) },
 
   travellerTitle: { fontSize: FSize.fs16, fontWeight: '700', marginBottom: hp(1) },
 

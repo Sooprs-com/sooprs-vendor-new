@@ -8,12 +8,10 @@ import BottomTab from './BottomTab';
 import HomeVerificationScreen from '../Screen/Verification/HomeVerification';
 // import RegistrationScreen from '../Screen/Home/Registration/RegistrationScreen';
 import AddPackagesScreen from '../Screen/AddPackage/AddPackagesScreen';
-
 import CabRideReviewScreen from '../Screen/CabDetails/CabRideDetailsScreen';
 import ProfileScreen from '../Screen/Profile/ProfileScreen';
 import RegistrationScreen from '../auth/RegistrationScreen';
 import CompleteProfileScreen from '../Screen/CompleteProfile/CompleteProfileScreen';
-
 // import WelcomeScreen from './auth/WelcomeScreen';
 // import ProfileSelection from './auth/ProfileSelection';
 // import Signup from './auth/Signup';
@@ -86,6 +84,7 @@ const AuthenticationRouter = () => {
       <Stack.Screen name="EmailCollectionScreen" component={EmailCollectionScreen} />
           <Stack.Screen name="HomeVerificationScreen" component={HomeVerificationScreen} />
           <Stack.Screen name="RegistrationScreen" component={RegistrationScreen} />
+          
            <Stack.Screen name="AddPackagesScreen" component={AddPackagesScreen} />
            <Stack.Screen name="CabRideReviewScreen" component={CabRideReviewScreen} />
            <Stack.Screen name="CompleteProfileScreen" component={CompleteProfileScreen} />

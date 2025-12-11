@@ -153,18 +153,18 @@ const NewOtpScreen = () => {
     }
 
     else if(result?.isRegistered===true && result?.user_type==="VENDOR"){
-      await storeDataToAsyncStorage(mobile_siteConfig.MOB_ACCESS_TOKEN_KEY, result.token);
+      await storeDataToAsyncStorage(mobile_siteConfig.MOB_ACCESS_TOKEN_KEY,result.token);
       await storeDataToAsyncStorage(mobile_siteConfig.IS_LOGIN, 'TRUE');
       
       // Store additional user data if available
-      if (result?.user?.id) {
-        await storeDataToAsyncStorage(mobile_siteConfig.UID, String(result.user.id));
+      if (result?.user_id) {
+        await storeDataToAsyncStorage(mobile_siteConfig.UID, result.user?.id);
       }
-      if (result?.user?.slug) {
-        await storeDataToAsyncStorage(mobile_siteConfig.SLUG, result.user.slug);
+      if (result?.slug) {
+        await storeDataToAsyncStorage(mobile_siteConfig.SLUG, result.user?.slug);
       }
-      if (result?.user?.email) {
-        await storeDataToAsyncStorage(mobile_siteConfig.EMAIL, result.user.email);
+      if (result?.email) {
+        await storeDataToAsyncStorage(mobile_siteConfig.EMAIL, result.user?.email);
       }
       (navigation as any).navigate('BottomTab',{ 
         email: result?.email, 
@@ -185,13 +185,7 @@ const NewOtpScreen = () => {
   //   if (otp.some(digit => digit === '')) {
   //     showAlert('error', 'Error', 'Please fill all the OTP fields.');
   //     return;
-  //   }
-
-
-
-   
-
-      
+  //   }   
       
   //     // Navigate to Registration Screen
   //     const phone = mobileNumber || phoneNumber || "9990099000";

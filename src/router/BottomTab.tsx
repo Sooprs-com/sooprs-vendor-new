@@ -10,10 +10,9 @@ import Leads from '../Screen/Leads/Leads';
 import Project from '../Screen/Projects/Project';
 import Order from '../Screen/Orders/Order';
 import HomeVerificationScreen from '../Screen/Verification/HomeVerification';
+import CompleteProfileScreen from '../Screen/CompleteProfile/CompleteProfileScreen';
 
 const iconSize = Math.min(wp(7), hp(4));
-
-
 const HomeFlow = createNativeStackNavigator();
 
 const HomeFlowScreen = () => {
@@ -26,6 +25,7 @@ const HomeFlowScreen = () => {
 
       <HomeFlow.Screen name="HomeMain" component={Home} />
       <HomeFlow.Screen name="HomeVerification" component={HomeVerificationScreen} />
+      {/* <HomeFlow.Screen name="CompleteProfile" component={CompleteProfileScreen} /> */}
     </HomeFlow.Navigator>
   );
 };
