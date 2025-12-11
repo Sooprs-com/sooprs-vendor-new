@@ -3,19 +3,15 @@ import {
   StyleSheet,
   Text,
   View,
-  TouchableOpacity,
-  Image,
-  ScrollView,
   SafeAreaView,
   FlatList,
   ActivityIndicator,
 } from "react-native";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { hp, wp } from "../../assets/commonCSS/GlobalCSS";
 import Colors from "../../assets/commonCSS/Colors";
 import FSize from "../../assets/commonCSS/FSize";
-import Images from "../../assets/image";
 import { postDataWithTokenBase2, getDataWithToken } from "../../services/mobile-api";
 import { mobile_siteConfig } from "../../services/mobile-siteConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -30,24 +26,24 @@ const MyLeadsScreen = () => {
 
   const getVendorId = async () => {
     try {
-      // Try to get vendor_id from AsyncStorage first
-      let id = await AsyncStorage.getItem(mobile_siteConfig.UID);
-      console.log('🔍 Step 1: Vendor ID from AsyncStorage:', id);
+      // Always get vendor_id from API to ensure we have the correct ID
+      console.log('🔍 Step 1: Fetching vendor ID from API...');
+      const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
+      const data: any = await res.json();
+      console.log('📋 User Details API Response:', JSON.stringify(data, null, 2));
       
-      if (!id) {
-        console.log('⚠️ Vendor ID not in AsyncStorage, fetching from API...');
-        // If not in AsyncStorage, get from user details API
-        const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
-        const data: any = await res.json();
-        console.log('📋 User Details API Response:', JSON.stringify(data, null, 2));
-        
-        if (data?.success && data?.vendorDetail?.id) {
-          id = String(data.vendorDetail.id);
-          await AsyncStorage.setItem(mobile_siteConfig.UID, id);
-          console.log('✅ Vendor ID saved to AsyncStorage:', id);
-        } else {
-          console.log('❌ Vendor ID not found in API response');
-        }
+      let id = null;
+      
+      if (data?.success && data?.vendorDetail?.id) {
+        id = String(data.vendorDetail.id);
+        // Update AsyncStorage with correct ID
+        await AsyncStorage.setItem(mobile_siteConfig.UID, id);
+        console.log('✅ Vendor ID from API:', id);
+        console.log('✅ Vendor ID saved to AsyncStorage:', id);
+      } else {
+        // Fallback: try AsyncStorage if API fails
+        id = await AsyncStorage.getItem(mobile_siteConfig.UID);
+        console.log('⚠️ Vendor ID not in API response, using AsyncStorage:', id);
       }
       
       if (id) {
@@ -58,29 +54,33 @@ const MyLeadsScreen = () => {
       console.log('❌ No Vendor ID found');
       return null;
     } catch (error) {
+      console.log('❌ Error getting vendor ID from API, trying AsyncStorage...');
+      // Fallback to AsyncStorage if API call fails
+      const id = await AsyncStorage.getItem(mobile_siteConfig.UID);
+      if (id) {
+        console.log('✅ Using Vendor ID from AsyncStorage (fallback):', id);
+        setVendorId(id);
+        return id;
+      }
       console.log('❌ Error getting vendor ID:', error);
       return null;
     }
   };
 
   const getContactList = async (page: number = 1, append: boolean = false) => {
-    // Ensure vendor ID is available
-    let currentVendorId = vendorId;
-    console.log('🔍 Step 2: Current vendorId state:', currentVendorId);
+    // Always get fresh vendor ID from API to ensure correct ID
+    console.log('🔍 Step 2: Fetching vendor ID...');
+    const id = await getVendorId();
     
-    if (!currentVendorId) {
-      console.log('⚠️ Vendor ID not in state, fetching...');
-      const id = await getVendorId();
-      if (!id) {
-        console.log('❌ Vendor ID not found - cannot fetch contacts');
-        setLoadingContacts(false);
-        setLoadingMore(false);
-        return;
-      }
-      currentVendorId = id;
-      setVendorId(id);
-      console.log('✅ Vendor ID set to state:', currentVendorId);
+    if (!id) {
+      console.log('❌ Vendor ID not found - cannot fetch contacts');
+      setLoadingContacts(false);
+      setLoadingMore(false);
+      return;
     }
+    
+    const currentVendorId = id;
+    console.log('✅ Using Vendor ID:', currentVendorId);
 
     try {
       if (append) {
@@ -197,7 +197,7 @@ const MyLeadsScreen = () => {
   };
 
   const loadMoreContacts = () => {
-    if (!loadingMore && hasMore && !loadingContacts && vendorId) {
+    if (!loadingMore && hasMore && !loadingContacts) {
       const nextPage = currentPage + 1;
       setCurrentPage(nextPage);
       getContactList(nextPage, true);
@@ -207,131 +207,124 @@ const MyLeadsScreen = () => {
   // Fetch contacts when screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      const fetchData = async () => {
-        const id = await getVendorId();
-        if (id) {
-          setVendorId(id);
-          setCurrentPage(1);
-          setHasMore(true);
-          // Small delay to ensure vendorId state is updated
-          setTimeout(() => {
-            getContactList(1, false);
-          }, 100);
-        } else {
-          console.log('Failed to get vendor ID on screen focus');
-          setLoadingContacts(false);
-        }
-      };
-      fetchData();
+      setCurrentPage(1);
+      setHasMore(true);
+      // getContactList will fetch vendor ID internally from API
+      getContactList(1, false);
     }, [])
+  );
+
+  const renderContactCard = ({ item: contact }: { item: any }) => (
+    <View style={styles.card}>
+      {/* TITLE */}
+      <Text style={styles.title}>
+        {contact.project_title || contact.pickup_location || contact.pickupLocation || 'Project Title'} 
+        {contact.pickup_location || contact.pickupLocation ? ` to ${contact.dropoff_location || contact.dropoffLocation || 'Dropoff'} ${contact.vehicle_type || contact.vehicleType || ''} Cab` : ''}
+      </Text>
+
+      {/* DESCRIPTION */}
+      <Text style={styles.desc}>
+        {contact.description || contact.desc || contact.project_title || 'The customer wants to book a cab trip.'}
+      </Text>
+
+      {/* BUDGET INFO */}
+      {contact.min_budget && contact.max_budget_amount && (
+        <Text style={styles.pickup}>
+          Budget: <Text style={styles.pickupBold}>₹{contact.min_budget} - ₹{contact.max_budget_amount}</Text>
+        </Text>
+      )}
+
+      {/* CREATED DATE */}
+      {contact.created_at && (
+        <Text style={styles.pickup}>
+          Created: <Text style={styles.pickupBold}>
+            {new Date(contact.created_at).toLocaleDateString('en-IN', { 
+              day: 'numeric', 
+              month: 'short', 
+              year: 'numeric' 
+            })}
+          </Text>
+        </Text>
+      )}
+
+      <View style={styles.cardDivider} />
+      
+      {/* USER ROW */}
+      <View style={styles.userRow}>
+        {/* LEFT USER INFO */}
+        <View style={styles.userLeft}>
+          <View>
+            <Text style={styles.userName}>
+              Name: <Text style={styles.userNameValue}>
+                {contact.name || contact.user_name || contact.userName || 'Customer'}
+              </Text>
+            </Text>
+
+            {contact.city && (
+              <Text style={styles.cityText}>
+                {contact.city}
+              </Text>
+            )}
+          </View>
+        </View>
+
+        {/* RIGHT PHONE NUMBER */}
+        <View style={styles.phoneRight}>
+          <Text style={styles.phoneLabel}>Phone Number</Text>
+          <Text style={styles.phoneValue} numberOfLines={1}>
+            {contact.phone || contact.phone_number || contact.phoneNumber || contact.encrypted_mobile || 'N/A'}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderHeader = () => (
+    <>
+      <Text style={styles.headerTitle}>My Leads ({contacts.length})</Text>
+      <View style={styles.headerDivider} />
+    </>
+  );
+
+  const renderFooter = () => {
+    if (loadingMore && hasMore) {
+      return (
+        <View style={styles.loadingMoreContainer}>
+          <ActivityIndicator size="small" color={Colors.sooprsblue} />
+          <Text style={styles.loadingMoreText}>Loading more...</Text>
+        </View>
+      );
+    }
+    return <View style={{ height: hp(5) }} />;
+  };
+
+  const renderEmpty = () => (
+    <View style={styles.emptyContainer}>
+      <Text style={styles.emptyText}>No contacts available</Text>
+    </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-
-        {/* HEADER */}
-        <Text style={styles.headerTitle}>My Leads ({contacts.length})</Text>
-
-        <View style={styles.headerDivider} />
-
-        {/* CONTACTS LIST */}
-        {loadingContacts ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors.sooprsblue} />
-            <Text style={styles.loadingText}>Loading contacts...</Text>
-          </View>
-        ) : contacts.length > 0 ? (
-          <FlatList
-            data={contacts}
-            keyExtractor={(item, index) => item.id?.toString() || item.contact_id?.toString() || index.toString()}
-            renderItem={({ item: contact }) => (
-              <View style={styles.card}>
-                {/* TITLE */}
-                <Text style={styles.title}>
-                  {contact.project_title || contact.pickup_location || contact.pickupLocation || 'Project Title'} 
-                  {contact.pickup_location || contact.pickupLocation ? ` to ${contact.dropoff_location || contact.dropoffLocation || 'Dropoff'} ${contact.vehicle_type || contact.vehicleType || ''} Cab` : ''}
-                </Text>
-
-                {/* DESCRIPTION */}
-                <Text style={styles.desc}>
-                  {contact.description || contact.desc || contact.project_title || 'The customer wants to book a cab trip.'}
-                </Text>
-
-                {/* BUDGET INFO */}
-                {contact.min_budget && contact.max_budget_amount && (
-                  <Text style={styles.pickup}>
-                    Budget: <Text style={styles.pickupBold}>₹{contact.min_budget} - ₹{contact.max_budget_amount}</Text>
-                  </Text>
-                )}
-
-                {/* CREATED DATE */}
-                {contact.created_at && (
-                  <Text style={styles.pickup}>
-                    Created: <Text style={styles.pickupBold}>
-                      {new Date(contact.created_at).toLocaleDateString('en-IN', { 
-                        day: 'numeric', 
-                        month: 'short', 
-                        year: 'numeric' 
-                      })}
-                    </Text>
-                  </Text>
-                )}
-
-                <View style={styles.cardDivider} />
-                
-                {/* USER ROW */}
-                <View style={styles.userRow}>
-                  {/* LEFT USER INFO */}
-                  <View style={styles.userLeft}>
-                    <Image 
-                      source={contact.profile_image || contact.profileImage ? { uri: contact.profile_image || contact.profileImage } : Images.profileImage} 
-                      style={styles.avatar} 
-                    />
-
-                    <View>
-                      <Text style={styles.userName}>
-                        {contact.name || contact.user_name || contact.userName || 'Customer'}
-                      </Text>
-
-                      {contact.city && (
-                        <Text style={styles.cityText}>
-                          {contact.city}
-                        </Text>
-                      )}
-                    </View>
-                  </View>
-
-                  {/* RIGHT PHONE NUMBER */}
-                  <View style={styles.phoneRight}>
-                    <Text style={styles.phoneLabel}>Phone Number</Text>
-                    <Text style={styles.phoneValue}>
-                      {contact.phone || contact.phone_number || contact.phoneNumber || contact.encrypted_mobile || 'N/A'}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            )}
-            onEndReached={loadMoreContacts}
-            onEndReachedThreshold={0.5}
-            ListFooterComponent={() => 
-              loadingMore ? (
-                <View style={styles.loadingMoreContainer}>
-                  <ActivityIndicator size="small" color={Colors.sooprsblue} />
-                  <Text style={styles.loadingMoreText}>Loading more...</Text>
-                </View>
-              ) : null
-            }
-            scrollEnabled={false}
-          />
-        ) : (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No contacts available</Text>
-          </View>
-        )}
-
-        <View style={{ height: hp(10) }} />
-      </ScrollView>
+      {loadingContacts ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.sooprsblue} />
+          <Text style={styles.loadingText}>Loading contacts...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={contacts}
+          keyExtractor={(item, index) => item.id?.toString() || item.contact_id?.toString() || index.toString()}
+          renderItem={renderContactCard}
+          ListHeaderComponent={renderHeader}
+          ListFooterComponent={renderFooter}
+          ListEmptyComponent={renderEmpty}
+          onEndReached={loadMoreContacts}
+          onEndReachedThreshold={0.5}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={contacts.length === 0 ? { flexGrow: 1 } : {}}
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -403,16 +396,15 @@ const styles = StyleSheet.create({
   userLeft: {
     flexDirection: "row",
     alignItems: "center",
-  },
-
-  avatar: {
-    width: wp(10),
-    height: wp(10),
-    borderRadius: wp(5),
-    marginRight: wp(2),
+    flex: 1,
   },
 
   userName: {
+    fontSize: FSize.fs13,
+    fontWeight: "700",
+    color: Colors.black,
+  },
+  userNameValue: {
     fontSize: FSize.fs13,
     fontWeight: "700",
     color: Colors.black,
@@ -444,6 +436,8 @@ ratingText: {
 
   phoneRight: {
     alignItems: "flex-end",
+    flexShrink: 0,
+    marginLeft: wp(2),
   },
 
   phoneLabel: {
@@ -467,6 +461,8 @@ cardDivider: {
     fontWeight: "600",
     color: Colors.blackgray,
     marginTop: hp(0.3),
+    flexShrink: 0,
+    maxWidth: wp(45),
   },
   loadingContainer: {
     padding: wp(5),

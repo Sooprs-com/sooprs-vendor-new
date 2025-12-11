@@ -8,6 +8,8 @@ import {
   SafeAreaView,
   FlatList,
   ActivityIndicator,
+  Modal,
+  Alert,
 } from 'react-native';
 import React, {useEffect, useState, useCallback} from 'react';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
@@ -17,6 +19,7 @@ import Images from '../../assets/image';
 import FSize from '../../assets/commonCSS/FSize';
 import { getDataWithToken, postDataWithTokenBase2 } from '../../services/mobile-api';
 import { mobile_siteConfig } from '../../services/mobile-siteConfig';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Home = () => {
   const navigation = useNavigation();
@@ -32,6 +35,10 @@ const Home = () => {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [expandedLeads, setExpandedLeads] = useState<Set<string | number>>(new Set());
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<any>(null);
+  const [contactDetails, setContactDetails] = useState<any>(null);
+  const [loadingContact, setLoadingContact] = useState(false);
 
   const getUserDetails = async () => {
     try {
@@ -75,7 +82,8 @@ const Home = () => {
       const payload = {
         category: categoryId,
         page: page,
-        limit: 20
+        limit: 20,
+        cur: "INR"
       };
       
       const result: any = await postDataWithTokenBase2(payload, mobile_siteConfig.FILTER_LEADS_ALL);
@@ -138,6 +146,57 @@ const Home = () => {
       }
       return newSet;
     });
+  };
+
+  const openContactModal = (lead: any) => {
+    setSelectedLead(lead);
+    setContactDetails(null);
+    setShowContactModal(true);
+  };
+
+  const closeContactModal = () => {
+    setShowContactModal(false);
+    setSelectedLead(null);
+    setContactDetails(null);
+  };
+
+  const getContactDetails = async () => {
+    if (!selectedLead) return;
+    
+    try {
+      setLoadingContact(true);
+      const leadId = selectedLead.id || selectedLead.lead_id || selectedLead.leadId;
+      
+      // Create URL-encoded data
+      const formData = `id=${encodeURIComponent(leadId)}`;
+      
+      const token = await AsyncStorage.getItem(mobile_siteConfig.MOB_ACCESS_TOKEN_KEY);
+      
+      const response = await fetch(mobile_siteConfig.BASE_URL2 + mobile_siteConfig.SHOW_LEAD_MOBILE, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+      
+      const result = await response.json();
+      console.log('Contact details API response:', result);
+      
+      // API should return mobile_number directly (decoded)
+      // If encrypted_mobile_number exists, use it as mobile_number
+      if (result.encrypted_mobile_number && !result.mobile_number && !result.mobile) {
+        result.mobile_number = result.encrypted_mobile_number;
+      }
+      
+      setContactDetails(result);
+    } catch (error: any) {
+      console.log('Error fetching contact details:', error);
+      Alert.alert('Error', error?.message || 'Failed to fetch contact details');
+    } finally {
+      setLoadingContact(false);
+    }
   };
 
   // Check profile status and fetch leads when screen comes into focus
@@ -241,7 +300,7 @@ const Home = () => {
             return (
               <View style={styles.reqCard}>
                 <Text style={styles.reqTitle2}>
-                  {lead.pickup_location || lead.pickupLocation || 'Pickup'} to {lead.dropoff_location || lead.dropoffLocation || 'Dropoff'} {lead.vehicle_type || lead.vehicleType || ''} Cab
+                  {lead.project_title || lead.projectTitle || 'Project Title'}
                 </Text>
 
                 <Text style={styles.reqDesc} numberOfLines={isExpanded ? undefined : 4}>
@@ -260,21 +319,18 @@ const Home = () => {
                 )}
                 
                 <View style={styles.Desc}>
-                  <Text style={[styles.reqDesc, {marginTop: 10}]}>Max Amount:</Text>
+                  <Text style={[styles.reqDesc, {marginTop: 10, fontWeight: '600', color: Colors.gray}]}>Max Amount: </Text>
                   <Text style={styles.reqDate}>
                     ₹{typeof maxBudget === 'number' ? maxBudget.toLocaleString('en-IN') : maxBudget}
                   </Text>
                 </View>
                
-                <View style={styles.reqBtnRow}>
-                  <TouchableOpacity style={styles.ignoreBtn}>
-                    <Text style={styles.ignoreText}>Ignore</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity style={styles.acceptBtn}>
-                    <Text style={styles.acceptText}>Accept</Text>
-                  </TouchableOpacity>
-                </View>
+                <TouchableOpacity 
+                  style={styles.getContactBtn}
+                  onPress={() => openContactModal(lead)}
+                >
+                  <Text style={styles.getContactText}>Get Contact Details</Text>
+                </TouchableOpacity>
               </View>
             );
           }}
@@ -297,6 +353,122 @@ const Home = () => {
       )}
 
     </ScrollView>
+
+        {/* Contact Details Modal */}
+        <Modal
+          visible={showContactModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={closeContactModal}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Contact Details</Text>
+              
+              {selectedLead && (
+                <>
+                  <View style={styles.modalInfoRow}>
+                    <Text style={styles.modalLabel}>Project Title:</Text>
+                    <Text style={styles.modalValue}>
+                      {selectedLead.project_title || selectedLead.projectTitle || 'N/A'}
+                    </Text>
+                  </View>
+                  
+                  <View style={styles.modalInfoRow}>
+                    <Text style={styles.modalLabel}>Credit:</Text>
+                    <Text style={styles.modalValue}>
+                      ₹{selectedLead.price1 || selectedLead.price || 'N/A'}
+                    </Text>
+                  </View>
+                </>
+              )}
+
+              {contactDetails && (
+                <View style={styles.contactDetailsContainer}>
+                  <Text style={styles.contactDetailsTitle}>Contact Information:</Text>
+                  
+                  {/* Mobile Number - decode encrypted_mobile_number */}
+                  {(contactDetails.mobile || contactDetails.mobile_number || contactDetails.encrypted_mobile_number) && (
+                    <View style={styles.modalInfoRow}>
+                      <Text style={styles.modalLabel}>Mobile Number:</Text>
+                      <Text style={styles.modalValue}>
+                        {contactDetails.mobile || contactDetails.mobile_number || contactDetails.encrypted_mobile_number}
+                      </Text>
+                    </View>
+                  )}
+                  
+                  {/* Email */}
+                  {contactDetails.email && (
+                    <View style={styles.modalInfoRow}>
+                      <Text style={styles.modalLabel}>Email:</Text>
+                      <Text style={styles.modalValue}>{contactDetails.email}</Text>
+                    </View>
+                  )}
+                  
+                  {/* Name */}
+                  {contactDetails.name && (
+                    <View style={styles.modalInfoRow}>
+                      <Text style={styles.modalLabel}>Name:</Text>
+                      <Text style={styles.modalValue}>{contactDetails.name}</Text>
+                    </View>
+                  )}
+                  
+                  {/* Display other fields except null values and excluded keys */}
+                  {Object.keys(contactDetails).map((key) => {
+                    const value = contactDetails[key];
+                    // Skip if null, undefined, empty string, or excluded keys
+                    if (
+                      value === null || 
+                      value === undefined || 
+                      value === '' ||
+                      key === 'mobile' || 
+                      key === 'mobile_number' ||
+                      key === 'encrypted_mobile_number' ||
+                      key === 'email' || 
+                      key === 'name' || 
+                      key === 'success' || 
+                      key === 'status' || 
+                      key === 'msg' ||
+                      key === 'price' ||
+                      (typeof value === 'string' && value.toLowerCase() === 'null')
+                    ) {
+                      return null;
+                    }
+                    return (
+                      <View key={key} style={styles.modalInfoRow}>
+                        <Text style={styles.modalLabel}>{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</Text>
+                        <Text style={styles.modalValue}>{String(value)}</Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
+
+              <View style={styles.modalButtonRow}>
+                <TouchableOpacity 
+                  style={styles.cancelBtn}
+                  onPress={closeContactModal}
+                >
+                  <Text style={styles.cancelBtnText}>Cancel</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[styles.confirmBtn, loadingContact && styles.confirmBtnDisabled]}
+                  onPress={contactDetails ? closeContactModal : getContactDetails}
+                  disabled={loadingContact}
+                >
+                  {loadingContact ? (
+                    <ActivityIndicator size="small" color={Colors.white} />
+                  ) : (
+                    <Text style={styles.confirmBtnText}>
+                      {contactDetails ? 'OK' : 'Confirm'}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
   </SafeAreaView>
   );
 };
@@ -407,6 +579,8 @@ headerDivider: {
   reqCard: {
     marginHorizontal: wp(5),
     backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
     elevation: 3,
     marginTop: hp(2),
     padding: wp(4),
@@ -423,7 +597,7 @@ headerDivider: {
     // marginTop: hp(1),
   },
   reqDesc: {
-    fontSize: FSize.fs12,
+    fontSize: FSize.fs13,
     marginTop: hp(1),
     color: Colors.grey,
     lineHeight: hp(2.2),
@@ -431,7 +605,7 @@ headerDivider: {
   reqDate: {
     marginTop: hp(1.4),
     fontSize: FSize.fs12,
-    fontWeight: '500',
+    fontWeight: '700',
     color: Colors.darkGray,
   },
 
@@ -500,5 +674,103 @@ headerDivider: {
     fontSize: FSize.fs12,
     color: Colors.sooprsblue,
     fontWeight: '600',
+  },
+  getContactBtn: {
+    width: '100%',
+    paddingVertical: hp(1.4),
+    borderRadius: wp(3),
+    backgroundColor: Colors.sooprsblue,
+    alignItems: 'center',
+    marginTop: hp(2),
+  },
+  getContactText: {
+    fontSize: FSize.fs13,
+    color: Colors.white,
+    fontWeight: '700',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: Colors.white,
+    borderRadius: wp(4),
+    padding: wp(5),
+    width: '90%',
+    maxHeight: '80%',
+  },
+  modalTitle: {
+    fontSize: FSize.fs18,
+    fontWeight: '700',
+    color: Colors.black,
+    marginBottom: hp(2),
+    textAlign: 'center',
+  },
+  modalInfoRow: {
+    flexDirection: 'row',
+    marginBottom: hp(1),
+    flexWrap: 'wrap',
+  },
+  modalLabel: {
+    fontSize: FSize.fs14,
+    fontWeight: '600',
+    color: Colors.black,
+    marginRight: wp(2),
+  },
+  modalValue: {
+    fontSize: FSize.fs14,
+    color: Colors.grey,
+    flex: 1,
+  },
+  contactDetailsContainer: {
+    marginTop: hp(2),
+    paddingTop: hp(2),
+    borderTopWidth: 1,
+    borderTopColor: Colors.lightgrey2,
+  },
+  contactDetailsTitle: {
+    fontSize: FSize.fs16,
+    fontWeight: '700',
+    color: Colors.black,
+    marginBottom: hp(1),
+  },
+  modalButtonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: hp(3),
+  },
+  cancelBtn: {
+    flex: 1,
+    paddingVertical: hp(1.4),
+    borderRadius: wp(3),
+    borderWidth: 1,
+    borderColor: Colors.grey,
+    backgroundColor: Colors.white,
+    alignItems: 'center',
+    marginRight: wp(2),
+  },
+  cancelBtnText: {
+    fontSize: FSize.fs14,
+    color: Colors.grey,
+    fontWeight: '600',
+  },
+  confirmBtn: {
+    flex: 1,
+    paddingVertical: hp(1.4),
+    borderRadius: wp(3),
+    backgroundColor: Colors.sooprsblue,
+    alignItems: 'center',
+    marginLeft: wp(2),
+  },
+  confirmBtnDisabled: {
+    backgroundColor: Colors.grey,
+    opacity: 0.6,
+  },
+  confirmBtnText: {
+    fontSize: FSize.fs14,
+    color: Colors.white,
+    fontWeight: '700',
   },
 });

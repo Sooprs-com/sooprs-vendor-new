@@ -22,10 +22,11 @@ export const mobile_siteConfig = {
   GET_PACKAGE_DETAILS:"user/vendor/package-by-slug/",
   CREATE_PACKAGE:"user/vendor/create-vendor-package",
   UPDATE_PACKAGE:"user/vendor/update-vendor-package",
-  FILTER_LEADS_ALL:"filter-leads-all",
+  FILTER_LEADS_ALL:"filter-leads-all-new",
   GET_CONTACT_LIST:"get-contact-list",
    GET_ALL_ORDERS:"user/vendor/all-orders",
-  GET_ORDER_DETAILS:"user/vendor/orders-detail-by-order_id/"
+  GET_ORDER_DETAILS:"user/vendor/orders-detail-by-order_id/",
+  SHOW_LEAD_MOBILE:"show-lead-mobile"
 
 };
 

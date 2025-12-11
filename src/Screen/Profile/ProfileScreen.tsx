@@ -6,16 +6,169 @@ import {
   Image,
   SafeAreaView,
   ScrollView,
+  Alert,
+  Platform,
+  PermissionsAndroid,
+  ActivityIndicator,
 } from 'react-native';
-import React from 'react';
-import {useNavigation} from '@react-navigation/native';
+import React, {useState, useEffect, useCallback} from 'react';
+import {useNavigation, useFocusEffect} from '@react-navigation/native';
+import {launchImageLibrary, ImagePickerResponse, MediaType} from 'react-native-image-picker';
+import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import {hp, wp} from '../../assets/commonCSS/GlobalCSS';
 import Colors from '../../assets/commonCSS/Colors';
 import Images from '../../assets/image';
 import FSize from '../../assets/commonCSS/FSize';
+import {getDataWithToken, postDataWithToken} from '../../services/mobile-api';
+import {mobile_siteConfig} from '../../services/mobile-siteConfig';
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
+  const [vendorName, setVendorName] = useState('Ankur Pandit');
+  const [vendorMobile, setVendorMobile] = useState('9888675676');
+  const [vendorImage, setVendorImage] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const getVendorProfile = async () => {
+    try {
+      setLoading(true);
+      const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
+      const data: any = await res.json();
+      console.log('Vendor profile data in ProfileScreen:::::', data);
+      
+      if (data?.success && data?.vendorDetail) {
+        // Update name
+        if (data.vendorDetail.name) {
+          setVendorName(data.vendorDetail.name);
+        }
+        
+        // Update mobile number
+        if (data.vendorDetail.mobile) {
+          setVendorMobile(data.vendorDetail.mobile);
+        }
+        
+        // Update profile image
+        if (data.vendorDetail.image) {
+          setVendorImage(data.vendorDetail.image);
+        }
+      }
+    } catch (error) {
+      console.log('Error fetching vendor profile in ProfileScreen:::::', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const requestStoragePermission = async (): Promise<boolean> => {
+    if (Platform.OS === 'android') {
+      if (Platform.Version >= 33) {
+        // Android 13+ (API 33+)
+        const result = await request(PERMISSIONS.ANDROID.READ_MEDIA_IMAGES);
+        return result === RESULTS.GRANTED;
+      } else {
+        // Android 12 and below
+        const result = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        );
+        return result === PermissionsAndroid.RESULTS.GRANTED;
+      }
+    }
+    return true; // iOS permissions are handled automatically
+  };
+
+  const pickProfileImage = async () => {
+    try {
+      const hasPermission = await requestStoragePermission();
+      
+      if (!hasPermission) {
+        Alert.alert(
+          'Permission Required',
+          'Please grant storage permission to select images.',
+        );
+        return;
+      }
+
+      const options = {
+        mediaType: 'photo' as MediaType,
+        quality: 0.8 as const,
+        maxWidth: 2000,
+        maxHeight: 2000,
+      };
+
+      launchImageLibrary(options, async (response: ImagePickerResponse) => {
+        if (response.didCancel) {
+          return;
+        }
+        
+        if (response.errorMessage) {
+          Alert.alert('Error', response.errorMessage);
+          return;
+        }
+
+        if (response.assets && response.assets.length > 0) {
+          const imageUri = response.assets[0].uri;
+          if (imageUri) {
+            setSelectedImage(imageUri);
+            // Upload image immediately after selection
+            await uploadProfileImage(imageUri);
+          }
+        }
+      });
+    } catch (error) {
+      console.log('ImagePicker Exception: ', error);
+      Alert.alert('Error', 'Failed to open image picker');
+    }
+  };
+
+  const uploadProfileImage = async (imageUri: string) => {
+    try {
+      setUploading(true);
+      
+      // Create FormData
+      const formData = new FormData();
+      const imageFileName = imageUri.split('/').pop() || 'profile_image.jpg';
+      const imageFileType = imageFileName.split('.').pop() || 'jpg';
+      
+      formData.append('profile_image', {
+        uri: Platform.OS === 'android' ? imageUri : imageUri.replace('file://', ''),
+        type: `image/${imageFileType}`,
+        name: imageFileName,
+      } as any);
+
+      console.log('Uploading profile image...');
+      
+      // Use COMPLETE_PROFILE endpoint or create a new UPDATE_PROFILE endpoint
+      // For now, using COMPLETE_PROFILE as it might support image updates
+      const result: any = await postDataWithToken(formData, mobile_siteConfig.COMPLETE_PROFILE);
+      console.log('Profile image upload result:::::', result);
+
+      if (result?.success === true || result?.status === 200) {
+        // Update local state with new image
+        setVendorImage(imageUri);
+        setSelectedImage(null);
+        Alert.alert('Success', 'Profile image updated successfully');
+        // Refresh profile data
+        await getVendorProfile();
+      } else {
+        Alert.alert('Error', result?.msg || result?.message || 'Failed to upload image');
+        setSelectedImage(null);
+      }
+    } catch (error: any) {
+      console.log('Error uploading profile image:', error);
+      Alert.alert('Error', error?.message || 'Failed to upload profile image');
+      setSelectedImage(null);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      getVendorProfile();
+    }, [])
+  );
 
   const renderSectionItem = (
     icon: any,
@@ -56,20 +209,29 @@ const ProfileScreen = () => {
         <View style={styles.profileSection}>
           {/* Profile Picture with Camera Overlay */}
           <View style={styles.profileImageContainer}>
-            <Image
-              source={Images.profileImage}
-              style={styles.profileImage}
-            />
-            <TouchableOpacity style={styles.cameraIconContainer}>
+            {uploading ? (
+              <View style={[styles.profileImage, styles.loadingContainer]}>
+                <ActivityIndicator size="large" color={Colors.sooprsblue} />
+              </View>
+            ) : (
+              <Image
+                source={selectedImage ? {uri: selectedImage} : (vendorImage ? {uri: vendorImage} : Images.profileImage)}
+                style={styles.profileImage}
+              />
+            )}
+            <TouchableOpacity 
+              style={styles.cameraIconContainer}
+              onPress={pickProfileImage}
+              disabled={uploading}>
               <Image source={Images.imageIcon} style={styles.cameraIcon} />
             </TouchableOpacity>
           </View>
 
           {/* Name */}
-          <Text style={styles.userName}>Ankur Pandit</Text>
+          <Text style={styles.userName}>{vendorName}</Text>
 
           {/* Phone Number */}
-          <Text style={styles.phoneNumber}>9888675676</Text>
+          <Text style={styles.phoneNumber}>{vendorMobile}</Text>
 
           {/* Verified Badge */}
           <View style={styles.verifiedBadge}>
@@ -82,8 +244,8 @@ const ProfileScreen = () => {
         
 
         {/* Stats Cards Row */}
-        <View style={styles.statsRow}>
-          {/* Vendor Rating */}
+        {/* <View style={styles.statsRow}>
+         
           <View style={styles.statCard}>
             <Image source={Images.starIcon} style={[styles.statIcon, {tintColor: '#FFD700'}]} />
             <View style={styles.statTextContainer}>
@@ -92,7 +254,7 @@ const ProfileScreen = () => {
             </View>
           </View>
 
-          {/* Experience */}
+         
           <View style={styles.statCard}>
             <Image source={Images.CalenderIcon} style={[styles.statIcon, {tintColor: Colors.sooprsblue}]} />
             <View style={styles.statTextContainer}>
@@ -101,7 +263,7 @@ const ProfileScreen = () => {
             </View>
           </View>
 
-          {/* Total Orders */}
+         
           <View style={styles.statCard}>
             <Image source={Images.projectsIcon} style={[styles.statIcon, {tintColor: '#9C27B0'}]} />
             <View style={styles.statTextContainer}>
@@ -109,7 +271,7 @@ const ProfileScreen = () => {
               <Text style={styles.statLabel} numberOfLines={1}>Total Orders</Text>
             </View>
           </View>
-        </View>
+        </View> */}
 
         {/* Your Information Section */}
         <View style={styles.sectionContainer}>
@@ -207,6 +369,11 @@ const styles = StyleSheet.create({
     width: wp(25),
     height: wp(25),
     borderRadius: wp(12.5),
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.lightgrey1,
   },
   cameraIconContainer: {
     position: 'absolute',
