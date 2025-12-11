@@ -19,12 +19,14 @@ import {hp, wp} from '../../assets/commonCSS/GlobalCSS';
 import Colors from '../../assets/commonCSS/Colors';
 import FSize from '../../assets/commonCSS/FSize';
 import Images from '../../assets/image';
-import { postDataWithToken, getDataWithToken } from '../../services/mobile-api';
+import { postDataWithToken, getDataWithToken, putDataWithTokenFormData } from '../../services/mobile-api';
 import { mobile_siteConfig } from '../../services/mobile-siteConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const AddPackagesScreen = () => {
+const AddPackagesScreen = ({route}: any) => {
   const navigation = useNavigation();
+  const isEditMode = route?.params?.isEditMode || false;
+  const editPackageData = route?.params?.packageData || null;
 
   const [packageName, setPackageName] = useState('');
   const [shortDescription, setShortDescription] = useState('');
@@ -79,7 +81,7 @@ const AddPackagesScreen = () => {
   const [thumbnailImage, setThumbnailImage] = useState<string>('');
   const [defaultImages, setDefaultImages] = useState<string[]>([]);
 
-  // Fetch vendor profile to get category_id
+  // Fetch vendor profile to get category_id and vendor_id
   const getVendorProfile = async () => {
     try {
       const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
@@ -94,6 +96,13 @@ const AddPackagesScreen = () => {
         } else {
           console.log('Category ID not found in vendor profile');
         }
+        
+        // Store vendor_id if not already stored
+        const storedVendorId = await AsyncStorage.getItem(mobile_siteConfig.UID);
+        if (!storedVendorId && data.vendorDetail.id) {
+          await AsyncStorage.setItem(mobile_siteConfig.UID, String(data.vendorDetail.id));
+          console.log('Vendor ID stored from vendor profile:', data.vendorDetail.id);
+        }
       }
     } catch (error) {
       console.log('error fetching vendor profile:::::', error);
@@ -102,7 +111,87 @@ const AddPackagesScreen = () => {
 
   useEffect(() => {
     getVendorProfile();
-  }, []);
+    
+    // Auto-fill form if in edit mode
+    if (isEditMode && editPackageData) {
+      console.log('Edit Package Data for auto-fill:', JSON.stringify(editPackageData, null, 2));
+      console.log('Package ID in editPackageData:', editPackageData.id || editPackageData.package_id || editPackageData.packageId);
+      
+      setPackageName(editPackageData.name || '');
+      setShortDescription(editPackageData.short_description || '');
+      setLongDescription(editPackageData.long_description || '');
+      setLocation1(editPackageData.location1 || '');
+      setLocation2(editPackageData.location2 || '');
+      
+      // Convert base_price to string (might be number)
+      const basePriceValue = editPackageData.base_price;
+      setBasePrice(basePriceValue !== null && basePriceValue !== undefined ? String(basePriceValue) : '');
+      console.log('Base Price set to:', basePriceValue !== null && basePriceValue !== undefined ? String(basePriceValue) : '');
+      
+      // Convert discount_price to string (might be number)
+      const discountPriceValue = editPackageData.discount_price;
+      setDiscountPrice(discountPriceValue !== null && discountPriceValue !== undefined ? String(discountPriceValue) : '');
+      console.log('Discount Price set to:', discountPriceValue !== null && discountPriceValue !== undefined ? String(discountPriceValue) : '');
+      
+      // Set charges per day (check multiple possible field names)
+      const chargesPerDayValue = editPackageData.charges_per_day || editPackageData.chargesPerDay || editPackageData.per_day_charges || editPackageData.charges || '';
+      setChargesPerDay(chargesPerDayValue !== null && chargesPerDayValue !== undefined ? String(chargesPerDayValue) : '');
+      console.log('Charges Per Day set to:', chargesPerDayValue !== null && chargesPerDayValue !== undefined ? String(chargesPerDayValue) : '');
+      
+      // Set tags from arrays
+      if (editPackageData.included && Array.isArray(editPackageData.included)) {
+        setInclusionsTags(editPackageData.included);
+      }
+      if (editPackageData.not_included && Array.isArray(editPackageData.not_included)) {
+        setExclusionsTags(editPackageData.not_included);
+      }
+      if (editPackageData.amenities && Array.isArray(editPackageData.amenities)) {
+        setAmenitiesTags(editPackageData.amenities);
+      }
+      if (editPackageData.policy) {
+        // Handle policy - could be array or object
+        if (Array.isArray(editPackageData.policy)) {
+          setPolicyTags(editPackageData.policy);
+        } else if (typeof editPackageData.policy === 'object') {
+          // Convert object to array of strings
+          const policyArray = Object.entries(editPackageData.policy).map(([key, value]) => 
+            `${key}: ${value}`
+          );
+          setPolicyTags(policyArray);
+        } else if (typeof editPackageData.policy === 'string') {
+          try {
+            const parsed = JSON.parse(editPackageData.policy);
+            if (Array.isArray(parsed)) {
+              setPolicyTags(parsed);
+            } else if (typeof parsed === 'object') {
+              const policyArray = Object.entries(parsed).map(([key, value]) => 
+                `${key}: ${value}`
+              );
+              setPolicyTags(policyArray);
+            }
+          } catch {
+            setPolicyTags([editPackageData.policy]);
+          }
+        }
+      }
+      
+      // Set category ID
+      if (editPackageData.category_id) {
+        setCategoryId(String(editPackageData.category_id));
+      }
+      
+      // Set images - convert URLs to local URIs if needed
+      if (editPackageData.thumbnail_image) {
+        const baseUrl = mobile_siteConfig.BASE_URL.replace('/api/', '');
+        setThumbnailImage(baseUrl + editPackageData.thumbnail_image);
+      }
+      if (editPackageData.other_images && Array.isArray(editPackageData.other_images)) {
+        const baseUrl = mobile_siteConfig.BASE_URL.replace('/api/', '');
+        const imageUris = editPackageData.other_images.map((img: string) => baseUrl + img);
+        setDefaultImages(imageUris);
+      }
+    }
+  }, [isEditMode, editPackageData]);
 
   const addTag = (
     tags: string[],
@@ -294,8 +383,28 @@ const AddPackagesScreen = () => {
 
       setIsSubmitting(true);
 
-      // Get vendor_id from AsyncStorage
-      const vendorId = await AsyncStorage.getItem(mobile_siteConfig.UID);
+      // Get vendor_id from AsyncStorage or from editPackageData
+      let vendorId = await AsyncStorage.getItem(mobile_siteConfig.UID);
+      
+      // Fallback: get vendor_id from edit package data if available
+      if (!vendorId && isEditMode && editPackageData?.vendor_id) {
+        vendorId = String(editPackageData.vendor_id);
+      }
+      
+      // If still not found, try to get from vendor profile
+      if (!vendorId) {
+        try {
+          const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
+          const data = await res.json();
+          if (data?.success && data?.vendorDetail?.id) {
+            vendorId = String(data.vendorDetail.id);
+            await AsyncStorage.setItem(mobile_siteConfig.UID, vendorId);
+          }
+        } catch (error) {
+          console.log('Error fetching vendor profile for vendor_id:', error);
+        }
+      }
+      
       console.log('vendorId:::::', vendorId);
       if (!vendorId) {
         Alert.alert('Error', 'Vendor ID not found. Please login again.');
@@ -305,6 +414,36 @@ const AddPackagesScreen = () => {
 
       // Create FormData
       const formData = new FormData();
+      
+      // Add package_id if in edit mode (required for update)
+      if (isEditMode) {
+        // Try multiple possible field names for package ID
+        const packageId = editPackageData?.id || 
+                         editPackageData?.package_id || 
+                         editPackageData?.packageId ||
+                         editPackageData?.package?.id ||
+                         editPackageData?.package?.package_id;
+        
+        console.log('Edit mode - Package ID check:');
+        console.log('- editPackageData?.id:', editPackageData?.id);
+        console.log('- editPackageData?.package_id:', editPackageData?.package_id);
+        console.log('- editPackageData?.packageId:', editPackageData?.packageId);
+        console.log('- editPackageData?.package?.id:', editPackageData?.package?.id);
+        console.log('- Final packageId:', packageId);
+        console.log('- Full editPackageData:', JSON.stringify(editPackageData, null, 2));
+        
+        if (!packageId) {
+          Alert.alert('Error', 'Package ID not found. Cannot update package. Please check console logs.');
+          setIsSubmitting(false);
+          return;
+        }
+        
+        // Append package_id as string (API expects string format based on curl example)
+        formData.append('package_id', String(packageId));
+        console.log('✓ Package ID appended to FormData:', String(packageId));
+      } else {
+        console.log('Create mode - No package_id needed');
+      }
 
       // Add text fields
       formData.append('name', packageName.trim());
@@ -330,31 +469,56 @@ const AddPackagesScreen = () => {
       // Add policy as JSON array string
       formData.append('policy', JSON.stringify(policyTags));
       
-      // Add thumbnail image
-      const thumbnailFileName = thumbnailImage.split('/').pop() || 'thumbnail.jpg';
-      const thumbnailFileType = thumbnailFileName.split('.').pop() || 'jpg';
-      formData.append('thumbnail_image', {
-        uri: Platform.OS === 'android' ? thumbnailImage : thumbnailImage.replace('file://', ''),
-        type: `image/${thumbnailFileType}`,
-        name: thumbnailFileName,
-      } as any);
-
-      // Add default images (max 4)
-      defaultImages.forEach((imageUri, index) => {
-        const fileName = imageUri.split('/').pop() || `image_${index}.jpg`;
-        const fileType = fileName.split('.').pop() || 'jpg';
-        formData.append('other_images', {
-          uri: Platform.OS === 'android' ? imageUri : imageUri.replace('file://', ''),
-          type: `image/${fileType}`,
-          name: fileName,
+      // Add thumbnail image (only if it's a local file, not a URL)
+      if (thumbnailImage && !thumbnailImage.startsWith('http')) {
+        const thumbnailFileName = thumbnailImage.split('/').pop() || 'thumbnail.jpg';
+        const thumbnailFileType = thumbnailFileName.split('.').pop() || 'jpg';
+        formData.append('thumbnail_image', {
+          uri: Platform.OS === 'android' ? thumbnailImage : thumbnailImage.replace('file://', ''),
+          type: `image/${thumbnailFileType}`,
+          name: thumbnailFileName,
         } as any);
+      }
+
+      // Add default images (max 4) - only local files, not URLs
+      defaultImages.forEach((imageUri, index) => {
+        if (!imageUri.startsWith('http')) {
+          const fileName = imageUri.split('/').pop() || `image_${index}.jpg`;
+          const fileType = fileName.split('.').pop() || 'jpg';
+          formData.append('other_images', {
+            uri: Platform.OS === 'android' ? imageUri : imageUri.replace('file://', ''),
+            type: `image/${fileType}`,
+            name: fileName,
+          } as any);
+        }
       });
 
-      console.log('Package FormData:', formData);
+      // Verify package_id is included in edit mode
+      if (isEditMode) {
+        const packageId = editPackageData?.id || 
+                         editPackageData?.package_id || 
+                         editPackageData?.packageId ||
+                         editPackageData?.package?.id ||
+                         editPackageData?.package?.package_id;
+        console.log('Final verification - Package ID being sent:', packageId);
+        if (!packageId) {
+          Alert.alert('Error', 'Package ID is missing. Cannot proceed with update.');
+          setIsSubmitting(false);
+          return;
+        }
+      }
       
-      // Call create package API
-      const result: any = await postDataWithToken(formData, mobile_siteConfig.CREATE_PACKAGE);
-      console.log('Create package result:::::', result);
+      console.log('Package FormData prepared. isEditMode:', isEditMode);
+      
+      // Call create or update package API
+      const apiEndpoint = isEditMode ? mobile_siteConfig.UPDATE_PACKAGE : mobile_siteConfig.CREATE_PACKAGE;
+      const apiFunction = isEditMode ? putDataWithTokenFormData : postDataWithToken;
+      
+      console.log('API Endpoint:', apiEndpoint);
+      console.log('API Function:', isEditMode ? 'PUT' : 'POST');
+      
+      const result: any = await apiFunction(formData, apiEndpoint);
+      console.log(isEditMode ? 'Update package result:::::' : 'Create package result:::::', result);
 
       // Check for error responses
       if (result?.status === 400 || result?.status === 'error' || (result?.success === false)) {
@@ -363,9 +527,12 @@ const AddPackagesScreen = () => {
         return;
       }
 
-      // Check if package creation was successful
+      // Check if package creation/update was successful
       if (result?.success === true || result?.status === 'success') {
-        Alert.alert('Success', result?.message || result?.msg || 'Package created successfully', [
+        const successMessage = isEditMode 
+          ? (result?.message || result?.msg || 'Package updated successfully')
+          : (result?.message || result?.msg || 'Package created successfully');
+        Alert.alert('Success', successMessage, [
           {
             text: 'OK',
             onPress: () => {
@@ -374,7 +541,10 @@ const AddPackagesScreen = () => {
           },
         ]);
       } else {
-        Alert.alert('Error', result?.msg || result?.message || 'Failed to create package');
+        const errorMessage = isEditMode 
+          ? (result?.msg || result?.message || 'Failed to update package')
+          : (result?.msg || result?.message || 'Failed to create package');
+        Alert.alert('Error', errorMessage);
       }
     } catch (error: any) {
       console.log('Create package error:::::', error);
@@ -484,7 +654,7 @@ const AddPackagesScreen = () => {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Image source={Images.backArrow} style={styles.backIcon} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Add Packages</Text>
+          <Text style={styles.headerTitle}>{isEditMode ? 'Edit Package' : 'Add Packages'}</Text>
         </View>
 
         <View style={styles.divider} />
@@ -626,7 +796,7 @@ const AddPackagesScreen = () => {
         </View>
 
         {/* Charges/Day */}
-        <Text style={styles.label}>Charges/Day</Text>
+        {/* <Text style={styles.label}>Charges/Day</Text>
         <TextInput
           style={styles.input}
           placeholder="e.g. 4"
@@ -634,7 +804,7 @@ const AddPackagesScreen = () => {
           value={chargesPerDay}
           onChangeText={setChargesPerDay}
           keyboardType="numeric"
-        />
+        /> */}
 
         {/* Upload Photos */}
         <Text style={styles.label}>
@@ -706,7 +876,9 @@ const AddPackagesScreen = () => {
           onPress={createPackage}
           disabled={isSubmitting}>
           <Text style={styles.submitText}>
-            {isSubmitting ? 'Creating Package...' : 'Add Package'}
+            {isSubmitting 
+              ? (isEditMode ? 'Updating Package...' : 'Creating Package...') 
+              : (isEditMode ? 'Update Package' : 'Add Package')}
           </Text>
         </TouchableOpacity>
       </ScrollView>
