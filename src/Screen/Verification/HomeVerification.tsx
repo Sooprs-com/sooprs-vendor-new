@@ -79,7 +79,7 @@ const HomeVerificationScreen = () => {
 
   <TouchableOpacity 
   style={styles.profileBtn}
-  onPress={() => navigation.navigate("RegistrationScreen")}
+  onPress={() => navigation.navigate("CompleteProfileScreen")}
 >
   <View style={styles.profileBtnRow}>
     <Text style={styles.profileBtnText}>Complete Profile</Text>

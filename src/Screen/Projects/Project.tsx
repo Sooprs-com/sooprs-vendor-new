@@ -6,86 +6,100 @@ import {
   TouchableOpacity,
   Image,
   SafeAreaView,
+  ActivityIndicator,
 } from 'react-native';
-import React, {useState} from 'react';
-import { useNavigation } from '@react-navigation/native';
+import React, {useEffect, useState, useCallback} from 'react';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 import {hp, wp, GlobalCss} from '../../assets/commonCSS/GlobalCSS';
 import Colors from '../../assets/commonCSS/Colors';
 import Images from '../../assets/image';
 import FSize from '../../assets/commonCSS/FSize';
+import { getDataWithToken } from '../../services/mobile-api';
+import { mobile_siteConfig } from '../../services/mobile-siteConfig';
 
-interface Package {
-  id: string;
-  vehicleImage: any;
-  vehicleName: string;
-  vehicleType: string;
-  route: string;
-  seats: number;
-  features: string[];
-  discount: number;
-  originalPrice: string;
-  discountedPrice: string;
-  additionalCharges: string;
+interface ApiPackage {
+  id: number;
+  slug: string;
+  name: string;
+  short_description: string;
+  long_description: string;
+  category_id: number;
+  vendor_id: number;
+  thumbnail_image: string | null;
+  other_images: string[] | null;
+  included: string[];
+  not_included: string[];
+  policy: {
+    refund: string;
+    advance: string;
+    cancellation: string;
+  };
+  amenities: string[];
+  base_price: string;
+  discount_price: string;
+  location1: string;
+  location2: string;
+  status: number;
+  created_at: string;
+  updated_at: string;
 }
 
 const Project = () => {
   const navigation = useNavigation();
+  const [packages, setPackages] = useState<ApiPackage[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [packages] = useState<Package[]>([
-    {
-      id: '1',
-      vehicleImage: Images.carIcon,
-      vehicleName: 'Mahindra',
-      vehicleType: 'SUV',
-      route: 'Delhi to Manali',
-      seats: 4,
-      features: ['AC'],
-      discount: 14,
-      originalPrice: '₹12,999',
-      discountedPrice: '₹5,499',
-      additionalCharges: '₹730',
-    },
-    {
-      id: '2',
-      vehicleImage: Images.carIcon,
-      vehicleName: 'Mahindra',
-      vehicleType: 'SUV',
-      route: 'Delhi to Manali',
-      seats: 4,
-      features: ['AC'],
-      discount: 14,
-      originalPrice: '₹12,999',
-      discountedPrice: '₹5,499',
-      additionalCharges: '₹730',
-    },
-    {
-      id: '3',
-      vehicleImage: Images.carIcon,
-      vehicleName: 'Mahindra',
-      vehicleType: 'SUV',
-      route: 'Delhi to Manali',
-      seats: 4,
-      features: ['AC'],
-      discount: 14,
-      originalPrice: '₹12,999',
-      discountedPrice: '₹5,499',
-      additionalCharges: '₹730',
-    },
-    {
-      id: '4',
-      vehicleImage: Images.carIcon,
-      vehicleName: 'Mahindra',
-      vehicleType: 'SUV',
-      route: 'Delhi to Manali',
-      seats: 4,
-      features: ['AC'],
-      discount: 14,
-      originalPrice: '₹12,999',
-      discountedPrice: '₹5,499',
-      additionalCharges: '₹730',
-    },
-  ]);
+  const getPackages = async () => {
+    try {
+      setLoading(true);
+      const res: any = await getDataWithToken({}, mobile_siteConfig.GET_PACKAGES);
+      const data: any = await res.json();
+      console.log('Packages API data:::::', data);
+      
+      if (data?.success && data?.data && Array.isArray(data.data)) {
+        setPackages(data.data);
+      } else {
+        console.log('Invalid packages response format');
+        setPackages([]);
+      }
+    } catch (error) {
+      console.log('Error fetching packages:::::', error);
+      setPackages([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Calculate discount percentage
+  const calculateDiscount = (basePrice: string, discountPrice: string): number => {
+    const base = parseFloat(basePrice);
+    const discount = parseFloat(discountPrice);
+    if (base > 0) {
+      return Math.round(((base - discount) / base) * 100);
+    }
+    return 0;
+  };
+
+  // Format price with Indian currency
+  const formatPrice = (price: string): string => {
+    const numPrice = parseFloat(price);
+    return `₹${numPrice.toLocaleString('en-IN')}`;
+  };
+
+  // Get image URI
+  const getImageUri = (thumbnailImage: string | null): any => {
+    if (thumbnailImage) {
+      return { uri: mobile_siteConfig.BASE_URL.replace('/api/', '') + thumbnailImage };
+    }
+    return Images.carIcon; // Default image
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      getPackages();
+    }, [])
+  );
 
   // const renderPackageCard = (pkg: Package) => (
   //   <View key={pkg.id} style={styles.packageCard}>
@@ -125,47 +139,56 @@ const Project = () => {
   // );
 
 
-  const renderPackageCard = (pkg: Package) => (
-  <TouchableOpacity
-    key={pkg.id}
-    activeOpacity={0.8}
-    onPress={() => navigation.navigate("CabRideReviewScreen", { data: pkg })}
-    style={styles.packageCard}
-  >
-    {/* Left Side - Vehicle Image & Details */}
-    <View style={styles.leftSection}>
-      <View style={styles.imageContainer}>
-        <Image source={pkg.vehicleImage} style={styles.vehicleImage} />
-      </View>
-      <View style={styles.detailsContainer}>
-        <Text style={styles.vehicleName}>
-          {pkg.vehicleName}, {pkg.vehicleType}
-        </Text>
-        <Text style={styles.routeText}>{pkg.route}</Text>
-        <Text style={styles.featuresText}>
-          {pkg.seats} seats • {pkg.features.join(" • ")}
-        </Text>
-      </View>
-    </View>
-
-    {/* Right Side - Pricing */}
-    <View style={styles.rightSection}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: wp(1) }}>
-        <View style={styles.discountTag}>
-          <Text style={styles.discountText}>{pkg.discount}% off</Text>
+  const renderPackageCard = (pkg: ApiPackage) => {
+    console.log("pkg Data",pkg);
+    console.log("pkg.base_price",pkg.base_price);
+    console.log("pkg.discount_price",pkg.discount_price);
+    const discount = calculateDiscount(pkg.base_price, pkg.discount_price);
+    console.log("discount",discount);
+    const route = `${pkg.location1} to ${pkg.location2}`;
+    const imageSource = getImageUri(pkg.thumbnail_image);
+    
+    return (
+      <TouchableOpacity
+        key={pkg.id}
+        activeOpacity={0.8}
+        onPress={() => (navigation as any).navigate("CabRideReviewScreen", { data: pkg })}
+        style={styles.packageCard}
+      >
+        {/* Left Side - Package Image & Details */}
+        <View style={styles.leftSection}>
+          <View style={styles.imageContainer}>
+            <Image source={imageSource} style={styles.vehicleImage} />
+          </View>
+          <View style={styles.detailsContainer}>
+            <Text style={styles.vehicleName} numberOfLines={1}>
+              {pkg.name}
+            </Text>
+            <Text style={styles.routeText} numberOfLines={1}>{route}</Text>
+            <Text style={styles.featuresText} numberOfLines={1}>
+              {pkg.amenities && pkg.amenities.length > 0 
+                ? pkg.amenities.slice(0, 3).join(" • ")
+                : 'No amenities'}
+            </Text>
+          </View>
         </View>
-        <Text style={styles.originalPrice}>{pkg.originalPrice}</Text>
-      </View>
 
-      <Text style={styles.discountedPrice}>{pkg.discountedPrice}</Text>
-
-      <View style={styles.additionalChargesContainer}>
-        <Text style={styles.additionalChargesText}>+{pkg.additionalCharges}</Text>
-        <Text style={styles.taxesText}>(Taxes & Charges)</Text>
-      </View>
-    </View>
-  </TouchableOpacity>
-);
+        {/* Right Side - Pricing */}
+        <View style={styles.rightSection}>
+          {discount > 0 && (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: wp(1) }}>
+              <View style={styles.discountTag}>
+                <Text style={styles.discountText}>{discount}% off</Text>
+              </View>
+              <Text style={styles.originalPrice}>{formatPrice(pkg.base_price)}</Text>
+            </View>
+          )}
+          <Text style={styles.discountedPrice}>{formatPrice(pkg.discount_price)}</Text>
+          <Text style={styles.taxesText}>(Inclusive of all taxes)</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -174,7 +197,7 @@ const Project = () => {
         <Text style={styles.headerTitle}>My Packages</Text>
      <TouchableOpacity 
   style={styles.addButton}
-  onPress={() => navigation.navigate("AddPackagesScreen")}
+  onPress={() => (navigation as any).navigate("AddPackagesScreen")}
 >
   <View style={styles.plusRow}>
     <Text style={styles.plus}>+</Text>
@@ -190,7 +213,19 @@ const Project = () => {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
-        {packages.map(pkg => renderPackageCard(pkg))}
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={Colors.sooprsblue} />
+            <Text style={styles.loadingText}>Loading packages...</Text>
+          </View>
+        ) : packages.length > 0 ? (
+          packages.map(pkg => renderPackageCard(pkg))
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No packages found</Text>
+            <Text style={styles.emptySubtext}>Add your first package to get started</Text>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -358,5 +393,32 @@ addText: {
     fontSize: FSize.fs9,
     color: Colors.gray,
     marginTop: hp(0.1),
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: hp(10),
+  },
+  loadingText: {
+    marginTop: hp(2),
+    fontSize: FSize.fs14,
+    color: Colors.gray,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: hp(10),
+  },
+  emptyText: {
+    fontSize: FSize.fs16,
+    fontWeight: '600',
+    color: Colors.black,
+    marginBottom: hp(1),
+  },
+  emptySubtext: {
+    fontSize: FSize.fs14,
+    color: Colors.gray,
   },
 });
