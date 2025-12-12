@@ -224,7 +224,8 @@ const MyLeadsScreen = () => {
 
       {/* DESCRIPTION */}
       <Text style={styles.desc}>
-        {contact.description || contact.desc || contact.project_title || 'The customer wants to book a cab trip.'}
+        {contact.description || contact.desc || contact.project_title 
+        || 'The customer wants to book a cab trip.'}
       </Text>
 
       {/* BUDGET INFO */}

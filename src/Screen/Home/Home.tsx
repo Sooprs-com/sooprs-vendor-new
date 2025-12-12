@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import React, {useEffect, useState, useCallback} from 'react';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
+import LinearGradient from 'react-native-linear-gradient';
 import {hp, wp, GlobalCss} from '../../assets/commonCSS/GlobalCSS';
 import Colors from '../../assets/commonCSS/Colors';
 import Images from '../../assets/image';
@@ -244,26 +245,41 @@ const Home = () => {
 
       <View style={styles.statsRow}>
 
-        {/* Earnings */}
-        <View style={styles.statCard}>
+        {/* Wallet Amount */}
+        <LinearGradient
+          colors={['#E4F2FD', '#C2DFFC']}
+          start={{x: 0, y: 0}}
+          end={{x: 1, y: 1}}
+          style={styles.statCard}
+        >
           <Image source={Images.walletIcon} style={styles.statIcon} />
-          <Text style={styles.statValue}>₹ 10,550</Text>
-          <Text style={styles.statLabel}>Total Earnings</Text>
-        </View>
+          <Text style={styles.statValueWallet}>₹ 10,550</Text>
+          <Text style={styles.statLabelWallet}>Wallet Amount</Text>
+        </LinearGradient>
 
-        {/* Active Trips */}
-        <View style={styles.statCard}>
+        {/* Total Leads */}
+        <LinearGradient
+          colors={['#F0E2FF', '#E5C7FF']}
+          start={{x: 0, y: 0}}
+          end={{x: 1, y: 1}}
+          style={styles.statCard}
+        >
           <Image source={Images.activeTripIcon} style={styles.statIcon} />
-          <Text style={styles.statValue}>8</Text>
-          <Text style={styles.statLabel}>Active Trips</Text>
-        </View>
+          <Text style={styles.statValueLeads}>8</Text>
+          <Text style={styles.statLabelLeads}>Total Leads</Text>
+        </LinearGradient>
 
-        {/* Rating */}
-        <View style={styles.statCard}>
+        {/* Total Orders */}
+        <LinearGradient
+          colors={['#FFF7DE', '#FEEBBB']}
+          start={{x: 0, y: 0}}
+          end={{x: 1, y: 1}}
+          style={styles.statCard}
+        >
           <Image source={Images.ratingStar} style={styles.statIcon} />
-          <Text style={styles.statValue}>4.9</Text>
-          <Text style={styles.statLabel}>Rating</Text>
-        </View>
+          <Text style={styles.statValueOrders}>4.9</Text>
+          <Text style={styles.statLabelOrders}>Total Orders</Text>
+        </LinearGradient>
       </View>
 
 
@@ -527,7 +543,6 @@ headerDivider: {
 
   statCard: {
     width: wp(28),
-    backgroundColor: Colors.white,
     elevation: 3,
     borderRadius: wp(3),
     paddingVertical: hp(2),
@@ -546,6 +561,39 @@ headerDivider: {
   statLabel: {
     fontSize: FSize.fs11,
     color: Colors.grey,
+    marginTop: hp(0.3),
+  },
+  statValueWallet: {
+    fontSize: FSize.fs16,
+    fontWeight: '700',
+    color: '#00498F',
+  },
+  statLabelWallet: {
+    fontSize: FSize.fs11,
+    color: '#00498F',
+    fontWeight: '500',
+    marginTop: hp(0.3),
+  },
+  statValueLeads: {
+    fontSize: FSize.fs16,
+    fontWeight: '700',
+    color: '#42007C',
+  },
+  statLabelLeads: {
+    fontSize: FSize.fs11,
+    color: '#42007C',
+    fontWeight: '500',
+    marginTop: hp(0.3),
+  },
+  statValueOrders: {
+    fontSize: FSize.fs16,
+    fontWeight: '700',
+    color: '#9F7200',
+  },
+  statLabelOrders: {
+    fontSize: FSize.fs11,
+    color: '#9F7200',
+    fontWeight: '500',
     marginTop: hp(0.3),
   },
 
