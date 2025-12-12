@@ -168,9 +168,11 @@ const Home = () => {
   };
 
   const openContactModal = (lead: any) => {
+    console.log('Opening contact modal for lead:', lead);
     setSelectedLead(lead);
     setContactDetails(null);
     setShowContactModal(true);
+    console.log('Modal state set to true');
   };
 
   const closeContactModal = () => {
@@ -256,9 +258,23 @@ const Home = () => {
     );
   }
 
+  const handleScroll = (event: any) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    const paddingToBottom = 20;
+    const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
+    
+    if (isCloseToBottom && hasMore && !loadingMore && !loadingLeads) {
+      loadMoreLeads();
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-    <ScrollView showsVerticalScrollIndicator={false}>
+    <ScrollView 
+      showsVerticalScrollIndicator={false}
+      onScroll={handleScroll}
+      scrollEventThrottle={400}
+    >
       
 
       {/* ================= HEADER ================= */}
@@ -325,10 +341,8 @@ const Home = () => {
           <Text style={styles.loadingText}>Loading leads...</Text>
         </View>
       ) : leads.length > 0 ? (
-        <FlatList
-          data={leads}
-          keyExtractor={(item, index) => item.id?.toString() || index.toString()}
-          renderItem={({ item: lead }) => {
+        <>
+          {leads.map((lead, index) => {
             const leadId = lead.id || lead.lead_id || lead.leadId;
             const isExpanded = expandedLeads.has(leadId);
             const description = lead.description || lead.desc || 'The customer wants to book a cab trip.';
@@ -338,7 +352,7 @@ const Home = () => {
             const shouldTruncate = lineCount > 4 || description.length > 300;
 
             return (
-              <View style={styles.reqCard}>
+              <View key={leadId?.toString() || index.toString()} style={styles.reqCard}>
                 <Text style={styles.reqTitle2}>
                   {lead.project_title || lead.projectTitle || 'Project Title'}
                 </Text>
@@ -367,25 +381,24 @@ const Home = () => {
                
                 <TouchableOpacity 
                   style={styles.getContactBtn}
-                  onPress={() => openContactModal(lead)}
+                  onPress={() => {
+                    console.log('Button pressed for lead:', lead);
+                    openContactModal(lead);
+                  }}
+                  activeOpacity={0.7}
                 >
                   <Text style={styles.getContactText}>Get Contact Details</Text>
                 </TouchableOpacity>
               </View>
             );
-          }}
-          onEndReached={loadMoreLeads}
-          onEndReachedThreshold={0.5}
-          ListFooterComponent={() => 
-            loadingMore ? (
-              <View style={styles.loadingMoreContainer}>
-                <ActivityIndicator size="small" color={Colors.sooprsblue} />
-                <Text style={styles.loadingMoreText}>Loading more...</Text>
-              </View>
-            ) : null
-          }
-          scrollEnabled={false}
-        />
+          })}
+          {loadingMore && (
+            <View style={styles.loadingMoreContainer}>
+              <ActivityIndicator size="small" color={Colors.sooprsblue} />
+              <Text style={styles.loadingMoreText}>Loading more...</Text>
+            </View>
+          )}
+        </>
       ) : (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>No leads available</Text>

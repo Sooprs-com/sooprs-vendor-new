@@ -13,6 +13,7 @@ import ProfileScreen from '../Screen/Profile/ProfileScreen';
 import RegistrationScreen from '../auth/RegistrationScreen';
 import CompleteProfileScreen from '../Screen/CompleteProfile/CompleteProfileScreen';
 import PackageDetailsScreen from '../Screen/Orders/PackageDetailsScreen';
+import AddCredits from '../Screen/CreditScreen/AddCredits';
 // import WelcomeScreen from './auth/WelcomeScreen';
 // import ProfileSelection from './auth/ProfileSelection';
 // import Signup from './auth/Signup';
@@ -90,6 +91,7 @@ const AuthenticationRouter = () => {
            <Stack.Screen name="CabRideReviewScreen" component={CabRideReviewScreen} />
            <Stack.Screen name="CompleteProfileScreen" component={CompleteProfileScreen} />
            <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+           <Stack.Screen name="AddCredits" component={AddCredits} />
            <Stack.Screen name="PackageDetailsScreen" component={PackageDetailsScreen} />
       <Stack.Screen name="BottomTab" component={BottomTab} />
     

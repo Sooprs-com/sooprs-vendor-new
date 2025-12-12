@@ -284,14 +284,16 @@ const ProfileScreen = () => {
         </View>
 
         {/* Payment and coupons Section */}
-        <View style={styles.sectionContainer}>
+        <TouchableOpacity 
+        onPress={() => navigation.navigate('AddCredits')}
+        style={styles.sectionContainer}>
           <Text style={styles.sectionHeader}>Payment and coupons</Text>
           {renderSectionItem(
             Images.walletIcon,
             'Wallet',
             'Manage your Wallet here.',
           )}
-        </View>
+        </TouchableOpacity>
 
         {/* Other Information Section */}
         <View style={styles.sectionContainer}>
