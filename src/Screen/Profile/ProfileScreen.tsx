@@ -175,13 +175,17 @@ const ProfileScreen = () => {
     title: string,
     subtitle: string,
     onPress?: () => void,
+    iconStyle?: any,
+    showDivider: boolean = true,
   ) => (
     <TouchableOpacity
-      style={styles.sectionItem}
+      style={[styles.sectionItem, !showDivider && styles.sectionItemNoDivider]}
       onPress={onPress}
       activeOpacity={0.7}>
       <View style={styles.sectionItemLeft}>
-        <Image source={icon} style={styles.sectionIcon} />
+        <View style={styles.iconContainer}>
+          <Image source={icon} style={[styles.sectionIcon, iconStyle]} />
+        </View>
         <View style={styles.sectionTextContainer}>
           <Text style={styles.sectionTitle}>{title}</Text>
           <Text style={styles.sectionSubtitle}>{subtitle}</Text>
@@ -277,9 +281,17 @@ const ProfileScreen = () => {
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionHeader}>Your Information</Text>
           {renderSectionItem(
+            Images.creditIcon,
+            'Credit',
+            'Check your available credits and usage details.',
+            undefined,
+            styles.creditIconSmall,
+            false,
+          )}
+          {renderSectionItem(
             Images.locationIcon,
-            'Address book',
-            'Manage your address here.',
+            'Subsciption',
+            'Manage your active plans and renewals.',
           )}
         </View>
 
@@ -296,31 +308,58 @@ const ProfileScreen = () => {
         </TouchableOpacity>
 
         {/* Other Information Section */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionHeader}>Other Information</Text>
+        <View style={[styles.sectionContainer, styles.sectionContainerNoTopMargin]}>
+          <Text style={styles.sectionHeader}>About Sooprs</Text>
           {renderSectionItem(
             Images.referIcon,
-            'Share the app',
-            'Share this app to someone else.',
+            'Privacy Policy',
+            'Learn how we protect and use your data.',
+            undefined,
+            undefined,
+            false,
           )}
           {renderSectionItem(
             Images.favoriteIcon,
-            'About us',
-            'About Us',
+            'Terms & Conditions',
+            'Understand the rules and guidelines of our platform.',
+            undefined,
+            undefined,
+            false,
           )}
           {renderSectionItem(
             Images.shieldIcon,
-            'Account privacy',
-            'Read Privacy here.',
+            'Refund Policy',
+            'Know your refund work on our platform.',
+            undefined,
+            undefined,
+            false,
           )}
+          {renderSectionItem(
+            Images.contactus,
+            'Contact Us',
+            'Reach out for help or support anytime.',
+            undefined,
+            undefined,
+            false,
+          )}
+          {renderSectionItem(
+            Images.faqIcone,
+            'FAQ',
+            'Find quick answers to common questions.',
+            undefined,
+            undefined,
+            false,
+          )}
+          <View style={styles.logoutDivider} />
           {renderSectionItem(
             Images.logoutIcon,
             'Log out',
-            'Log Out',
+            '',
             () => {
               // Handle logout logic here
             },
           )}
+          <View style={styles.logoutDivider} />
         </View>
 
         {/* Bottom Branding */}
@@ -479,8 +518,12 @@ const styles = StyleSheet.create({
     marginTop: hp(2),
     paddingHorizontal: wp(5),
   },
+  sectionContainerNoTopMargin: {
+    marginTop: 0,
+    paddingTop: 0,
+  },
   sectionHeader: {
-    fontSize: FSize.fs14,
+    fontSize: FSize.fs16,
     fontWeight: '600',
     color: Colors.black,
     marginBottom: hp(1),
@@ -491,19 +534,42 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: hp(1.5),
+    paddingHorizontal: wp(0.5),
     borderBottomWidth: 1,
     borderBottomColor: Colors.lightgrey2,
+    overflow: 'visible',
+  },
+  sectionItemNoDivider: {
+    borderBottomWidth: 0,
+  },
+  logoutDivider: {
+    height: 1,
+    backgroundColor: Colors.lightgrey2,
   },
   sectionItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    overflow: 'visible',
+  },
+  iconContainer: {
+    width: wp(7),
+    height: wp(7),
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: wp(3),
+    overflow: 'visible',
   },
   sectionIcon: {
     width: wp(6),
     height: wp(6),
-    marginRight: wp(3),
     tintColor: Colors.grey,
+    resizeMode: 'contain',
+  },
+  creditIconSmall: {
+    width: wp(4.5),
+    height: wp(4.5),
+    resizeMode: 'contain',
   },
   sectionTextContainer: {
     flex: 1,
@@ -521,7 +587,7 @@ const styles = StyleSheet.create({
   chevronIcon: {
     width: wp(5),
     height: wp(5),
-    tintColor: Colors.grey,
+    tintColor: Colors.lightgrey2,
   },
   brandingContainer: {
     alignItems: 'center',
