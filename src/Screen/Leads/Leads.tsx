@@ -6,6 +6,9 @@ import {
   SafeAreaView,
   FlatList,
   ActivityIndicator,
+  TouchableOpacity,
+  Image,
+  Linking,
 } from "react-native";
 import React, { useState, useCallback } from "react";
 import { useFocusEffect } from "@react-navigation/native";
@@ -15,6 +18,7 @@ import FSize from "../../assets/commonCSS/FSize";
 import { postDataWithTokenBase2, getDataWithToken } from "../../services/mobile-api";
 import { mobile_siteConfig } from "../../services/mobile-siteConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Images from "../../assets/image";
 
 const MyLeadsScreen = () => {
   const [contacts, setContacts] = useState<any[]>([]);
@@ -152,73 +156,108 @@ const MyLeadsScreen = () => {
     }, [])
   );
 
-  const renderContactCard = ({ item: contact }: { item: any }) => (
-    <View style={styles.card}>
-      {/* TITLE */}
-      <Text style={styles.title}>
-        {contact.project_title || contact.pickup_location || contact.pickupLocation || 'Project Title'} 
-        {contact.pickup_location || contact.pickupLocation ? ` to ${contact.dropoff_location || contact.dropoffLocation || 'Dropoff'} ${contact.vehicle_type || contact.vehicleType || ''} Cab` : ''}
-      </Text>
+  const handleWhatsApp = (phone: string) => {
+    const phoneNumber = phone.replace(/[^0-9]/g, ''); // Remove non-numeric characters
+    const whatsappUrl = `whatsapp://send?phone=${phoneNumber}`;
+    Linking.openURL(whatsappUrl).catch(() => {
+      // If WhatsApp is not installed, try web version
+      const webUrl = `https://wa.me/${phoneNumber}`;
+      Linking.openURL(webUrl);
+    });
+  };
 
-      {/* DESCRIPTION */}
-      {/* <Text style={styles.desc}>
-        {contact.description || contact.desc || contact.project_title 
-        || 'The customer wants to book a cab trip.'}
-      </Text> */}
+  const handleCall = (phone: string) => {
+    const phoneNumber = phone.replace(/[^0-9]/g, ''); // Remove non-numeric characters
+    Linking.openURL(`tel:${phoneNumber}`);
+  };
 
-      {/* BUDGET INFO */}
-      {contact.min_budget && contact.max_budget_amount && (
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Budget:</Text>
-          <Text style={styles.infoValue}>${contact.min_budget} - ${contact.max_budget_amount}</Text>
-        </View>
-      )}
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const month = date.toLocaleDateString('en-IN', { month: 'long' });
+    const year = date.getFullYear();
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+    const displayMinutes = minutes.toString().padStart(2, '0');
+    return `Posted on ${day} ${month}, ${year} at ${displayHours}:${displayMinutes}${ampm}`;
+  };
 
-      {/* CREATED DATE */}
-      {contact.created_at && (
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Created:</Text>
-          <Text style={styles.infoValue}>
-            {new Date(contact.created_at).toLocaleDateString('en-IN', { 
-              day: 'numeric', 
-              month: 'short', 
-              year: 'numeric' 
-            })}
-          </Text>
-        </View>
-      )}
+  const renderContactCard = ({ item: contact }: { item: any }) => {
+    const phone = contact.phone || contact.phone_number || contact.phoneNumber || contact.encrypted_mobile || '';
+    const name = contact.name || contact.user_name || contact.userName || 'Customer';
+    const location = contact.city || contact.pickup_location || contact.pickupLocation || contact.location || '';
+    const minBudget = contact.min_budget || contact.min_budget_amount || '';
+    const maxBudget = contact.max_budget_amount || contact.max_budget || '';
+    const title = contact.project_title || contact.pickup_location || contact.pickupLocation || 'Project Title';
+    const fullTitle = contact.pickup_location || contact.pickupLocation 
+      ? `${title} to ${contact.dropoff_location || contact.dropoffLocation || 'Dropoff'} ${contact.vehicle_type || contact.vehicleType || ''} Cab`
+      : title;
 
-      <View style={styles.cardDivider} />
-      
-      {/* USER ROW */}
-      <View style={styles.userRow}>
-        {/* LEFT USER INFO */}
-        <View style={styles.userLeft}>
-          <View>
-            <Text style={styles.userName}>
-              Name: <Text style={styles.userNameValue}>
-                {contact.name || contact.user_name || contact.userName || 'Customer'}
-              </Text>
+    return (
+      <View style={styles.card}>
+        {/* TITLE */}
+        <Text style={styles.title}>
+          {fullTitle}
+        </Text>
+
+        {/* BUDGET INFO */}
+        {minBudget && maxBudget && (
+          <View style={styles.budgetRow}>
+            <Text style={styles.budgetLabel}>Budget range: </Text>
+            <Text style={styles.budgetValue}>
+              ₹{typeof minBudget === 'number' ? minBudget.toLocaleString('en-IN') : minBudget} - ₹{typeof maxBudget === 'number' ? maxBudget.toLocaleString('en-IN') : maxBudget}
             </Text>
-
-            {contact.city && (
-              <Text style={styles.cityText}>
-                {contact.city}
-              </Text>
-            )}
           </View>
+        )}
+
+        {/* CREATED DATE */}
+        {contact.created_at && (
+          <Text style={styles.dateText}>
+            {formatDate(contact.created_at)}
+          </Text>
+        )}
+
+        {/* USER NAME */}
+        <View style={styles.nameRow}>
+          <Text style={styles.nameLabel}>Name: </Text>
+          <Text style={styles.nameValue}>{name}</Text>
         </View>
 
-        {/* RIGHT PHONE NUMBER */}
-        <View style={styles.phoneRight}>
-          <Text style={styles.phoneLabel}>Phone Number</Text>
-          <Text style={styles.phoneValue} numberOfLines={1}>
-            {contact.phone || contact.phone_number || contact.phoneNumber || contact.encrypted_mobile || 'N/A'}
-          </Text>
+        {/* LOCATION */}
+        {location && (
+          <View style={styles.locationRow}>
+            <Image source={Images.locatioPinIcon} style={styles.locationIcon} />
+            <Text style={styles.locationText}>{location}</Text>
+          </View>
+        )}
+
+        {/* ACTION BUTTONS */}
+        <View style={styles.buttonRow}>
+          <TouchableOpacity 
+            style={styles.whatsappButton}
+            onPress={() => phone && handleWhatsApp(phone)}
+            activeOpacity={0.7}
+          >
+            <Image source={Images.whatsAppIcon} style={styles.whatsappIcon} />
+            <Text style={styles.whatsappText}>Whatsapp</Text>
+            
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.contactButton}
+            onPress={() => phone && handleCall(phone)}
+            activeOpacity={0.7}
+          >
+            <Image source={Images.phoneIcon} style={styles.contactIcon} />
+            <Text style={styles.contactText}>Contact</Text>
+          </TouchableOpacity>
         </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   const renderHeader = () => (
     <>
@@ -297,7 +336,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.white,
     marginHorizontal: wp(5),
-    marginTop: hp(1.5),
+    marginTop: hp(2),
     marginBottom: hp(0.5),
     padding: wp(4),
     borderRadius: wp(3),
@@ -310,116 +349,129 @@ const styles = StyleSheet.create({
     fontSize: FSize.fs15,
     fontWeight: "700",
     color: Colors.black,
+    marginBottom: hp(1),
   },
 
-  desc: {
-    fontSize: FSize.fs12,
-    marginTop: hp(1),
-    lineHeight: hp(2.2),
-    color: Colors.grey,
-  },
-
-  pickup: {
-    marginTop: hp(1.2),
-    fontSize: FSize.fs12,
-    color: Colors.grey,
-  },
-  pickupBold: {
-    color: Colors.darkblack,
-    fontWeight: "600",
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: hp(1.2),
-  },
-  infoLabel: {
-    fontSize: FSize.fs12,
-    color: Colors.darkblack,
-    fontWeight: "600",
-    marginRight: wp(1.5),
-  },
-  infoValue: {
-    fontSize: FSize.fs12,
-    color: Colors.darkblack,
-    fontWeight: "700",
-    flex: 1,
-  },
-
-  /* Bottom User Row */
-  userRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: hp(1.5),
-    alignItems: "flex-start",
-  },
-
-  userLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-
-  userName: {
-    fontSize: FSize.fs13,
-    fontWeight: "700",
-    color: Colors.black,
-  },
-  userNameValue: {
-    fontSize: FSize.fs13,
-    fontWeight: "700",
-    color: Colors.black,
-  },
-
-  ratingRow: {
+  budgetRow: {
     flexDirection: "row",
     alignItems: "center",
     marginTop: hp(0.5),
-  },
-
-  star: {
-    width: wp(3.5),
-    height: wp(3.5),
-    tintColor: "#F4C430", // golden star
-    marginRight: wp(1),
-  },
-
-ratingText: {
-    fontSize: FSize.fs12,
-    fontWeight: "600",
-    color: Colors.gray,
-  },
-  cityText: {
-    fontSize: FSize.fs11,
-    color: Colors.grey,
-    marginTop: hp(0.3),
-  },
-
-  phoneRight: {
-    alignItems: "flex-end",
-    flexShrink: 0,
-    marginLeft: wp(2),
-  },
-
-  phoneLabel: {
-    fontSize: FSize.fs11,
-    color: Colors.grey,
-  },
-  cardDivider: {
-    height: hp(0.1),
-    width: "100%",
-    backgroundColor: Colors.lightgrey2,
-    marginTop: hp(1.5),
     marginBottom: hp(0.5),
+    flexWrap: "wrap",
   },
 
-  phoneValue: {
+  budgetLabel: {
+    fontSize: FSize.fs14,
+    fontWeight: "400",
+    color: Colors.grey,
+  },
+
+  budgetValue: {
+    fontSize: FSize.fs14,
+    fontWeight: "700",
+    color: Colors.black,
+  },
+
+  dateText: {
+    fontSize: FSize.fs12,
+    color: Colors.grey,
+    marginTop: hp(0.5),
+    marginBottom: hp(1),
+  },
+
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: hp(0.5),
+    marginBottom: hp(0.5),
+    flexWrap: "wrap",
+  },
+
+  nameLabel: {
+    fontSize: FSize.fs14,
+    fontWeight: "400",
+    color: Colors.grey,
+  },
+
+  nameValue: {
+    fontSize: FSize.fs14,
+    fontWeight: "700",
+    color: Colors.black,
+  },
+
+  locationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: hp(0.3),
+    marginBottom: hp(1.5),
+  },
+
+  locationIcon: {
+    width: wp(4),
+    height: wp(4),
+    marginRight: wp(2),
+  },
+
+  locationText: {
+    fontSize: FSize.fs12,
+    color: Colors.grey,
+  },
+
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: hp(1),
+  },
+
+  whatsappButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: Colors.lightgrey2,
+    borderRadius: wp(3),
+    paddingVertical: hp(1.4),
+    paddingHorizontal: wp(3),
+    marginRight: wp(1.5),
+  },
+
+  whatsappIcon: {
+    width: wp(5),
+    height: wp(5),
+    marginRight: wp(2),
+  },
+
+  whatsappText: {
     fontSize: FSize.fs13,
     fontWeight: "600",
-    color: Colors.darkblack,
-    marginTop: hp(0.3),
-    flexShrink: 0,
-    maxWidth: wp(45),
+    color: Colors.black,
+  },
+
+  contactButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.sooprsblue,
+    borderRadius: wp(3),
+    paddingVertical: hp(1.4),
+    paddingHorizontal: wp(3),
+    marginLeft: wp(1.5),
+  },
+
+  contactIcon: {
+    width: wp(5),
+    height: wp(5),
+    marginRight: wp(2),
+    tintColor: Colors.white,
+  },
+
+  contactText: {
+    fontSize: FSize.fs13,
+    fontWeight: "700",
+    color: Colors.white,
   },
   loadingContainer: {
     padding: wp(5),

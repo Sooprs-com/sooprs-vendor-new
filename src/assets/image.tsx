@@ -32,6 +32,7 @@ const Images = {
   phoneIcon: require('../assets/Icons/phoneIcon.png'),
   phoneIcon1: require('../assets/images/create.png'),
   locationIcon: require('../assets/images/address.png'),
+  locatioPinIcon: require('../assets/images/locationPin.png'),
   professionalsIcon: require('../assets/Icons/professionals.png'),
   gigsIcon: require('../assets/Icons/gigs.png'),
   accountIcon: require('../assets/Icons/account.png'),

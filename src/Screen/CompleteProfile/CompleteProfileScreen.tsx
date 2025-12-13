@@ -127,9 +127,12 @@ import {
         if (result?.success === true) {
           showAlert('success', 'Success', result?.message || 'Profile completed successfully');
           
-          // Navigate back or to home screen after successful submission
+          // Navigate to Home screen after successful submission
           setTimeout(() => {
-            navigation.goBack();
+            // Navigate to BottomTab with Home screen, which will trigger refresh via useFocusEffect
+            (navigation as any).replace('BottomTab', {
+              screen: 'Home',
+            });
           }, 1500);
         } else {
           showAlert('error', 'Error', result?.msg || result?.message || 'Failed to complete profile. Please try again.');
@@ -319,6 +322,7 @@ import {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
+      paddingTop: hp(2),
       backgroundColor: Colors.white,
       paddingHorizontal: wp(5),
     },

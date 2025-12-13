@@ -264,11 +264,18 @@ const ProfileScreen = () => {
                 style={styles.profileImage}
               />
             )}
-            <TouchableOpacity 
+            {/* <TouchableOpacity 
               style={styles.cameraIconContainer}
               onPress={pickProfileImage}
               disabled={uploading}>
               <Image source={Images.imageIcon} style={styles.cameraIcon} />
+            </TouchableOpacity> */}
+            {/* Edit Profile Button */}
+            <TouchableOpacity 
+              style={styles.editIconContainer}
+              onPress={() => (navigation as any).navigate('EditProfileScreen')}
+              disabled={uploading}>
+              <Image source={Images.editButton} style={styles.editIcon} />
             </TouchableOpacity>
           </View>
 
@@ -473,6 +480,25 @@ const styles = StyleSheet.create({
     width: wp(8),
     height: wp(8),
     // tintColor: Colors.,
+    resizeMode: 'contain',
+  },
+  editIconContainer: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: wp(8),
+    height: wp(8),
+    borderRadius: wp(4),
+    backgroundColor: Colors.sooprsblue,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: Colors.white,
+  },
+  editIcon: {
+    width: wp(5),
+    height: wp(5),
+    // tintColor: Colors.white,
     resizeMode: 'contain',
   },
   userName: {

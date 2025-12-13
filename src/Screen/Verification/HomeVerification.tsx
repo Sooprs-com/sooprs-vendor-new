@@ -6,9 +6,10 @@ import {
   Image,
   SafeAreaView,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
-import React from 'react';
-import { useNavigation } from '@react-navigation/native';
+import React, {useState, useCallback} from 'react';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 import LinearGradient from 'react-native-linear-gradient';
 
@@ -16,9 +17,69 @@ import {hp, wp, GlobalCss} from '../../assets/commonCSS/GlobalCSS';
 import Colors from '../../assets/commonCSS/Colors';
 import Images from '../../assets/image';
 import FSize from '../../assets/commonCSS/FSize';
+import { getDataWithToken } from '../../services/mobile-api';
+import { mobile_siteConfig } from '../../services/mobile-siteConfig';
 
 const HomeVerificationScreen = () => {
     const navigation = useNavigation();
+    const [userName, setUserName] = useState('');
+    const [profileImage, setProfileImage] = useState<string | null>(null);
+    const [loadingUserDetails, setLoadingUserDetails] = useState(true);
+
+  const getUserDetails = async () => {
+    try {
+      setLoadingUserDetails(true);
+      const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
+      const data: any = await res.json();
+      console.log('User details data in HomeVerification:::::', data);
+      
+      if (data?.success && data?.vendorDetail) {
+        // Update user name from API response
+        if (data.vendorDetail.name) {
+          setUserName(data.vendorDetail.name);
+        } else {
+          setUserName('User');
+        }
+        
+        // Set profile image from API response
+        if (data.vendorDetail.image) {
+          setProfileImage(data.vendorDetail.image);
+        }
+      }
+    } catch (err: any) {
+      console.log('Error fetching user details in HomeVerification:::::', err);
+      setUserName('User');
+    } finally {
+      setLoadingUserDetails(false);
+    }
+  };
+
+  // Fetch user details when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      getUserDetails();
+    }, [])
+  );
+
+  // Get image URI helper function
+  const getImageUri = (imagePath: string | null): any => {
+    if (imagePath) {
+      return { uri: imagePath };
+    }
+    return Images.profileImage;
+  };
+
+  // Show loader while user details are loading
+  if (loadingUserDetails) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.userDetailsLoadingContainer}>
+          <ActivityIndicator size="large" color={Colors.sooprsblue} />
+          <Text style={styles.userDetailsLoadingText}>Loading user details...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -26,17 +87,19 @@ const HomeVerificationScreen = () => {
         
         {/* ===== HEADER ===== */}
         <View style={styles.header}>
-          <Text style={styles.helloText}>Hello Ankur</Text>
+          <Text style={styles.helloText}>Hello {userName || 'User'}</Text>
 
           <View style={styles.headerRight}>
             <TouchableOpacity>
               <Image source={Images.bellIcon} style={styles.bellIcon} />
             </TouchableOpacity>
 
-            <Image
-              source={Images.profileImage}
-              style={styles.profileImg}
-            />
+            <TouchableOpacity onPress={() => (navigation as any).navigate('ProfileScreen')}>
+              <Image
+                source={getImageUri(profileImage)}
+                style={styles.profileImg}
+              />
+            </TouchableOpacity>
           </View>
         </View>
       <View style={styles.headerDivider} />
@@ -79,7 +142,7 @@ const HomeVerificationScreen = () => {
 
   <TouchableOpacity 
   style={styles.profileBtn}
-  onPress={() => navigation.navigate("CompleteProfileScreen")}
+  onPress={() => (navigation as any).navigate("CompleteProfileScreen")}
 >
   <View style={styles.profileBtnRow}>
     <Text style={styles.profileBtnText}>Complete Profile</Text>
@@ -113,6 +176,7 @@ export default HomeVerificationScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: hp(2),
     backgroundColor: Colors.white,
   },
 
@@ -158,6 +222,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  shieldBox: {
+    // Container for shield icon
   },
   shieldIcon: {
     width: wp(9),
@@ -236,5 +303,16 @@ arrowIcon: {
     width: wp(60),
     height: hp(30),
     opacity: 1,
+  },
+  userDetailsLoadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: hp(50),
+  },
+  userDetailsLoadingText: {
+    marginTop: hp(2),
+    fontSize: FSize.fs14,
+    color: Colors.grey,
   },
 });

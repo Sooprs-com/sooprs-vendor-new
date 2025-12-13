@@ -10,6 +10,7 @@ import HomeVerificationScreen from '../Screen/Verification/HomeVerification';
 import AddPackagesScreen from '../Screen/AddPackage/AddPackagesScreen';
 import CabRideReviewScreen from '../Screen/CabDetails/CabRideDetailsScreen';
 import ProfileScreen from '../Screen/Profile/ProfileScreen';
+import EditProfileScreen from '../Screen/Profile/EditProfileScreen';
 import RegistrationScreen from '../auth/RegistrationScreen';
 import CompleteProfileScreen from '../Screen/CompleteProfile/CompleteProfileScreen';
 import PackageDetailsScreen from '../Screen/Orders/PackageDetailsScreen';
@@ -95,6 +96,7 @@ const AuthenticationRouter = ({initialRoute}: {initialRoute?: string}) => {
            <Stack.Screen name="CabRideReviewScreen" component={CabRideReviewScreen} />
            <Stack.Screen name="CompleteProfileScreen" component={CompleteProfileScreen} />
            <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+           <Stack.Screen name="EditProfileScreen" component={EditProfileScreen} />
            <Stack.Screen name="AddCredits" component={AddCredits} />
            <Stack.Screen name="SubscriptionScreen" component={SubscriptionScreen} />
            <Stack.Screen name="WebView" component={WebView} />

@@ -187,7 +187,7 @@ const CabRideReviewScreen = ({route}: any) => {
           <View style={styles.titleRow}>
             <Text style={styles.serviceTitle}>{pkg.name || 'Package Name'}</Text>
             {/* STATUS TOGGLE */}
-            <TouchableOpacity
+            {/* <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => {
                 const newActive = !isActive;
@@ -223,7 +223,7 @@ const CabRideReviewScreen = ({route}: any) => {
                   },
                 ]}
               />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
 
           <View style={styles.locationRow}>

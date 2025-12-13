@@ -17,6 +17,8 @@ export const mobile_siteConfig = {
   VERIFY_OTP_NEW: 'auth/verify-otp-user', // Update with your actual endpoint
   COMPLETE_PROFILE: 'user/vendor/complete-vendor-profile', // Update with your actual endpoint
   VERIFY_ORDER:"update_wallet",
+
+  UPDATE_PROFILE:"user/vendor/update-vendor-profile",
   // TOKEN: 'auth_token',
 
   GET_ALL_CATEGORIES: 'auth/get-all-categories',
