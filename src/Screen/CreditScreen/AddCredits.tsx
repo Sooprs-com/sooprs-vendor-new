@@ -39,7 +39,7 @@ import Images from '../../assets/image';
 import CInput from '../../Component/CInput';
 import { mobile_siteConfig } from '../../services/mobile-siteConfig';
 import { getDataFromAsyncStorage } from '../../services/CommonFunction';
-import { postDataWithToken1 } from '../../services/mobile-api';
+import { postDataWithToken1, getDataWithToken } from '../../services/mobile-api';
 import NewHeader from '../../Component/NewHeader';
   
   const AddCredits = ({navigation, route}: {navigation: any; route: any}) => {
@@ -83,32 +83,19 @@ import NewHeader from '../../Component/NewHeader';
         fetchData();
       }
     }, [isFocused]);
-    const calculateTransaction = (transactionArray: []) => {
+    const calculateTransaction = (transactionArray: any[]) => {
       const debited = transactionArray
-        ?.filter(item => item.transaction_type === '0') // Filter for debit transactions
-        ?.reduce((sum, item) => sum + Number(item.amount), 0);
-  
+        ?.filter((item: any) => item.transaction_type === '0') // Filter for debit transactions
+        ?.reduce((sum: number, item: any) => sum + Number(item.amount), 0);
+
       const credited = transactionArray
-        ?.filter(item => item.transaction_type === '1') // Filter for credit transactions
-        ?.reduce((sum, item) => sum + Number(item.amount), 0);
-      setTotalAmount(credited);
-      setConsuption(debited);
+        ?.filter((item: any) => item.transaction_type === '1') // Filter for credit transactions
+        ?.reduce((sum: number, item: any) => sum + Number(item.amount), 0);
+      setTotalAmount(credited || 0);
+      setConsuption(debited || 0);
     };
   
-    const AllTab = () => (
-      <FlatList
-        data={transactions}
-        showsVerticalScrollIndicator={false}
-        nestedScrollEnabled={true}
-        keyExtractor={item => item.updated_at}
-        renderItem={renderItems}
-        contentContainerStyle={{padding: wp(4)}} // 16
-        ListEmptyComponent={() => (
-          <Text style={styles.emptyMessage}>No transactions found !</Text>
-        )}
-      />
-    );
-    const renderItems = ({item, index}) => {
+    const renderItems = ({item, index}: {item: any; index: number}) => {
       return (
         <View style={styles.card} key={index}>
           <View style={styles.transactionRow}>
@@ -131,42 +118,171 @@ import NewHeader from '../../Component/NewHeader';
         </View>
       );
     };
-    const CreditedTab = () => (
-      <FlatList
-        data={transactions.filter(item => item.transaction_type === '1')}
-        showsVerticalScrollIndicator={false}
-        nestedScrollEnabled={true}
-        keyExtractor={item => item.updated_at}
-        renderItem={renderItems}
-        contentContainerStyle={{padding: wp(4)}} // 16
-        ListEmptyComponent={() => (
-          <Text style={styles.emptyMessage}>No credits found !</Text>
-        )}
-      />
-    );
-    const DebitedTab = () => (
-      <FlatList
-        data={transactions.filter(item => item.transaction_type === '0')}
-        showsVerticalScrollIndicator={false}
-        nestedScrollEnabled={true}
-        keyExtractor={item => item.updated_at}
-        renderItem={renderItems}
-        contentContainerStyle={{padding: wp(4)}} // 16
-        ListEmptyComponent={() => (
-          <Text style={styles.emptyMessage}>No debits found !</Text>
-        )}
-      />
-    );
-  
-    const renderScene = SceneMap({
-      all: AllTab,
-      credited: CreditedTab,
-      debited: DebitedTab,
-    });
+
+    const AllTab = () => {
+      const allTransactions = transactions || [];
+      return (
+        <FlatList
+          data={allTransactions}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled={true}
+          keyExtractor={(item, idx) => 
+            item?.transaction_id?.toString() || 
+            item?.updated_at?.toString() || 
+            `all-${idx}`
+          }
+          renderItem={renderItems}
+          contentContainerStyle={{
+            padding: wp(4),
+            paddingBottom: hp(5),
+          }}
+          ListEmptyComponent={() => (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyMessage}>No transactions found !</Text>
+            </View>
+          )}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={Colors.sooprsblue}
+              colors={[Colors.sooprsblue, Colors.black]}
+            />
+          }
+        />
+      );
+    };
+
+    const CreditedTab = () => {
+      const creditedTransactions = (transactions || []).filter(
+        item => item.transaction_type === '1'
+      );
+      return (
+        <FlatList
+          data={creditedTransactions}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled={true}
+          keyExtractor={(item, idx) => 
+            item?.transaction_id?.toString() || 
+            item?.updated_at?.toString() || 
+            `credited-${idx}`
+          }
+          renderItem={renderItems}
+          contentContainerStyle={{
+            padding: wp(4),
+            paddingBottom: hp(5),
+          }}
+          ListEmptyComponent={() => (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyMessage}>No credits found !</Text>
+            </View>
+          )}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={Colors.sooprsblue}
+              colors={[Colors.sooprsblue, Colors.black]}
+            />
+          }
+        />
+      );
+    };
+
+    const DebitedTab = () => {
+      const debitedTransactions = (transactions || []).filter(
+        item => item.transaction_type === '0'
+      );
+      return (
+        <FlatList
+          data={debitedTransactions}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled={true}
+          keyExtractor={(item, idx) => 
+            item?.transaction_id?.toString() || 
+            item?.updated_at?.toString() || 
+            `debited-${idx}`
+          }
+          renderItem={renderItems}
+          contentContainerStyle={{
+            padding: wp(4),
+            paddingBottom: hp(5),
+          }}
+          ListEmptyComponent={() => (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyMessage}>No debits found !</Text>
+            </View>
+          )}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={Colors.sooprsblue}
+              colors={[Colors.sooprsblue, Colors.black]}
+            />
+          }
+        />
+      );
+    };
+
+    const renderScene = ({route}: {route: any}) => {
+      switch (route.key) {
+        case 'all':
+          return <AllTab />;
+        case 'credited':
+          return <CreditedTab />;
+        case 'debited':
+          return <DebitedTab />;
+        default:
+          return null;
+      }
+    };
+
+    const getUserId = async (): Promise<string | null> => {
+      try {
+        // Try AsyncStorage first (faster)
+        let userId = await AsyncStorage.getItem(mobile_siteConfig.UID);
+        if (userId) {
+          // Remove quotes if present
+          userId = userId.replace(/^"|"$/g, '').trim();
+          if (userId && userId !== 'null' && userId !== 'undefined') {
+            console.log('User ID from AsyncStorage:', userId);
+            return userId;
+          }
+        }
+
+        // Fetch from API if not in AsyncStorage or invalid
+        console.log('Fetching user ID from API...');
+        const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
+        const data: any = await res.json();
+        
+        if (data?.success && data?.vendorDetail?.id) {
+          const id = String(data.vendorDetail.id);
+          // Store in AsyncStorage for future use
+          await AsyncStorage.setItem(mobile_siteConfig.UID, id);
+          console.log('User ID from API:', id);
+          return id;
+        }
+        
+        console.error('User ID not found in API response');
+        return null;
+      } catch (error) {
+        console.error('Error getting user ID:', error);
+        // Fallback to AsyncStorage if API call fails
+        const cachedId = await AsyncStorage.getItem(mobile_siteConfig.UID);
+        if (cachedId) {
+          const cleanedId = cachedId.replace(/^"|"$/g, '').trim();
+          if (cleanedId && cleanedId !== 'null' && cleanedId !== 'undefined') {
+            return cleanedId;
+          }
+        }
+        return null;
+      }
+    };
   
     const VeriftyOrderPayment = async (orderId, paymentId, sign, amount) => {
       closeModal();
-      const userId = await getDataFromAsyncStorage(mobile_siteConfig.UID);
+      const userId = await getUserId();
   
       const payload = new FormData();
       payload.append('user_id', userId);
@@ -222,10 +338,67 @@ import NewHeader from '../../Component/NewHeader';
       }
     };
     const fetchWallet = async () => {
-      const formdata = new FormData();
-      formdata.append('auth_user_slug', getUserDetails?.slug);
-  
       try {
+        // First, try to get wallet balance from GET_USER_DETAILS API (more reliable)
+        try {
+          const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
+          const data: any = await res.json();
+          console.log('User details API response for wallet:', data);
+          
+          if (data?.success && data?.stats?.wallet_balance !== undefined) {
+            const walletBalance = String(data.stats.wallet_balance || 0);
+            setCredits(walletBalance);
+            console.log('Wallet balance from GET_USER_DETAILS:', walletBalance);
+            return;
+          }
+        } catch (apiError) {
+          console.log('Error fetching wallet from GET_USER_DETAILS, trying wallet_balance API:', apiError);
+        }
+
+        // Fallback to wallet_balance API if GET_USER_DETAILS doesn't have it
+        const slug = getUserDetails?.slug;
+        if (!slug) {
+          console.error('User slug not found. Cannot fetch wallet balance.');
+          // Try to get slug from API
+          try {
+            const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
+            const data: any = await res.json();
+            if (data?.success && data?.vendorDetail?.slug) {
+              const formdata = new FormData();
+              formdata.append('auth_user_slug', data.vendorDetail.slug);
+              
+              const response = await fetch(
+                'https://sooprs.com/api2/public/index.php/wallet_balance',
+                {
+                  method: 'POST',
+                  body: formdata,
+                },
+              );
+              
+              const walletRes = await response.json();
+              console.log('Wallet balance API response:', walletRes);
+              
+              if (walletRes.status == 200) {
+                const walletBalance = String(walletRes.msg?.wallet || walletRes.msg || 0);
+                setCredits(walletBalance);
+                console.log('Wallet balance from wallet_balance API:', walletBalance);
+              } else {
+                console.error('Error fetching wallet balance:', walletRes.msg);
+                setCredits('0');
+              }
+            } else {
+              setCredits('0');
+            }
+          } catch (error) {
+            console.error('Error fetching wallet balance:', error);
+            setCredits('0');
+          }
+          return;
+        }
+
+        const formdata = new FormData();
+        formdata.append('auth_user_slug', slug);
+        
         const response = await fetch(
           'https://sooprs.com/api2/public/index.php/wallet_balance',
           {
@@ -233,29 +406,46 @@ import NewHeader from '../../Component/NewHeader';
             body: formdata,
           },
         );
-  
+        
         const res = await response.json();
-        setLoading(false);
+        console.log('Wallet balance API response:', res);
+        
         // Check if the response status is 200
         if (res.status == 200) {
-          setCredits(res.msg.wallet);
+          const walletBalance = String(res.msg?.wallet || res.msg || 0);
+          setCredits(walletBalance);
+          console.log('Wallet balance set to:', walletBalance);
         } else {
           console.error('Error fetching wallet balance:', res.msg);
+          setCredits('0');
         }
       } catch (error) {
         console.error('Error fetching wallet balance:', error);
+        setCredits('0');
+      } finally {
+        setLoading(false);
       }
     };
-  
+
     const fetchTransactions = async () => {
-      let lead_id = await AsyncStorage.getItem('uid');
+      const lead_id = await getUserId();
+      console.log('lead_id:::::', lead_id);
       const formData = new FormData();
-  
-      if (lead_id) {
-        lead_id = lead_id.replace(/^"|"$/g, '');
+
+      if (!lead_id) {
+        console.error('User ID is null. Cannot fetch transactions.');
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'User ID not found. Please login again.',
+          position: 'top',
+          visibilityTime: 3000,
+        });
+        return;
       }
+
       formData.append('user_id', lead_id);
-      formData.append('data_value', '2');
+      formData.append('data_value','2');
   
       try {
         const response = await fetch(
@@ -267,6 +457,8 @@ import NewHeader from '../../Component/NewHeader';
         );
   
         const res = await response.json();
+
+        console.log('transactions Response:::::', res);
   
         if (res.status === 200) {
           setTransactions(res.msg);
@@ -405,6 +597,8 @@ import NewHeader from '../../Component/NewHeader';
                     name="Enter number of credits"
                     newlabel={false}
                     style={undefined}
+                    loggedIn={true}
+                    customInputStyle={undefined}
                     setValue={(val: any) => {
                       setaddCredits(val);
                       const conversionRate = 85;
@@ -487,17 +681,7 @@ import NewHeader from '../../Component/NewHeader';
       );
     };
     return (
-      <ScrollView
-        contentContainerStyle={styles.container}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={Colors.sooprsblue}
-            colors={[Colors.sooprsblue, Colors.black]}
-          />
-        }>
+      <View style={styles.container}>
         {loading && (
           <View
             style={{
@@ -509,7 +693,11 @@ import NewHeader from '../../Component/NewHeader';
             <ActivityIndicator color={Colors.sooprsblue} size={25} />
           </View>
         )}
-        <NewHeader navigation={navigation} header={'Credits'} />
+        <NewHeader 
+          navigation={navigation} 
+          header={'Credits'} 
+          onBackPress={() => navigation.goBack()}
+        />
         <View style={styles.creditContainer}>
           <LinearGradient
             colors={['#8794C2', '#363889', '#322679']}
@@ -584,37 +772,39 @@ import NewHeader from '../../Component/NewHeader';
             }}
           />
         </View>
-        <TabView
-          navigationState={{index, routes}}
-          renderScene={renderScene}
-          onIndexChange={setIndex}
-          initialLayout={{width: layout.width}}
-          renderTabBar={props => (
-            <View style={styles.tabBar}>
-              {props.navigationState.routes.map((route, i) => {
-                const isActive = i === index;
-                return (
-                  <TouchableOpacity
-                    key={i}
-                    onPress={() => setIndex(i)}
-                    style={[
-                      styles.tabItem,
-                      isActive ? styles.activeTabItem : styles.inactiveTabItem,
-                    ]}>
-                    <Text
-                      style={
-                        isActive ? styles.activeTabText : styles.inactiveTabText
-                      }>
-                      {route.title}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          )}
-        />
+        <View style={styles.tabViewContainer}>
+          <TabView
+            navigationState={{index, routes}}
+            renderScene={renderScene}
+            onIndexChange={setIndex}
+            initialLayout={{width: layout.width}}
+            renderTabBar={props => (
+              <View style={styles.tabBar}>
+                {props.navigationState.routes.map((route, i) => {
+                  const isActive = i === index;
+                  return (
+                    <TouchableOpacity
+                      key={i}
+                      onPress={() => setIndex(i)}
+                      style={[
+                        styles.tabItem,
+                        isActive ? styles.activeTabItem : styles.inactiveTabItem,
+                      ]}>
+                      <Text
+                        style={
+                          isActive ? styles.activeTabText : styles.inactiveTabText
+                        }>
+                        {route.title}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
+          />
+        </View>
         <PurchaseModal />
-      </ScrollView>
+      </View>
     );
   };
   
@@ -901,6 +1091,16 @@ import NewHeader from '../../Component/NewHeader';
       marginTop: hp(10),
       color: 'gray',
       fontSize: FSize.fs14,
+    },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: hp(40),
+    },
+    tabViewContainer: {
+      flex: 1,
+      marginTop: hp(1),
     },
     amountSelection: {
       borderWidth: 1.5,

@@ -14,6 +14,8 @@ import RegistrationScreen from '../auth/RegistrationScreen';
 import CompleteProfileScreen from '../Screen/CompleteProfile/CompleteProfileScreen';
 import PackageDetailsScreen from '../Screen/Orders/PackageDetailsScreen';
 import AddCredits from '../Screen/CreditScreen/AddCredits';
+import SubscriptionScreen from '../Screen/SubscriptionScreen/SubscriptionScreen';
+import WebView from '../Component/WebView';
 // import WelcomeScreen from './auth/WelcomeScreen';
 // import ProfileSelection from './auth/ProfileSelection';
 // import Signup from './auth/Signup';
@@ -77,9 +79,11 @@ import AddCredits from '../Screen/CreditScreen/AddCredits';
 
 
 const Stack = createNativeStackNavigator();
-const AuthenticationRouter = () => {
+const AuthenticationRouter = ({initialRoute}: {initialRoute?: string}) => {
   return (
-    <Stack.Navigator screenOptions={{headerShown: false}}>
+    <Stack.Navigator 
+      screenOptions={{headerShown: false}}
+      initialRouteName={initialRoute || 'EnterMobileNumber'}>
       {/* <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} /> */}
       <Stack.Screen name="EnterMobileNumber" component={EnterMobileNumber} />
       <Stack.Screen name="NewOtpScreen" component={NewOtpScreen} />
@@ -92,6 +96,8 @@ const AuthenticationRouter = () => {
            <Stack.Screen name="CompleteProfileScreen" component={CompleteProfileScreen} />
            <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
            <Stack.Screen name="AddCredits" component={AddCredits} />
+           <Stack.Screen name="SubscriptionScreen" component={SubscriptionScreen} />
+           <Stack.Screen name="WebView" component={WebView} />
            <Stack.Screen name="PackageDetailsScreen" component={PackageDetailsScreen} />
       <Stack.Screen name="BottomTab" component={BottomTab} />
     
@@ -197,11 +203,13 @@ const AuthenticationRouter = () => {
 // };
 
 
-const AppRouter = () => {
+const AppRouter = ({initialRouteName}: {initialRouteName?: string}) => {
   return (
     <Stack.Navigator screenOptions={{headerShown: false}}>
       {/* <Stack.Screen name="Splash" component={Splash} /> */}
-      <Stack.Screen name="Authentication" component={AuthenticationRouter} />
+      <Stack.Screen name="Authentication">
+        {(props) => <AuthenticationRouter {...props} initialRoute={initialRouteName} />}
+      </Stack.Screen>
       {/* <Stack.Screen name="ProfessionalStack" component={ProfessionalStack} />
       <Stack.Screen name="UrbanClapStack" component={UrbanClapStack} />
       <Stack.Screen name="AccountStack" component={AccountStack} />

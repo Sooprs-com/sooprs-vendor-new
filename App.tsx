@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 // import AppRouter from './src/AppRouter';
@@ -22,18 +22,25 @@ import {getDataWithToken} from './src/services/mobile-api';
 // Inner App component that uses notification context
 const AppContent = () => {
   const dispatch = useDispatch();
+  const [isReady, setIsReady] = React.useState(false);
+  const [initialRoute, setInitialRoute] = React.useState<string | undefined>(undefined);
 
-  // Initialize user details in Redux store
+  // Initialize app and check login state
   useEffect(() => {
-    const initializeUserDetails = async () => {
+    const initializeApp = async () => {
       try {
-        // First try to get from AsyncStorage
-        const email = await getDataFromAsyncStorage(mobile_siteConfig.EMAIL);
-        const slug = await getDataFromAsyncStorage(mobile_siteConfig.SLUG);
-        
-        // Try to fetch from API if token exists
+        // Check if user is logged in
+        const isLogin = await getDataFromAsyncStorage(mobile_siteConfig.IS_LOGIN);
         const token = await getDataFromAsyncStorage(mobile_siteConfig.MOB_ACCESS_TOKEN_KEY);
-        if (token) {
+        
+        // If user is logged in and has token, navigate to BottomTab
+        if (isLogin === 'TRUE' && token) {
+          setInitialRoute('BottomTab');
+          
+          // Initialize user details in Redux store
+          const email = await getDataFromAsyncStorage(mobile_siteConfig.EMAIL);
+          const slug = await getDataFromAsyncStorage(mobile_siteConfig.SLUG);
+          
           try {
             const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
             const data: any = await res.json();
@@ -49,39 +56,58 @@ const AppContent = () => {
                   is_company: data.vendorDetail.is_company || '0',
                 },
               });
-              return;
+            } else {
+              // Fallback to AsyncStorage values
+              dispatch({
+                type: 'SET_USER_DETAILS',
+                payload: {
+                  email: email || '',
+                  mobile: '',
+                  name: '',
+                  slug: slug || '',
+                  is_company: '0',
+                },
+              });
             }
           } catch (error) {
             console.log('Error fetching user details from API:', error);
+            // Fallback to AsyncStorage values
+            dispatch({
+              type: 'SET_USER_DETAILS',
+              payload: {
+                email: email || '',
+                mobile: '',
+                name: '',
+                slug: slug || '',
+                is_company: '0',
+              },
+            });
           }
-        }
-        
-        // Fallback to AsyncStorage values
-        if (email || slug) {
-          dispatch({
-            type: 'SET_USER_DETAILS',
-            payload: {
-              email: email || '',
-              mobile: '',
-              name: '',
-              slug: slug || '',
-              is_company: '0',
-            },
-          });
+        } else {
+          // User not logged in, go to login screen
+          setInitialRoute('EnterMobileNumber');
         }
       } catch (error) {
-        console.log('Error initializing user details:', error);
+        console.log('Error initializing app:', error);
+        setInitialRoute('EnterMobileNumber');
+      } finally {
+        setIsReady(true);
       }
     };
 
-    initializeUserDetails();
+    initializeApp();
   }, [dispatch]);
+
+  if (!isReady) {
+    // You can show a splash screen here
+    return null;
+  }
 
   return (
     <>
       <NavigationContainer>
         <GestureHandlerRootView>
-          <AppRouter/>
+          <AppRouter initialRouteName={initialRoute} />
           {/* <HomeDrawer /> */}
         </GestureHandlerRootView>
       </NavigationContainer>

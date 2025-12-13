@@ -100,7 +100,7 @@ const Images = {
   termAndConditionIcone:require('./images/terms&Condition.png'),
   refundPolicyIcone:require('./images/refundPolicy.png'),
   contactUsIcone:require('./images/ContectUs.png'),
-  faqIcone:require('./images/faq.png'),
+  faqIcone:require('./images/FAQ.png'),
   passwordIcone:require('./images/passwordIcone.png'),
   bankDetailsIcone:require('./images/bankDetails.png'),
 manageDetailsIcone:require('./images/ManageDetails.png'),

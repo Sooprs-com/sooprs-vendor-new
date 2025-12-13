@@ -12,6 +12,7 @@ export const mobile_siteConfig = {
 
 
 
+
   REGISTER_USER_NEW: 'auth/vendor-register', // Update with your actual endpoint
   VERIFY_OTP_NEW: 'auth/verify-otp-user', // Update with your actual endpoint
   COMPLETE_PROFILE: 'user/vendor/complete-vendor-profile', // Update with your actual endpoint
@@ -19,6 +20,9 @@ export const mobile_siteConfig = {
   // TOKEN: 'auth_token',
 
   GET_ALL_CATEGORIES: 'auth/get-all-categories',
+
+  GET_MEMBERSHIP:"get-membership-plans",
+  CREATE_RAZORPAY_ORDER:"https://sooprs.com/create_razr_order.php",
 
   GET_USER_DETAILS:"user/vendor/get-vendor-profile",
   GET_PACKAGES:"user/vendor/all-vendor-packages",

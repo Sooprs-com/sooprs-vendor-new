@@ -69,8 +69,8 @@ import {
       flexDirection: 'row',
       backgroundColor: Colors.sooprsDark,
       paddingHorizontal: 16,
-      paddingVertical: hp(1),
-      height:Platform.OS === 'ios' ? hp(12) : hp(8),
+      paddingVertical: hp(3),
+      height:Platform.OS === 'ios' ? hp(12) : hp(10),
     },
   });
   

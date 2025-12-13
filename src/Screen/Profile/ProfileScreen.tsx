@@ -21,15 +21,56 @@ import Images from '../../assets/image';
 import FSize from '../../assets/commonCSS/FSize';
 import {getDataWithToken, postDataWithToken} from '../../services/mobile-api';
 import {mobile_siteConfig} from '../../services/mobile-siteConfig';
+import {clearAllAsyncStorage} from '../../services/CommonFunction';
+import {useDispatch} from 'react-redux';
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
   const [vendorName, setVendorName] = useState('Ankur Pandit');
   const [vendorMobile, setVendorMobile] = useState('9888675676');
   const [vendorImage, setVendorImage] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  const handleLogout = async () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Clear all AsyncStorage data
+              await clearAllAsyncStorage();
+              
+              // Clear Redux store
+              dispatch({
+                type: 'CLEAR_USER_DETAILS',
+              });
+              
+              // Navigate to login screen
+              (navigation as any).reset({
+                index: 0,
+                routes: [{name: 'EnterMobileNumber'}],
+              });
+            } catch (error) {
+              console.error('Error during logout:', error);
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+          },
+        },
+      ],
+      {cancelable: true},
+    );
+  };
 
   const getVendorProfile = async () => {
     try {
@@ -284,7 +325,7 @@ const ProfileScreen = () => {
             Images.creditIcon,
             'Credit',
             'Check your available credits and usage details.',
-            undefined,
+            () => navigation.navigate('AddCredits'),
             styles.creditIconSmall,
             false,
           )}
@@ -292,11 +333,12 @@ const ProfileScreen = () => {
             Images.locationIcon,
             'Subsciption',
             'Manage your active plans and renewals.',
+            () => navigation.navigate('SubscriptionScreen'),
           )}
         </View>
 
         {/* Payment and coupons Section */}
-        <TouchableOpacity 
+        {/* <TouchableOpacity 
         onPress={() => navigation.navigate('AddCredits')}
         style={styles.sectionContainer}>
           <Text style={styles.sectionHeader}>Payment and coupons</Text>
@@ -305,7 +347,7 @@ const ProfileScreen = () => {
             'Wallet',
             'Manage your Wallet here.',
           )}
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         {/* Other Information Section */}
         <View style={[styles.sectionContainer, styles.sectionContainerNoTopMargin]}>
@@ -314,7 +356,7 @@ const ProfileScreen = () => {
             Images.referIcon,
             'Privacy Policy',
             'Learn how we protect and use your data.',
-            undefined,
+            () => navigation.navigate('WebView', {header: 'Privacy Policy'}),
             undefined,
             false,
           )}
@@ -322,7 +364,7 @@ const ProfileScreen = () => {
             Images.favoriteIcon,
             'Terms & Conditions',
             'Understand the rules and guidelines of our platform.',
-            undefined,
+            () => navigation.navigate('WebView', {header: 'Term & Condition'}),
             undefined,
             false,
           )}
@@ -330,7 +372,7 @@ const ProfileScreen = () => {
             Images.shieldIcon,
             'Refund Policy',
             'Know your refund work on our platform.',
-            undefined,
+            () => navigation.navigate('WebView', {header: 'Refund Policy'}),
             undefined,
             false,
           )}
@@ -338,7 +380,7 @@ const ProfileScreen = () => {
             Images.contactus,
             'Contact Us',
             'Reach out for help or support anytime.',
-            undefined,
+            () => navigation.navigate('WebView', {header: 'Contact Us'}),
             undefined,
             false,
           )}
@@ -346,7 +388,7 @@ const ProfileScreen = () => {
             Images.faqIcone,
             'FAQ',
             'Find quick answers to common questions.',
-            undefined,
+            () => navigation.navigate('WebView', {header: 'FAQ'}),
             undefined,
             false,
           )}
@@ -355,9 +397,7 @@ const ProfileScreen = () => {
             Images.logoutIcon,
             'Log out',
             '',
-            () => {
-              // Handle logout logic here
-            },
+            handleLogout,
           )}
           <View style={styles.logoutDivider} />
         </View>

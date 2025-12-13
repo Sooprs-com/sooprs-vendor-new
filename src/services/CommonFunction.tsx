@@ -21,3 +21,14 @@ export const getDataFromAsyncStorage = async (key: string): Promise<string | nul
   }
 };
 
+// Clear all AsyncStorage data (for logout)
+export const clearAllAsyncStorage = async (): Promise<void> => {
+  try {
+    await AsyncStorage.clear();
+    console.log('All AsyncStorage data cleared');
+  } catch (error) {
+    console.error('Error clearing AsyncStorage:', error);
+    throw error;
+  }
+};
+

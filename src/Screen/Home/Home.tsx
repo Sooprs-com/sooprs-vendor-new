@@ -21,6 +21,7 @@ import FSize from '../../assets/commonCSS/FSize';
 import { getDataWithToken, postDataWithTokenBase2 } from '../../services/mobile-api';
 import { mobile_siteConfig } from '../../services/mobile-siteConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Toast from 'react-native-toast-message';
 
 const Home = () => {
   const navigation = useNavigation();
@@ -105,6 +106,7 @@ const Home = () => {
         limit: 20,
         cur: "INR"
       };
+      console.log('Payload Filter lead:::::', payload);
       
       const result: any = await postDataWithTokenBase2(payload, mobile_siteConfig.FILTER_LEADS_ALL);
       console.log('Leads API response (page', page, '):::::', result);
@@ -205,6 +207,26 @@ const Home = () => {
       
       const result = await response.json();
       console.log('Contact details API response:', result);
+      
+      // Check for insufficient wallet balance error
+      if (result.status === 402 && result.msg === 'Insufficient wallet balance!') {
+        Toast.show({
+          type: 'error',
+          text1: 'Insufficient Balance',
+          text2: result.msg || 'Insufficient wallet balance!',
+          position: 'top',
+          visibilityTime: 3000,
+          text1Style: {
+            fontSize: 14,
+            fontWeight: 'bold',
+          },
+          text2Style: {
+            fontSize: 13,
+          },
+        });
+        closeContactModal();
+        return;
+      }
       
       // API should return mobile_number directly (decoded)
       // If encrypted_mobile_number exists, use it as mobile_number
@@ -321,8 +343,8 @@ const Home = () => {
           style={styles.statCard}
         >
           <Image source={Images.activeTripIcon} style={styles.statIcon} />
-          <Text style={styles.statValueLeads}>{status?.total_orders || '0'}</Text>
-          <Text style={styles.statLabelLeads}>Total Leads</Text>
+          <Text style={styles.statValueLeads}>{status?.total_packages || '0'}</Text>
+          <Text style={styles.statLabelLeads}>Total Packages</Text>
         </LinearGradient>
 
         {/* Total Orders */}
@@ -333,7 +355,7 @@ const Home = () => {
           style={styles.statCard}
         >
           <Image source={Images.ratingStar} style={styles.statIcon} />
-          <Text style={styles.statValueOrders}>{status?.total_leads || '0'}</Text>
+          <Text style={styles.statValueOrders}>{status?.total_orders || '0'}</Text>
           <Text style={styles.statLabelOrders}>Total Orders</Text>
         </LinearGradient>
       </View>

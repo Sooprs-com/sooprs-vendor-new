@@ -23,68 +23,59 @@ const MyLeadsScreen = () => {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [vendorId, setVendorId] = useState<string | null>(null);
-  const [isFetching, setIsFetching] = useState(false);
 
   const getVendorId = async () => {
+    // Return cached vendor ID if available
+    if (vendorId) {
+      return vendorId;
+    }
+
     try {
-      // Always get vendor_id from API to ensure we have the correct ID
-      console.log('🔍 Step 1: Fetching vendor ID from API...');
+      // Try AsyncStorage first (faster)
+      const cachedId = await AsyncStorage.getItem(mobile_siteConfig.UID);
+      if (cachedId) {
+        setVendorId(cachedId);
+        return cachedId;
+      }
+
+      // Fetch from API if not cached
       const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
       const data: any = await res.json();
-      console.log('📋 User Details API Response:', JSON.stringify(data, null, 2));
-      
-      let id = null;
       
       if (data?.success && data?.vendorDetail?.id) {
-        id = String(data.vendorDetail.id);
-        // Update AsyncStorage with correct ID
+        const id = String(data.vendorDetail.id);
         await AsyncStorage.setItem(mobile_siteConfig.UID, id);
-        console.log('✅ Vendor ID from API:', id);
-        console.log('✅ Vendor ID saved to AsyncStorage:', id);
-      } else {
-        // Fallback: try AsyncStorage if API fails
-        id = await AsyncStorage.getItem(mobile_siteConfig.UID);
-        console.log('⚠️ Vendor ID not in API response, using AsyncStorage:', id);
+        setVendorId(id);
+        return id;
+      } else if (cachedId) {
+        setVendorId(cachedId);
+        return cachedId;
       }
       
-      if (id) {
-        setVendorId(id);
-        console.log('✅ Final Vendor ID:', id);
-        return id;
-      }
-      console.log('❌ No Vendor ID found');
       return null;
     } catch (error) {
-      console.log('❌ Error getting vendor ID from API, trying AsyncStorage...');
       // Fallback to AsyncStorage if API call fails
-      const id = await AsyncStorage.getItem(mobile_siteConfig.UID);
-      if (id) {
-        console.log('✅ Using Vendor ID from AsyncStorage (fallback):', id);
-        setVendorId(id);
-        return id;
+      const cachedId = await AsyncStorage.getItem(mobile_siteConfig.UID);
+      if (cachedId) {
+        setVendorId(cachedId);
+        return cachedId;
       }
-      console.log('❌ Error getting vendor ID:', error);
       return null;
     }
   };
 
   const getContactList = async (page: number = 1, append: boolean = false) => {
-    // Always get fresh vendor ID from API to ensure correct ID
-    console.log('🔍 Step 2: Fetching vendor ID...');
     const id = await getVendorId();
     
     if (!id) {
-      console.log('❌ Vendor ID not found - cannot fetch contacts');
       setLoadingContacts(false);
       setLoadingMore(false);
       return;
     }
     
     const currentVendorId = id;
-    console.log('✅ Using Vendor ID:', currentVendorId);
 
     try {
-      setIsFetching(true);
       if (append) {
         setLoadingMore(true);
       } else {
@@ -97,104 +88,49 @@ const MyLeadsScreen = () => {
       formData.append('page', String(page));
       formData.append('limit', '20');
 
-      console.log('📤 Step 3: API Request Details:');
-      console.log('   - Endpoint:', mobile_siteConfig.BASE_URL2 + mobile_siteConfig.GET_CONTACT_LIST);
-      console.log('   - FormData id:', currentVendorId);
-      console.log('   - FormData page:', page);
-      console.log('   - FormData limit: 20');
-
       const result: any = await postDataWithTokenBase2(formData, mobile_siteConfig.GET_CONTACT_LIST);
       
-      console.log('📥 Step 4: API Response:');
-      console.log('   - Full Response:', JSON.stringify(result, null, 2));
-      console.log('   - Response Status:', result?.status);
-      console.log('   - Response Message:', result?.msg);
-      console.log('   - Has result.data:', !!result?.data);
-      console.log('   - Has result.data.records:', !!result?.data?.records);
-      console.log('   - result.data.records type:', Array.isArray(result?.data?.records) ? 'Array' : typeof result?.data?.records);
-      console.log('   - result.data.records length:', result?.data?.records?.length || 0);
-
       let newContacts: any[] = [];
 
       // Handle different response formats
-      // Check for result.data.records (actual API response structure)
       if (result?.data?.records && Array.isArray(result.data.records)) {
         newContacts = result.data.records;
-        console.log('✅ Step 5: Extracted from result.data.records');
       } else if (result?.success !== undefined) {
-        // Response has success field
         if (result.success && Array.isArray(result?.data)) {
           newContacts = result.data;
-          console.log('✅ Step 5: Extracted from result.data (with success)');
         } else if (result.success && Array.isArray(result?.contacts)) {
           newContacts = result.contacts;
-          console.log('✅ Step 5: Extracted from result.contacts');
         } else if (result.success && Array.isArray(result?.list)) {
           newContacts = result.list;
-          console.log('✅ Step 5: Extracted from result.list');
         } else if (Array.isArray(result?.data)) {
           newContacts = result.data;
-          console.log('✅ Step 5: Extracted from result.data');
-        } else {
-          console.log('⚠️ Step 5: No array found in success response');
         }
       } else if (Array.isArray(result?.data)) {
         newContacts = result.data;
-        console.log('✅ Step 5: Extracted from result.data');
       } else if (Array.isArray(result?.contacts)) {
         newContacts = result.contacts;
-        console.log('✅ Step 5: Extracted from result.contacts');
       } else if (Array.isArray(result?.list)) {
         newContacts = result.list;
-        console.log('✅ Step 5: Extracted from result.list');
       } else if (Array.isArray(result)) {
         newContacts = result;
-        console.log('✅ Step 5: Extracted from result (direct array)');
-      } else {
-        console.log('❌ Step 5: No valid array found in response');
-        console.log('   - Response keys:', Object.keys(result || {}));
-      }
-
-      console.log('📊 Step 6: Final Extracted Contacts:');
-      console.log('   - Count:', newContacts.length);
-      if (newContacts.length > 0) {
-        console.log('   - First contact:', JSON.stringify(newContacts[0], null, 2));
       }
 
       if (append) {
-        // Append new contacts to existing ones
-        setContacts(prevContacts => {
-          const updated = [...prevContacts, ...newContacts];
-          console.log('📝 Step 7: Appended contacts. Total:', updated.length);
-          return updated;
-        });
+        setContacts(prevContacts => [...prevContacts, ...newContacts]);
       } else {
-        // Replace contacts for first page
         setContacts(newContacts);
-        console.log('📝 Step 7: Set contacts. Total:', newContacts.length);
       }
 
       // Check if there are more pages
-      if (newContacts.length < 20) {
-        setHasMore(false);
-        console.log('📄 Step 8: No more pages (less than 20 items)');
-      } else {
-        setHasMore(true);
-        console.log('📄 Step 8: More pages available');
-      }
+      setHasMore(newContacts.length >= 20);
 
     } catch (error: any) {
-      console.log('❌ Step ERROR: Error fetching contact list');
-      console.log('   - Error:', error);
-      console.log('   - Error Message:', error?.message);
-      console.log('   - Error Stack:', error?.stack);
       if (!append) {
         setContacts([]);
       }
     } finally {
       setLoadingContacts(false);
       setLoadingMore(false);
-      console.log('✅ Step FINAL: Loading states reset');
     }
   };
 
@@ -225,29 +161,31 @@ const MyLeadsScreen = () => {
       </Text>
 
       {/* DESCRIPTION */}
-      <Text style={styles.desc}>
+      {/* <Text style={styles.desc}>
         {contact.description || contact.desc || contact.project_title 
         || 'The customer wants to book a cab trip.'}
-      </Text>
+      </Text> */}
 
       {/* BUDGET INFO */}
       {contact.min_budget && contact.max_budget_amount && (
-        <Text style={styles.pickup}>
-          Budget: <Text style={styles.pickupBold}>₹{contact.min_budget} - ₹{contact.max_budget_amount}</Text>
-        </Text>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Budget:</Text>
+          <Text style={styles.infoValue}>${contact.min_budget} - ${contact.max_budget_amount}</Text>
+        </View>
       )}
 
       {/* CREATED DATE */}
       {contact.created_at && (
-        <Text style={styles.pickup}>
-          Created: <Text style={styles.pickupBold}>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Created:</Text>
+          <Text style={styles.infoValue}>
             {new Date(contact.created_at).toLocaleDateString('en-IN', { 
               day: 'numeric', 
               month: 'short', 
               year: 'numeric' 
             })}
           </Text>
-        </Text>
+        </View>
       )}
 
       <View style={styles.cardDivider} />
@@ -348,7 +286,7 @@ const styles = StyleSheet.create({
   },
 
   headerDivider: {
-    height: hp(0.12),
+    height: hp(0.1),
     width: "100%",
     backgroundColor: Colors.lightgrey2,
     marginTop: hp(1.2),
@@ -360,12 +298,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     marginHorizontal: wp(5),
     marginTop: hp(1.5),
+    marginBottom: hp(0.5),
     padding: wp(4),
     borderRadius: wp(3),
     borderWidth: 1,
-    borderColor:'#f1f1f1',
+    borderColor: Colors.lightgrey2,
     overflow: "hidden",
-    // elevation: 3,
   },
 
   title: {
@@ -382,21 +320,38 @@ const styles = StyleSheet.create({
   },
 
   pickup: {
-    marginTop: hp(1.5),
+    marginTop: hp(1.2),
     fontSize: FSize.fs12,
     color: Colors.grey,
   },
   pickupBold: {
-    color: Colors.blackgray,
+    color: Colors.darkblack,
     fontWeight: "600",
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: hp(1.2),
+  },
+  infoLabel: {
+    fontSize: FSize.fs12,
+    color: Colors.darkblack,
+    fontWeight: "600",
+    marginRight: wp(1.5),
+  },
+  infoValue: {
+    fontSize: FSize.fs12,
+    color: Colors.darkblack,
+    fontWeight: "700",
+    flex: 1,
   },
 
   /* Bottom User Row */
   userRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: hp(2),
-    alignItems: "center",
+    marginTop: hp(1.5),
+    alignItems: "flex-start",
   },
 
   userLeft: {
@@ -450,22 +405,18 @@ ratingText: {
     fontSize: FSize.fs11,
     color: Colors.grey,
   },
-cardDivider: {
-
- position: "absolute",
-  left: 0,
-  right: 0,
-  height: hp(0.12),
-   marginTop: hp(5.4),
-  backgroundColor: "#f1f1f1",
-  top: "54%", 
-  
-},
+  cardDivider: {
+    height: hp(0.1),
+    width: "100%",
+    backgroundColor: Colors.lightgrey2,
+    marginTop: hp(1.5),
+    marginBottom: hp(0.5),
+  },
 
   phoneValue: {
     fontSize: FSize.fs13,
     fontWeight: "600",
-    color: Colors.blackgray,
+    color: Colors.darkblack,
     marginTop: hp(0.3),
     flexShrink: 0,
     maxWidth: wp(45),
