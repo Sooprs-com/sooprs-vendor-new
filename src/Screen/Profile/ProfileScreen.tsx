@@ -441,8 +441,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   backArrowIcon: {
-    width: wp(5),
-    height: wp(5),
+    width: wp(6),
+    height: wp(6),
     tintColor: Colors.black,
   },
   profileSection: {

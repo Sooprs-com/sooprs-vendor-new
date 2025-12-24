@@ -305,7 +305,7 @@ const Home = () => {
         <Text style={styles.helloText}>Hello {userName || 'User'}</Text>
 
         <View style={styles.headerRight}>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => (navigation as any).navigate('NotificationScreen')}>
             <Image source={Images.bellIcon} style={styles.bellIcon} />
           </TouchableOpacity>
 
@@ -324,40 +324,55 @@ const Home = () => {
       <View style={styles.statsRow}>
 
         {/* Wallet Amount */}
-        <LinearGradient
-          colors={['#E4F2FD', '#C2DFFC']}
-          start={{x: 0, y: 0}}
-          end={{x: 1, y: 1}}
-          style={styles.statCard}
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => (navigation as any).navigate('AddCredits')}
         >
-          <Image source={Images.walletIcon} style={styles.statIcon} />
-          <Text style={styles.statValueWallet}>₹ {status?.wallet_balance || '0'}</Text>
-          <Text style={styles.statLabelWallet}>Wallet Amount</Text>
-        </LinearGradient>
+          <LinearGradient
+            colors={['#E4F2FD', '#C2DFFC']}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={styles.statCard}
+          >
+            <Image source={Images.walletIcon} style={styles.statIcon} />
+            <Text style={styles.statValueWallet}>₹ {status?.wallet_balance || '0'}</Text>
+            <Text style={styles.statLabelWallet}>Wallet Amount</Text>
+          </LinearGradient>
+        </TouchableOpacity>
 
-        {/* Total Leads */}
-        <LinearGradient
-          colors={['#F0E2FF', '#E5C7FF']}
-          start={{x: 0, y: 0}}
-          end={{x: 1, y: 1}}
-          style={styles.statCard}
+        {/* Total Packages */}
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => (navigation as any).navigate('Projects')}
         >
-          <Image source={Images.activeTripIcon} style={styles.statIcon} />
-          <Text style={styles.statValueLeads}>{status?.total_packages || '0'}</Text>
-          <Text style={styles.statLabelLeads}>Total Packages</Text>
-        </LinearGradient>
+          <LinearGradient
+            colors={['#F0E2FF', '#E5C7FF']}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={styles.statCard}
+          >
+            <Image source={Images.activeTripIcon} style={styles.statIcon} />
+            <Text style={styles.statValueLeads}>{status?.total_packages || '0'}</Text>
+            <Text style={styles.statLabelLeads}>Total Packages</Text>
+          </LinearGradient>
+        </TouchableOpacity>
 
         {/* Total Orders */}
-        <LinearGradient
-          colors={['#FFF7DE', '#FEEBBB']}
-          start={{x: 0, y: 0}}
-          end={{x: 1, y: 1}}
-          style={styles.statCard}
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => (navigation as any).navigate('Orders')}
         >
-          <Image source={Images.ratingStar} style={styles.statIcon} />
-          <Text style={styles.statValueOrders}>{status?.total_orders || '0'}</Text>
-          <Text style={styles.statLabelOrders}>Total Orders</Text>
-        </LinearGradient>
+          <LinearGradient
+            colors={['#FFF7DE', '#FEEBBB']}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={styles.statCard}
+          >
+            <Image source={Images.ratingStar} style={styles.statIcon} />
+            <Text style={styles.statValueOrders}>{status?.total_orders || '0'}</Text>
+            <Text style={styles.statLabelOrders}>Total Orders</Text>
+          </LinearGradient>
+        </TouchableOpacity>
       </View>
 
 
@@ -695,7 +710,7 @@ headerDivider: {
     marginTop: hp(2),
     fontSize: FSize.fs16,
     fontWeight: '700',
-    color: Colors.black,
+    color: Colors.gray,
   },
 
   /* ------------ Request Cards ------------ */
@@ -710,7 +725,7 @@ headerDivider: {
     borderRadius: wp(3),
   },
   reqTitle2: {
-    fontSize: FSize.fs15,
+    fontSize: FSize.fs17,
     fontWeight: '700',
     color: Colors.black,
   },
@@ -720,14 +735,14 @@ headerDivider: {
     // marginTop: hp(1),
   },
   reqDesc: {
-    fontSize: FSize.fs13,
+    fontSize: FSize.fs14,
     marginTop: hp(1),
-    color: Colors.grey,
+    color: Colors.blsck,
     lineHeight: hp(2.2),
   },
   reqDate: {
     marginTop: hp(1.4),
-    fontSize: FSize.fs12,
+    fontSize: FSize.fs17,
     fontWeight: '700',
     color: Colors.darkGray,
   },

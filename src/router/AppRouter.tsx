@@ -17,6 +17,8 @@ import PackageDetailsScreen from '../Screen/Orders/PackageDetailsScreen';
 import AddCredits from '../Screen/CreditScreen/AddCredits';
 import SubscriptionScreen from '../Screen/SubscriptionScreen/SubscriptionScreen';
 import WebView from '../Component/WebView';
+import SplashScreen from '../Screen/Splash/SplashScreen';
+import NotificationScreen from '../Screen/Notifications/NotificationScreen';
 // import WelcomeScreen from './auth/WelcomeScreen';
 // import ProfileSelection from './auth/ProfileSelection';
 // import Signup from './auth/Signup';
@@ -101,6 +103,7 @@ const AuthenticationRouter = ({initialRoute}: {initialRoute?: string}) => {
            <Stack.Screen name="SubscriptionScreen" component={SubscriptionScreen} />
            <Stack.Screen name="WebView" component={WebView} />
            <Stack.Screen name="PackageDetailsScreen" component={PackageDetailsScreen} />
+           <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
       <Stack.Screen name="BottomTab" component={BottomTab} />
     
       {/* <Stack.Screen name="ProfileSelection" component={ProfileSelection} />
@@ -207,8 +210,10 @@ const AuthenticationRouter = ({initialRoute}: {initialRoute?: string}) => {
 
 const AppRouter = ({initialRouteName}: {initialRouteName?: string}) => {
   return (
-    <Stack.Navigator screenOptions={{headerShown: false}}>
-      {/* <Stack.Screen name="Splash" component={Splash} /> */}
+    <Stack.Navigator 
+      screenOptions={{headerShown: false}}
+      initialRouteName="SplashScreen">
+      <Stack.Screen name="SplashScreen" component={SplashScreen} />
       <Stack.Screen name="Authentication">
         {(props) => <AuthenticationRouter {...props} initialRoute={initialRouteName} />}
       </Stack.Screen>

@@ -99,7 +99,7 @@ const AppContent = () => {
   }, [dispatch]);
 
   if (!isReady) {
-    // You can show a splash screen here
+    // Show splash screen while initializing
     return null;
   }
 

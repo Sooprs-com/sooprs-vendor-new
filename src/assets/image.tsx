@@ -196,6 +196,8 @@ manageDetailsIcone:require('./images/ManageDetails.png'),
   carIcon:require('./Icons/Car.png'),
   UserRoundIcon:require('./Icons/user-round.png'),
   editButton:require('./images/editbutton.png'),
+  splashLogo1: require('./images/SplaceIcon.png'),
+  leadsIcon: require('./images/LeadIcon.png'),
 };
 
 export default Images;

@@ -171,6 +171,10 @@ const NewOtpScreen = () => {
         ...params 
       });
     }
+    else if(result?.isRegistered===true && result?.user_type==="USER"){
+      showAlert('error', 'Error', 'You are already registered as a user from this number.');
+      return;
+    }
     } catch (error) {
       showAlert('error', 'Error', 'An error occurred while verifying OTP.');
       console.error(error);

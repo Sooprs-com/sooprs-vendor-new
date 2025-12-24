@@ -52,7 +52,7 @@ const BottomTab = () => {
     {
       name: 'Leads',
       component: Leads,
-      icon: Images.projects,
+      icon: Images.leadsIcon,
     },
     {
       name: 'Projects',
@@ -63,6 +63,11 @@ const BottomTab = () => {
       name: 'Orders',
       component: Order,
       icon: Images.chat,
+    },
+    {
+      name: 'Profile',
+      component: Order,
+      icon: Images.projects,
     },
   ].filter(Boolean);
 
@@ -76,7 +81,17 @@ const BottomTab = () => {
           // Handle tab press
           const onPress = () => {
             if (!isFocused) {
-              navigation.navigate(route.name);
+              // If Profile tab is clicked, navigate to ProfileScreen using parent navigation
+              if (route.name === 'Profile') {
+                const parent = navigation.getParent();
+                if (parent) {
+                  (parent as any).navigate('ProfileScreen');
+                } else {
+                  (navigation as any).navigate('ProfileScreen');
+                }
+              } else {
+                navigation.navigate(route.name);
+              }
             }
           };
           return (
