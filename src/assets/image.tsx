@@ -198,6 +198,22 @@ manageDetailsIcone:require('./images/ManageDetails.png'),
   editButton:require('./images/editbutton.png'),
   splashLogo1: require('./images/SplaceIcon.png'),
   leadsIcon: require('./images/LeadIcon.png'),
+  // Drawer menu icons
+  editIcon: require('./images/editbutton.png'),
+  supportUser: require('./images/support1.png'),
+  notificationUser: require('./Icons/bellicon.png'),
+  drawerExploreServices: require('./images/services.png'),
+  drawerWishlist: require('./Icons/favorite.png'),
+  drawerOffersCoupons: require('./images/wallet1.png'),
+  drawerReferEarn: require('./images/referandearn.png'),
+  drawerBecomeVendor: require('./images/professionalslogo.png'),
+  drawerLanguage: require('./images/settings1.png'),
+  drawerRateUs: require('./Icons/starIcon.png'),
+  aboutSooprsIcon: require('./images/aboutsooprsicon.png'),
+  drawerTerms: require('./images/term.png'),
+  drawerPrivacy: require('./images/privacyPolicyIcone.png'),
+  notificationIcon: require('./images/notification.png'),
+  bankDetailsIcon: require('./images/bank.png'),
 };
 
 export default Images;

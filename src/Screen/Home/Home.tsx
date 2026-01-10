@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Modal,
   Alert,
+  StatusBar,
 } from 'react-native';
 import React, {useEffect, useState, useCallback} from 'react';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
@@ -291,8 +292,13 @@ const Home = () => {
     }
   };
 
+  const openDrawer = () => {
+    (navigation as any).openDrawer();
+  };
+
   return (
     <SafeAreaView style={styles.container}>
+    <StatusBar barStyle="light-content" backgroundColor={"white"} />
     <ScrollView 
       showsVerticalScrollIndicator={false}
       onScroll={handleScroll}
@@ -302,7 +308,12 @@ const Home = () => {
 
       {/* ================= HEADER ================= */}
       <View style={styles.header}>
-        <Text style={styles.helloText}>Hello {userName || 'User'}</Text>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity onPress={openDrawer} style={styles.drawerIconContainer}>
+            <Image source={Images.drawer} style={styles.drawerIcon} />
+          </TouchableOpacity>
+          <Text style={styles.helloText}>Hello {userName || 'User'}</Text>
+        </View>
 
         <View style={styles.headerRight}>
           <TouchableOpacity onPress={() => (navigation as any).navigate('NotificationScreen')}>
@@ -360,7 +371,7 @@ const Home = () => {
         {/* Total Orders */}
         <TouchableOpacity
           activeOpacity={0.7}
-          onPress={() => (navigation as any).navigate('Orders')}
+          onPress={() => (navigation as any).navigate('Bookings')}
         >
           <LinearGradient
             colors={['#FFF7DE', '#FEEBBB']}
@@ -585,7 +596,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.white,
-    paddingTop: hp(3),
+    paddingTop: hp(2),
   },
   /* ------------ HEADER ------------ */
   header: {
@@ -595,10 +606,16 @@ const styles = StyleSheet.create({
     paddingVertical: hp(2),
     alignItems: 'center',
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
   helloText: {
     fontSize: FSize.fs18,
     fontWeight: '700',
     color: Colors.black,
+    marginLeft: wp(3),
   },
   headerRight: {
     flexDirection: 'row',
@@ -737,7 +754,7 @@ headerDivider: {
   reqDesc: {
     fontSize: FSize.fs14,
     marginTop: hp(1),
-    color: Colors.blsck,
+    color: Colors.black,
     lineHeight: hp(2.2),
   },
   reqDate: {
@@ -921,5 +938,13 @@ headerDivider: {
     fontSize: FSize.fs14,
     color: Colors.grey,
     marginTop: hp(2),
+  },
+  drawerIconContainer: {
+    // Icon is now on the left side
+  },
+  drawerIcon: {
+    width: wp(6),
+    height: wp(6),
+    tintColor: Colors.gray,
   },
 });

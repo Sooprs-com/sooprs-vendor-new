@@ -76,8 +76,8 @@ const SplashScreen: React.FC<SplashScreenProps> = ({navigation}) => {
           });
         }
         
-        // Navigate to Authentication stack with BottomTab as target
-        navigation.replace('Authentication', {screen: 'BottomTab'});
+        // Navigate to Authentication stack with VendorDrawer as target
+        navigation.replace('Authentication', {screen: 'VendorDrawer'});
       } else {
         // Navigate to Authentication stack with EnterMobileNumber as target
         navigation.replace('Authentication', {screen: 'EnterMobileNumber'});

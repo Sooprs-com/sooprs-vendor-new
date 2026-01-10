@@ -33,9 +33,9 @@ const AppContent = () => {
         const isLogin = await getDataFromAsyncStorage(mobile_siteConfig.IS_LOGIN);
         const token = await getDataFromAsyncStorage(mobile_siteConfig.MOB_ACCESS_TOKEN_KEY);
         
-        // If user is logged in and has token, navigate to BottomTab
+        // If user is logged in and has token, navigate to VendorDrawer
         if (isLogin === 'TRUE' && token) {
-          setInitialRoute('BottomTab');
+          setInitialRoute('VendorDrawer');
           
           // Initialize user details in Redux store
           const email = await getDataFromAsyncStorage(mobile_siteConfig.EMAIL);

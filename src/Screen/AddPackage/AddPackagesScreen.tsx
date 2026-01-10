@@ -901,8 +901,8 @@ const styles = StyleSheet.create({
     paddingVertical: hp(2),
   },
   backIcon: {
-    width: wp(5),
-    height: wp(5),
+    width: wp(8),
+    height: wp(8),
     tintColor: Colors.black,
   },
   headerTitle: {

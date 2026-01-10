@@ -6,7 +6,7 @@ import {
   Image,
   SafeAreaView,
   ScrollView,
-  Alert,
+  Alert,  
   Platform,
   PermissionsAndroid,
   ActivityIndicator,
@@ -341,6 +341,14 @@ const ProfileScreen = () => {
             'Subsciption',
             'Manage your active plans and renewals.',
             () => navigation.navigate('SubscriptionScreen'),
+            undefined,
+            false,
+          )}
+          {renderSectionItem(
+            Images.support1,
+            'Support',
+            'Get help from our support team anytime.',
+            () => (navigation as any).navigate('ChatSupportHome'),
           )}
         </View>
 
@@ -425,7 +433,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.white,
-    paddingTop: hp(3),
+    paddingTop: hp(2),
   },
   scrollContent: {
     paddingBottom: hp(3),
@@ -441,8 +449,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   backArrowIcon: {
-    width: wp(6),
-    height: wp(6),
+    width: wp(9),
+    height: wp(9),
     tintColor: Colors.black,
   },
   profileSection: {

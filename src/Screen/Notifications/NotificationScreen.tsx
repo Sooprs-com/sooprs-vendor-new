@@ -64,8 +64,8 @@ const styles = StyleSheet.create({
     marginRight: wp(3),
   },
   backArrowIcon: {
-    width: wp(6),
-    height: wp(6),
+    width: wp(8),
+    height: wp(8 ),
     tintColor: Colors.black,
   },
   headerText: {

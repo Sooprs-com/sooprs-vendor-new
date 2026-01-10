@@ -145,7 +145,7 @@ const NewOtpScreen = () => {
 
       // Navigate to Email Collection Screen
       if(result?.isRegistered===false){
-      (navigation as any).navigate('RegistrationScreen', {
+      (navigation as any).navigate('CategorySelectionScreen', {
         mobileNumber: phone,
         phoneNumber: phone,
         otp: otpString,
@@ -166,7 +166,7 @@ const NewOtpScreen = () => {
       if (result?.email) {
         await storeDataToAsyncStorage(mobile_siteConfig.EMAIL, result.user?.email);
       }
-      (navigation as any).navigate('BottomTab',{ 
+      (navigation as any).navigate('VendorDrawer',{ 
         email: result?.email, 
         ...params 
       });
@@ -223,7 +223,9 @@ const NewOtpScreen = () => {
             {otp.map((digit, index) => (
               <TextInput
                 key={index}
-                ref={ref => (inputRefs.current[index] = ref)}
+                ref={ref => {
+                  inputRefs.current[index] = ref;
+                }}
                 style={[styles.otpBox, digit ? styles.otpBoxFilled : null]}
                 value={digit}
                 onChangeText={value => handleOtpChange(value, index)}

@@ -5,6 +5,7 @@ import EnterMobileNumber from '../auth/EnterMobileNumber';
 import NewOtpScreen from '../auth/NewOtpScreen';
 import EmailCollectionScreen from '../auth/EmailCollectionScreen';
 import BottomTab from './BottomTab';
+import VendorDrawer from './VendorDrawer';
 import HomeVerificationScreen from '../Screen/Verification/HomeVerification';
 // import RegistrationScreen from '../Screen/Home/Registration/RegistrationScreen';
 import AddPackagesScreen from '../Screen/AddPackage/AddPackagesScreen';
@@ -19,6 +20,9 @@ import SubscriptionScreen from '../Screen/SubscriptionScreen/SubscriptionScreen'
 import WebView from '../Component/WebView';
 import SplashScreen from '../Screen/Splash/SplashScreen';
 import NotificationScreen from '../Screen/Notifications/NotificationScreen';
+import ChatSupportHome from '../Screen/Support/ChatSupportHome';
+import ChatbotSupport from '../Screen/Support/ChatbotSupport';
+import CategorySelectionScreen from '../auth/CategorySelectionScreen';
 // import WelcomeScreen from './auth/WelcomeScreen';
 // import ProfileSelection from './auth/ProfileSelection';
 // import Signup from './auth/Signup';
@@ -92,6 +96,7 @@ const AuthenticationRouter = ({initialRoute}: {initialRoute?: string}) => {
       <Stack.Screen name="NewOtpScreen" component={NewOtpScreen} />
       <Stack.Screen name="EmailCollectionScreen" component={EmailCollectionScreen} />
           <Stack.Screen name="HomeVerificationScreen" component={HomeVerificationScreen} />
+      <Stack.Screen name="CategorySelectionScreen" component={CategorySelectionScreen} />
           <Stack.Screen name="RegistrationScreen" component={RegistrationScreen} />
           
            <Stack.Screen name="AddPackagesScreen" component={AddPackagesScreen} />
@@ -101,11 +106,13 @@ const AuthenticationRouter = ({initialRoute}: {initialRoute?: string}) => {
            <Stack.Screen name="EditProfileScreen" component={EditProfileScreen} />
            <Stack.Screen name="AddCredits" component={AddCredits} />
            <Stack.Screen name="SubscriptionScreen" component={SubscriptionScreen} />
+           <Stack.Screen name="ChatSupportHome" component={ChatSupportHome} />
+           <Stack.Screen name="ChatbotSupport" component={ChatbotSupport} />
            <Stack.Screen name="WebView" component={WebView} />
            <Stack.Screen name="PackageDetailsScreen" component={PackageDetailsScreen} />
            <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
+      <Stack.Screen name="VendorDrawer" component={VendorDrawer} />
       <Stack.Screen name="BottomTab" component={BottomTab} />
-    
       {/* <Stack.Screen name="ProfileSelection" component={ProfileSelection} />
       <Stack.Screen name="Signup" component={Signup} />
       <Stack.Screen name="Login" component={Login} />

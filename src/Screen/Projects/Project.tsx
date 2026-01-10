@@ -194,18 +194,23 @@ const Project = () => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Packages</Text>
-     <TouchableOpacity 
-  style={styles.addButton}
-  onPress={() => (navigation as any).navigate("AddPackagesScreen")}
->
-  <View style={styles.plusRow}>
-    <Text style={styles.plus}>+</Text>
-    <Text style={styles.addText}>Add Packages</Text>
-  </View>
-</TouchableOpacity>
-
-
+        <View style={styles.headerLeft}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}>
+            <Image source={Images.backArrow} style={styles.backArrowIcon} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>My Packages</Text>
+        </View>
+        <TouchableOpacity 
+          style={styles.addButton}
+          onPress={() => (navigation as any).navigate("AddPackagesScreen")}
+        >
+          <View style={styles.plusRow}>
+            <Text style={styles.plus}>+</Text>
+            <Text style={styles.addText}>Add Packages</Text>
+          </View>
+        </TouchableOpacity>
       </View>
 
       {/* Packages List */}
@@ -247,6 +252,20 @@ const styles = StyleSheet.create({
     paddingTop: hp(2),
     paddingBottom: hp(1.5),
     backgroundColor: Colors.white,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  backButton: {
+    marginRight: wp(3),
+    padding: wp(1),
+  },
+  backArrowIcon: {
+    width: wp(6),
+    height: wp(6),
+    tintColor: Colors.black,
   },
   headerTitle: {
     fontSize: FSize.fs17,

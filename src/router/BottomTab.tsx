@@ -55,12 +55,12 @@ const BottomTab = () => {
       icon: Images.leadsIcon,
     },
     {
-      name: 'Projects',
+      name: 'Packages',
       component: Project,
       icon: Images.phoneIcon1,
     },
     {
-      name: 'Orders',
+      name: 'Bookings',
       component: Order,
       icon: Images.chat,
     },

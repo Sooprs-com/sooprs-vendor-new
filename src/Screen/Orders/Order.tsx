@@ -213,6 +213,11 @@ const Order = () => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}>
+          <Image source={Images.backArrow} style={styles.backArrowIcon} />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>My Orders</Text>
       </View>
 
@@ -298,10 +303,21 @@ const styles = StyleSheet.create({
     paddingTop: hp(2),
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: wp(6),
     paddingTop: hp(2),
     paddingBottom: hp(1.5),
     backgroundColor: Colors.white,
+  },
+  backButton: {
+    marginRight: wp(3),
+    padding: wp(1),
+  },
+  backArrowIcon: {
+    width: wp(6),
+    height: wp(6),
+    tintColor: Colors.black,
   },
   headerTitle: {
     fontSize: FSize.fs20,

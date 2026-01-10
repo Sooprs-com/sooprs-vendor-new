@@ -20,7 +20,7 @@ import {hp, wp} from '../assets/commonCSS/GlobalCSS';
 import Colors from '../assets/commonCSS/Colors';
 import FSize from '../assets/commonCSS/FSize';
 import Images from '../assets/image';
-import { getDataWithToken, postData } from '../services/mobile-api';
+import { postData } from '../services/mobile-api';
 import { mobile_siteConfig } from '../services/mobile-siteConfig';
 import Toast from 'react-native-toast-message';
 import { storeDataToAsyncStorage } from '../services/CommonFunction';
@@ -28,19 +28,22 @@ import { storeDataToAsyncStorage } from '../services/CommonFunction';
 const RegistrationScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const params = route?.params as {mobileNumber?: string; phoneNumber?: string; otp?: string} | undefined;
-  const {mobileNumber, phoneNumber, otp} = params || {};
+  const params = route?.params as {
+    mobileNumber?: string;
+    phoneNumber?: string;
+    otp?: string;
+    selectedCategoryId?: number;
+    selectedCategoryName?: string;
+  } | undefined;
+  const {mobileNumber, phoneNumber, otp, selectedCategoryId, selectedCategoryName} = params || {};
 
   const [name, setName] = useState('');
   const [company, setCompany] = useState('');
-  const [category, setCategory] = useState('');
-  const [categoryId, setCategoryId] = useState<number | null>(null);
+  const [category, setCategory] = useState(selectedCategoryName || '');
+  const [categoryId, setCategoryId] = useState<number | null>(selectedCategoryId || null);
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState(phoneNumber || mobileNumber || '');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [loadingCategories, setLoadingCategories] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
 
   const requestStoragePermission = async (): Promise<boolean> => {
@@ -59,6 +62,13 @@ const RegistrationScreen = () => {
     }
     return true; // iOS permissions are handled automatically
   };
+
+  useEffect(() => {
+    if (selectedCategoryId && selectedCategoryName) {
+      setCategory(selectedCategoryName);
+      setCategoryId(selectedCategoryId);
+    }
+  }, [selectedCategoryId, selectedCategoryName]);
 
   const handleImagePicker = async () => {
     try {
@@ -228,28 +238,6 @@ const RegistrationScreen = () => {
     }
   }
 
-  const getAllCategories = async () => {
-    try {
-      setLoadingCategories(true);
-      const res: any = await getDataWithToken({}, mobile_siteConfig.GET_ALL_CATEGORIES);
-      const data = await res.json();
-      console.log('Categories data:::::', data);
-      
-      if (data.success && data.data && Array.isArray(data.data)) {
-        setCategories(data.data);
-      } else {
-        console.log('Invalid categories response format');
-      }
-    } catch (error) {
-      console.log('error:::::', error);
-    } finally {
-      setLoadingCategories(false);
-    }
-  };
-  useEffect(() => {
-    getAllCategories();
-  }, []);
-
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#2C2C2C" />
@@ -310,63 +298,25 @@ const RegistrationScreen = () => {
             {/* Category Field */}
             <View style={styles.fieldContainer}>
               <Text style={styles.label}>Category</Text>
-              <View style={styles.inputWrapper}>
-                <Image source={Images.searchIcon} style={styles.searchIcon} />
-                <TextInput
-                  style={styles.inputWithIcon}
-                  value={category}
-                  onChangeText={setCategory}
-                  placeholder="e.g Website Development"
-                  placeholderTextColor="#BCBCBC"
-                  editable={false}
-                />
+              <View style={styles.categoryRow}>
+                <View style={[styles.inputWrapper, styles.categoryBadge]}>
+                  <Text style={styles.categoryText} numberOfLines={1}>
+                    {category || 'Select category'}
+                  </Text>
+                </View>
                 <TouchableOpacity
-                  onPress={() => setIsDropdownOpen(!isDropdownOpen)}
-                  activeOpacity={0.7}>
-                  <Image source={Images.Dropdown} style={styles.dropdownIcon} />
+                  style={styles.changeButton}
+                  activeOpacity={0.8}
+                  onPress={() =>
+                    (navigation as any).navigate('CategorySelectionScreen', {
+                      mobileNumber: phone,
+                      phoneNumber: phone,
+                      otp,
+                    })
+                  }>
+                  <Text style={styles.changeButtonText}>Change</Text>
                 </TouchableOpacity>
               </View>
-              {isDropdownOpen && (
-                <View style={styles.dropdownList}>
-                  {loadingCategories ? (
-                    <View style={styles.loadingContainer}>
-                      <Text style={styles.loadingText}>Loading categories...</Text>
-                    </View>
-                  ) : categories.length > 0 ? (
-                    <ScrollView
-                      nestedScrollEnabled={true}
-                      style={styles.dropdownScrollView}
-                      showsVerticalScrollIndicator={true}>
-                      {categories.map((item) => (
-                        <TouchableOpacity
-                          key={item.id}
-                          style={[
-                            styles.dropdownItem,
-                            categoryId === item.id && styles.dropdownItemSelected,
-                          ]}
-                          onPress={() => {
-                            setCategory(item.name);
-                            setCategoryId(item.id);
-                            setIsDropdownOpen(false);
-                          }}
-                          activeOpacity={0.7}>
-                          <Text
-                            style={[
-                              styles.dropdownItemText,
-                              categoryId === item.id && styles.dropdownItemTextSelected,
-                            ]}>
-                            {item.name}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </ScrollView>
-                  ) : (
-                    <View style={styles.loadingContainer}>
-                      <Text style={styles.loadingText}>No categories available</Text>
-                    </View>
-                  )}
-                </View>
-              )}
             </View>
 
             {/* Upload Profile/Logo */}
@@ -490,6 +440,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(4), 
 
   },
+  categoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  categoryBadge: {
+    flex: 1,
+    minHeight: hp(6),
+  },
+  categoryText: {
+    fontSize: FSize.fs16,
+    color: Colors.black,
+  },
+  changeButton: {
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(1.4),
+    borderRadius: wp(2),
+    borderWidth: 1,
+    borderColor: Colors.sooprsblue,
+    marginLeft: wp(3),
+  },
+  changeButtonText: {
+    color: Colors.sooprsblue,
+    fontSize: FSize.fs14,
+    fontWeight: '600',
+  },
   fieldContainer: {
     marginBottom: hp(1),
   },
@@ -526,49 +501,6 @@ const styles = StyleSheet.create({
     width: wp(5),
     height: wp(5),
     tintColor: Colors.gray,
-  },
-  dropdownIcon: {
-    width: wp(4),
-    height: wp(4),
-    resizeMode: 'contain',
-    tintColor: Colors.gray,
-    // marginLeft: wp(2),
-  },
-  dropdownList: {
-    marginTop: hp(0.5),
-    borderWidth: 1,
-    borderColor: Colors.lightgrey2,
-    borderRadius: wp(2),
-    backgroundColor: Colors.white,
-    maxHeight: hp(25),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  dropdownScrollView: {
-    maxHeight: hp(25),
-  },
-  dropdownItem: {
-    paddingVertical: hp(1.5),
-    paddingHorizontal: wp(4),
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.lightgrey2,
-  },
-  dropdownItemSelected: {
-    backgroundColor: Colors.sooprsblue + '10',
-  },
-  dropdownItemText: {
-    fontSize: FSize.fs16,
-    color: Colors.black,
-  },
-  dropdownItemTextSelected: {
-    color: Colors.sooprsblue,
-    fontWeight: '600',
   },
   uploadBox: {
     width: '22%',
@@ -614,15 +546,5 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: FSize.fs16,
     fontWeight: '600',
-  },
-  loadingContainer: {
-    paddingVertical: hp(2),
-    paddingHorizontal: wp(4),
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadingText: {
-    fontSize: FSize.fs14,
-    color: Colors.gray,
   },
 });
