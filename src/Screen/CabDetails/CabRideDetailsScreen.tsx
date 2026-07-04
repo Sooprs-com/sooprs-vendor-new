@@ -251,6 +251,7 @@ const CabRideReviewScreen = ({route}: any) => {
           </View>
         )}
 
+
         {/* INCLUSIONS */}
         {pkg.included && pkg.included.length > 0 && (
           <View style={styles.inclusionsSectionWrapper}>
@@ -266,6 +267,7 @@ const CabRideReviewScreen = ({route}: any) => {
           </View>
         )}
 
+
         {/* EXCLUSIONS */}
         {pkg.not_included && pkg.not_included.length > 0 && (
           <View style={styles.exclusionsSectionWrapper}>
@@ -280,6 +282,7 @@ const CabRideReviewScreen = ({route}: any) => {
             </View>
           </View>
         )}
+
 
         {/* BOOKING POLICY */}
         {pkg.policy && pkg.policy.length > 0 && (
@@ -300,6 +303,7 @@ const CabRideReviewScreen = ({route}: any) => {
             </View>
           </View>
         )}
+
 
         {/* FARE BREAKUP */}
         {pkg.fare_breakup && (

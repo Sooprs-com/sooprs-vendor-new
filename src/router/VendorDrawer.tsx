@@ -3,6 +3,7 @@ import {Dimensions, ScrollView} from 'react-native';
 import {createDrawerNavigator} from '@react-navigation/drawer';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import BottomTab from './BottomTab';
+import BillingBottomTab from './BillingBottomTab';
 import DrawerMenuScreen from '../Component/DrawerMenuScreen';
 import ProfileScreen from '../Screen/Profile/ProfileScreen';
 import AddCredits from '../Screen/CreditScreen/AddCredits';
@@ -13,6 +14,11 @@ import WebView from '../Component/WebView';
 import Project from '../Screen/Projects/Project';
 import Order from '../Screen/Orders/Order';
 import PaymentMethodScreen from '../Screen/PaymentMethod/PaymentMethodScreen';
+import BillingScreen from '../Screen/Billing/BillingScreen';
+import CreateCustomerScreen from '../Screen/Billing/CreateCustomerScreen';
+import CreateInvoiceScreen from '../Screen/Billing/CreateInvoiceScreen';
+import AllCustomersScreen from '../Screen/Billing/AllCustomersScreen';
+import InvoicePreviewScreen from '../Screen/Billing/InvoicePreviewScreen';
 
 const MainDrawer = createDrawerNavigator();
 const {width} = Dimensions.get('window');
@@ -24,6 +30,7 @@ const VendorStackNavigator = () => {
       screenOptions={{headerShown: false}}
       initialRouteName="BottomTab">
       <VendorStack.Screen name="BottomTab" component={BottomTab} />
+      <VendorStack.Screen name="BillingBottomTab" component={BillingBottomTab} />
       <VendorStack.Screen name="ProfileScreen" component={ProfileScreen} />
       <VendorStack.Screen name="PackagesScreen" component={Project} />
       <VendorStack.Screen name="BookingsScreen" component={Order} />
@@ -33,6 +40,11 @@ const VendorStackNavigator = () => {
       <VendorStack.Screen name="NotificationScreen" component={NotificationScreen} />
       <VendorStack.Screen name="WebView" component={WebView} />
       <VendorStack.Screen name="PaymentMethodScreen" component={PaymentMethodScreen} />
+      <VendorStack.Screen name="BillingScreen" component={BillingScreen} />
+      <VendorStack.Screen name="CreateCustomerScreen" component={CreateCustomerScreen} />
+      <VendorStack.Screen name="AllCustomersScreen" component={AllCustomersScreen} />
+      <VendorStack.Screen name="CreateInvoiceScreen" component={CreateInvoiceScreen} />
+      <VendorStack.Screen name="InvoicePreviewScreen" component={InvoicePreviewScreen} />
     </VendorStack.Navigator>
   );
 };

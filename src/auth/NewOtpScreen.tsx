@@ -9,7 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {CommonActions, useNavigation, useRoute} from '@react-navigation/native';
 import {hp, wp} from '../assets/commonCSS/GlobalCSS';
 import Colors from '../assets/commonCSS/Colors';
 import FSize from '../assets/commonCSS/FSize';
@@ -166,10 +166,23 @@ const NewOtpScreen = () => {
       if (result?.email) {
         await storeDataToAsyncStorage(mobile_siteConfig.EMAIL, result.user?.email);
       }
-      (navigation as any).navigate('VendorDrawer',{ 
-        email: result?.email, 
-        ...params 
+
+        let reset = CommonActions.reset({
+        index: 0,
+        routes: [{
+          name: "VendorDrawer",
+          params: {
+            email: result?.user?.email,
+            ...params
+          }
+        }],
       });
+      navigation.dispatch(reset);
+      // navigation.dispatch(reset);
+      // (navigation as any).navigate('VendorDrawer',{ 
+      //   email: result?.email, 
+      //   ...params 
+      // });
     }
     else if(result?.isRegistered===true && result?.user_type==="USER"){
       showAlert('error', 'Error', 'You are already registered as a user from this number.');

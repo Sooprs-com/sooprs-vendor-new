@@ -36,6 +36,20 @@ const DrawerMenuScreen = ({navigation}: {navigation: any}) => {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const isFocused = useIsFocused();
 
+  const isBillingMode = (() => {
+    try {
+      const state = navigation.getState();
+      const drawerRoute = state?.routes?.[state?.index ?? 0];
+      const nestedState = (drawerRoute as any)?.state;
+      const nestedRoutes = nestedState?.routes;
+      const nestedIndex = nestedState?.index ?? 0;
+      const currentRouteName = nestedRoutes?.[nestedIndex]?.name;
+      return currentRouteName === 'BillingBottomTab';
+    } catch {
+      return false;
+    }
+  })();
+
   useEffect(() => {
     // Jab drawer focus me aaye tab latest user details fetch karo
     const fetchUserDetails = async () => {
@@ -266,7 +280,8 @@ const DrawerMenuScreen = ({navigation}: {navigation: any}) => {
           </LinearGradient>
         </View>
 
-        {/* Action Buttons */}
+        {/* Action Buttons - hide when in Billing mode */}
+        {!isBillingMode && (
         <View style={styles.actionButtonsContainer}>
           <ActionButton
             image={Images.locationIcon}
@@ -307,37 +322,68 @@ const DrawerMenuScreen = ({navigation}: {navigation: any}) => {
             }}
           />
         </View>
+        )}
 
-        {/* Sections */}
-        {sections.map((section, sectionIndex) => (
+        {/* Back to Home - when in Billing mode */}
+        {isBillingMode && (
+          <View style={styles.section}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                navigation.closeDrawer();
+                navigation.navigate('VendorHomeScreen', {
+                  screen: 'BottomTab',
+                });
+              }}>
+              <View style={styles.menuItemLeft}>
+                <View style={styles.menuIconContainer}>
+                  <Image
+                    source={Images.homeIcon}
+                    style={styles.menuIconImage}
+                    resizeMode="contain"
+                  />
+                </View>
+                <Text style={styles.menuItemText}>Back to Home</Text>
+              </View>
+              <Image
+                source={Images.chevronRight}
+                style={styles.chevronIcon}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Sections - hide when in Billing mode */}
+        {!isBillingMode && sections.map((section, sectionIndex) => (
           <View key={section.title} style={styles.section}>
             <Text style={styles.sectionTitle}>{section.title}</Text>
             {section.items.map((item, itemIndex) => (
-              <TouchableOpacity
-                key={item.id}
-                style={styles.menuItem}
-                onPress={item.onPress}>
-                <View style={styles.menuItemLeft}>
-                  <View style={styles.menuIconContainer}>
-                    {item.icon ? (
-                      <Image
-                        source={item.icon}
-                        style={styles.menuIconImage}
-                        resizeMode="contain"
-                      />
-                    ) : (
-                      <View style={styles.placeholderIcon} />
-                    )}
+                <TouchableOpacity
+                  key={item.id}
+                  style={styles.menuItem}
+                  onPress={item.onPress}>
+                  <View style={styles.menuItemLeft}>
+                    <View style={styles.menuIconContainer}>
+                      {item.icon ? (
+                        <Image
+                          source={item.icon}
+                          style={styles.menuIconImage}
+                          resizeMode="contain"
+                        />
+                      ) : (
+                        <View style={styles.placeholderIcon} />
+                      )}
+                    </View>
+                    <Text style={styles.menuItemText}>{item.title}</Text>
                   </View>
-                  <Text style={styles.menuItemText}>{item.title}</Text>
-                </View>
-                <Image
-                  source={Images.chevronRight}
-                  style={styles.chevronIcon}
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-            ))}
+                  <Image
+                    source={Images.chevronRight}
+                    style={styles.chevronIcon}
+                    resizeMode="contain"
+                  />
+                </TouchableOpacity>
+              ))}
           </View>
         ))}
 
@@ -514,6 +560,26 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     fontSize: FSize.fs17,
+    color: Colors.black,
+    fontWeight: '400',
+    flex: 1,
+  },
+  dropdownSubItems: {
+    marginLeft: wp(4),
+    paddingVertical: hp(0.5),
+    // borderLeftWidth: 2,
+    // borderLeftColor: Colors.lightgrey2,
+    marginTop: hp(0.5),
+  },
+  subMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: hp(1.2),
+    paddingLeft: wp(2),
+  },
+  subMenuItemText: {
+    fontSize: FSize.fs15,
     color: Colors.black,
     fontWeight: '400',
     flex: 1,

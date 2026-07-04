@@ -471,6 +471,7 @@ const PackageDetailsScreen = () => {
           </View>
         </View>
       </Modal>
+      
     </SafeAreaView>
   );
 };

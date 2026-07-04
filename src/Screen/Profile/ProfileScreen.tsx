@@ -435,24 +435,29 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     paddingTop: hp(2),
   },
+
   scrollContent: {
     paddingBottom: hp(3),
   },
+
   header: {
     paddingHorizontal: wp(5),
     paddingTop: hp(2),
     paddingBottom: hp(1),
   },
+
   backButton: {
     width: wp(10),
     height: wp(10),
     justifyContent: 'center',
   },
+
   backArrowIcon: {
     width: wp(9),
     height: wp(9),
     tintColor: Colors.black,
   },
+  
   profileSection: {
     alignItems: 'center',
     paddingVertical: hp(2),

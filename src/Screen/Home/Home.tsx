@@ -23,6 +23,8 @@ import { getDataWithToken, postDataWithTokenBase2 } from '../../services/mobile-
 import { mobile_siteConfig } from '../../services/mobile-siteConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
+import Animated from 'react-native-reanimated';
+import AnimatedButton from '../../Component/AnimatedButton';
 
 const Home = () => {
   const navigation = useNavigation();
@@ -30,7 +32,7 @@ const Home = () => {
   const [totalEarnings, setTotalEarnings] = useState('10,550');
   const [activeTrips, setActiveTrips] = useState(8);
   const [rating, setRating] = useState(4.9);
-
+  const [userData,setUserData] = useState<any>(null);
   const [leads, setLeads] = useState<any[]>([]);
   const [loadingLeads, setLoadingLeads] = useState(false);
   const [categoryId, setCategoryId] = useState<string>('1');
@@ -52,7 +54,10 @@ const Home = () => {
       const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
       const data: any = await res.json();
       console.log('User details data:::::', data);
-      
+      console.log('User membership data:::::', data?.membership?.plan?.plan_name);
+      // console.log('User membership data:::::123', data?.membership?.plan?.plan_name==="Standard" ? Images.standardPlanIcon :userData?.membership?.plan?.plan_name==="Elite" ? Images.ElitePlanIcon : Images.starIcon);
+
+      setUserData(data);
       // Check if profile is completed
       if (data?.success && data?.vendorDetail) {
         const isProfileCompleted = data.vendorDetail.is_profile_completed;
@@ -316,16 +321,46 @@ const Home = () => {
         </View>
 
         <View style={styles.headerRight}>
-          <TouchableOpacity onPress={() => (navigation as any).navigate('NotificationScreen')}>
+          {/* <TouchableOpacity 
+            style={styles.upgradeButton}
+            onPress={() => (navigation as any).navigate('SubscriptionScreen')}
+          >
+            <LinearGradient
+              colors={['#3B82F6', '#2563EB']}
+              start={{x: 0, y: 0}}
+              end={{x: 1, y: 1}}
+              style={styles.upgradeButtonGradient}
+            >
+              <Image source={Images.starIcon} style={styles.upgradeIcon} />
+              <Text style={styles.upgradeText}>Upgrade</Text>
+            </LinearGradient>
+          </TouchableOpacity> */}
+
+
+          <AnimatedButton 
+          icon={userData?.membership?.plan?.plan_name==="STANDARD" ? Images.standardPlanIcon :userData?.membership?.plan?.plan_name==="ELITE" ? Images.ElitePlanIcon : Images.starIcon}
+          title={"Upgrade"}
+         onPress={() => (navigation as any).navigate('SubscriptionScreen')}
+           buttonStyle={undefined} 
+           textStyle={undefined}/>
+
+          <TouchableOpacity 
+            style={styles.notificationBadgeContainer}
+            onPress={() => (navigation as any).navigate('NotificationScreen')}
+          >
             <Image source={Images.bellIcon} style={styles.bellIcon} />
+            {/* <View style={styles.notificationBadge}>
+              <Text style={styles.badgeText}>1</Text>
+            </View> */}
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => navigation.navigate('ProfileScreen' as never)}>
+          {/* <TouchableOpacity onPress={() => navigation.navigate('ProfileScreen' as never)}>
             <Image source={getImageUri(profileImage)} style={styles.profileImg} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
+
+
         </View>
       </View>
-
 
       <View style={styles.headerDivider} />
 
@@ -354,8 +389,9 @@ const Home = () => {
         {/* Total Packages */}
         <TouchableOpacity
           activeOpacity={0.7}
-          onPress={() => (navigation as any).navigate('Projects')}
+          onPress={() => (navigation as any).navigate('PackagesScreen')}
         >
+          
           <LinearGradient
             colors={['#F0E2FF', '#E5C7FF']}
             start={{x: 0, y: 0}}
@@ -371,7 +407,7 @@ const Home = () => {
         {/* Total Orders */}
         <TouchableOpacity
           activeOpacity={0.7}
-          onPress={() => (navigation as any).navigate('Bookings')}
+          onPress={() => (navigation as any).navigate('BookingsScreen')}
         >
           <LinearGradient
             colors={['#FFF7DE', '#FEEBBB']}
@@ -386,6 +422,29 @@ const Home = () => {
         </TouchableOpacity>
       </View>
 
+
+      {/* ================= START BILLING ================= */}
+      <TouchableOpacity
+        activeOpacity={0.8}
+        style={styles.startBillingCard}
+        onPress={() => {
+          // Navigate to BillingBottomTab via drawer's screen (nested nav - works from any depth)
+          (navigation as any).navigate('VendorHomeScreen', { screen: 'BillingBottomTab' });
+        }}>
+        <LinearGradient
+          colors={['#E8F5E9', '#C8E6C9']}
+          start={{x: 0, y: 0}}
+          end={{x: 1, y: 1}}
+          style={styles.startBillingGradient}>
+          <Image source={Images.dollarIcon} style={styles.startBillingIcon} />
+          <View style={styles.startBillingTextWrap}>
+            <Text style={styles.startBillingTitle}>Start Billing</Text>
+            <Text style={styles.startBillingSubtitle}>
+              Create customers & invoices
+            </Text>
+          </View>
+        </LinearGradient>
+      </TouchableOpacity>
 
       {/* ================= ADD PACKAGE LISTING ================= */}
       <TouchableOpacity style={styles.addListingBtn}
@@ -620,13 +679,55 @@ const styles = StyleSheet.create({
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: wp(3),
+  },
+  upgradeButton: {
+    borderRadius: wp(5),
+    overflow: 'hidden',
+    paddingHorizontal: wp(3),
+    paddingVertical: hp(0.8),
+  },
+  upgradeButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: wp(3),
+    paddingVertical: hp(1),
+    borderRadius: wp(5),
+  },
+  upgradeIcon: {
+    width: wp(4),
+    height: wp(4),
+    marginRight: wp(1.5),
+    tintColor: Colors.white,
+  },
+  upgradeText: {
+    fontSize: FSize.fs13,
+    fontWeight: '700',
+    color: Colors.white,
+  },
+  notificationBadgeContainer: {
+    position: 'relative',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#EF4444',
+    borderRadius: wp(3),
+    width: wp(4),
+    height: wp(4),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: Colors.white,
+    fontSize: FSize.fs10,
+    fontWeight: '700',
   },
   bellIcon: {
     width: wp(5),
     height: wp(5),
-    marginRight: wp(3),
-     tintColor: Colors.yellow, 
-   
+    tintColor: Colors.yellow,
   },
   profileImg: {
     width: wp(6),
@@ -701,6 +802,42 @@ headerDivider: {
     fontSize: FSize.fs11,
     color: '#9F7200',
     fontWeight: '500',
+    marginTop: hp(0.3),
+  },
+
+  /* ------------ Start Billing ------------ */
+  startBillingCard: {
+    marginHorizontal: wp(5),
+    marginTop: hp(2),
+    borderRadius: wp(3),
+    overflow: 'hidden',
+  },
+  startBillingGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: hp(1.8),
+    paddingHorizontal: wp(4),
+    borderRadius: wp(3),
+    borderWidth: 1,
+    borderColor: 'rgba(76, 175, 80, 0.3)',
+  },
+  startBillingIcon: {
+    width: wp(10),
+    height: wp(10),
+    tintColor: Colors.sooprsblue,
+    marginRight: wp(3),
+  },
+  startBillingTextWrap: {
+    flex: 1,
+  },
+  startBillingTitle: {
+    fontSize: FSize.fs16,
+    fontWeight: '700',
+    color: Colors.black,
+  },
+  startBillingSubtitle: {
+    fontSize: FSize.fs12,
+    color: Colors.gray,
     marginTop: hp(0.3),
   },
 

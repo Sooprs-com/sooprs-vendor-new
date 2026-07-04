@@ -214,6 +214,9 @@ manageDetailsIcone:require('./images/ManageDetails.png'),
   drawerPrivacy: require('./images/privacyPolicyIcone.png'),
   notificationIcon: require('./images/notification.png'),
   bankDetailsIcon: require('./images/bank.png'),
+  MultiStart:require('./images/star2.png'),
+  standardPlanIcon:require('./images/StanderdPaln.png'),
+  ElitePlanIcon:require('./images/ElitePlan.png'),
 };
 
 export default Images;
