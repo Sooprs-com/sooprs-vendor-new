@@ -15,6 +15,7 @@ import EditProfileScreen from '../Screen/Profile/EditProfileScreen';
 import RegistrationScreen from '../auth/RegistrationScreen';
 import CompleteProfileScreen from '../Screen/CompleteProfile/CompleteProfileScreen';
 import PackageDetailsScreen from '../Screen/Orders/PackageDetailsScreen';
+import VideoCallScreen from '../Screen/VideoCall/VideoCallScreen';
 import AddCredits from '../Screen/CreditScreen/AddCredits';
 import SubscriptionScreen from '../Screen/SubscriptionScreen/SubscriptionScreen';
 import WebView from '../Component/WebView';
@@ -110,6 +111,7 @@ const AuthenticationRouter = ({initialRoute}: {initialRoute?: string}) => {
            <Stack.Screen name="ChatbotSupport" component={ChatbotSupport} />
            <Stack.Screen name="WebView" component={WebView} />
            <Stack.Screen name="PackageDetailsScreen" component={PackageDetailsScreen} />
+           <Stack.Screen name="VideoCallScreen" component={VideoCallScreen} />
            <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
       <Stack.Screen name="VendorDrawer" component={VendorDrawer} />
       <Stack.Screen name="BottomTab" component={BottomTab} />

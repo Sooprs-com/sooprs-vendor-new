@@ -18,6 +18,20 @@ import store from './src/store/store';
 import {getDataFromAsyncStorage} from './src/services/CommonFunction';
 import {mobile_siteConfig} from './src/services/mobile-siteConfig';
 import {getDataWithToken} from './src/services/mobile-api';
+import {VendorCallProvider} from './src/context/VendorCallContext';
+import IncomingCallModal from './src/Component/IncomingCallModal';
+import {navigationRef} from './src/router/navigationRef';
+import {VendorCallBridge} from './src/router/VendorCallBridge';
+
+const isLoggedInValue = (value: string | null) =>
+  value === 'TRUE' || value === 'true' || value === '1';
+
+const sanitizeToken = (value: string | null) => {
+  if (!value) {
+    return null;
+  }
+  return value.replace(/^"+|"+$/g, '').trim();
+};
 
 // Inner App component that uses notification context
 const AppContent = () => {
@@ -31,10 +45,12 @@ const AppContent = () => {
       try {
         // Check if user is logged in
         const isLogin = await getDataFromAsyncStorage(mobile_siteConfig.IS_LOGIN);
-        const token = await getDataFromAsyncStorage(mobile_siteConfig.MOB_ACCESS_TOKEN_KEY);
+        const token = sanitizeToken(
+          await getDataFromAsyncStorage(mobile_siteConfig.MOB_ACCESS_TOKEN_KEY),
+        );
         
         // If user is logged in and has token, navigate to VendorDrawer
-        if (isLogin === 'TRUE' && token) {
+        if (isLoggedInValue(isLogin) && token) {
           setInitialRoute('VendorDrawer');
           
           // Initialize user details in Redux store
@@ -104,16 +120,16 @@ const AppContent = () => {
   }
 
   return (
-    <>
-      <NavigationContainer>
-        <GestureHandlerRootView>
+    <VendorCallProvider>
+      <NavigationContainer ref={navigationRef}>
+        <GestureHandlerRootView style={{flex: 1}}>
+          <VendorCallBridge />
           <AppRouter initialRouteName={initialRoute} />
-          {/* <HomeDrawer /> */}
         </GestureHandlerRootView>
       </NavigationContainer>
-      {/* <CustomNotificationAlert /> */}
+      <IncomingCallModal />
       <Toast />
-    </>
+    </VendorCallProvider>
   );
 };
 

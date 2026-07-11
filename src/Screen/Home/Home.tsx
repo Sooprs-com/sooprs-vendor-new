@@ -529,7 +529,6 @@ const Home = () => {
       )}
 
     </ScrollView>
-
         {/* Contact Details Modal */}
         <Modal
           visible={showContactModal}
@@ -539,8 +538,7 @@ const Home = () => {
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Contact Details</Text>
-              
+              <Text style={styles.modalTitle}>Contact Details</Text> 
               {selectedLead && (
                 <>
                   <View style={styles.modalInfoRow}>

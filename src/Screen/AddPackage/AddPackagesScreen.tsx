@@ -444,7 +444,7 @@ const AddPackagesScreen = ({route}: any) => {
       } else {
         console.log('Create mode - No package_id needed');
       }
-
+      
       // Add text fields
       formData.append('name', packageName.trim());
       formData.append('short_description', shortDescription.trim());

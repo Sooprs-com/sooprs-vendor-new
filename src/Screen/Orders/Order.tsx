@@ -18,6 +18,7 @@ import Images from '../../assets/image';
 import FSize from '../../assets/commonCSS/FSize';
 import { getDataWithToken } from '../../services/mobile-api';
 import { mobile_siteConfig } from '../../services/mobile-siteConfig';
+import { AGORA_CHANNEL_NAME } from '../VideoCall/agoraConfig';
 
 interface ApiOrder {
   order_id: number;
@@ -126,6 +127,14 @@ const Order = () => {
     return 0;
   };
 
+  const handleJoinVideoCall = () => {
+    (navigation as any).navigate('VideoCallScreen', {
+      role: 'vendor',
+      channelName: AGORA_CHANNEL_NAME,
+      uid: 2,
+    });
+  };
+
   const renderOrderCard = (order: ApiOrder) => {
     const discountAmount = calculateDiscount(order.package_price, order.coupon_price, order.final_pay_amount);
     const hasCoupon = order.coupon_code && order.coupon_code.trim() !== '';
@@ -187,6 +196,16 @@ const Order = () => {
 
         {/* Divider */}
         <View style={styles.divider} />
+
+        {order.order_status === 'CONFIRMED' && (
+          <TouchableOpacity
+            style={styles.videoCallButton}
+            activeOpacity={0.85}
+            onPress={handleJoinVideoCall}>
+            <Image source={Images.callIcon} style={styles.videoCallIcon} />
+            <Text style={styles.videoCallText}>Join Video Call</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Bottom Footer - Payment Order ID and View Details */}
         <View style={styles.footer}>
@@ -496,6 +515,26 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: Colors.lightgrey2,
     marginVertical: hp(1.5),
+  },
+  videoCallButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#059669',
+    borderRadius: wp(2.5),
+    paddingVertical: hp(1.2),
+    marginBottom: hp(1.5),
+  },
+  videoCallIcon: {
+    width: wp(4.5),
+    height: wp(4.5),
+    tintColor: Colors.white,
+    marginRight: wp(2),
+  },
+  videoCallText: {
+    fontSize: FSize.fs14,
+    fontWeight: '700',
+    color: Colors.white,
   },
   footer: {
     flexDirection: 'row',
