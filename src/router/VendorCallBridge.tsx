@@ -1,6 +1,10 @@
 import {useEffect, useRef} from 'react';
 import {useVendorCall} from '../context/VendorCallContext';
-import {navigationRef} from './navigationRef';
+import {
+  isOnVideoCallScreen,
+  leaveVideoCallScreen,
+  navigationRef,
+} from './navigationRef';
 
 export function VendorCallBridge() {
   const {activeCall} = useVendorCall();
@@ -12,10 +16,16 @@ export function VendorCallBridge() {
       return;
     }
 
-    if (wasInCall.current && navigationRef.isReady() && navigationRef.canGoBack()) {
-      navigationRef.goBack();
+    if (!wasInCall.current || !navigationRef.isReady()) {
+      wasInCall.current = false;
+      return;
     }
+
     wasInCall.current = false;
+
+    if (isOnVideoCallScreen()) {
+      leaveVideoCallScreen();
+    }
   }, [activeCall]);
 
   return null;

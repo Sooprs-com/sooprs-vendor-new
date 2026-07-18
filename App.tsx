@@ -11,7 +11,7 @@ import {useDispatch} from 'react-redux';
 // import { NotificationProvider, useNotification } from './src/contexts/NotificationContext';
 // import CustomNotificationAlert from './src/components/CustomNotificationAlert';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppState } from 'react-native';
+import {Platform} from 'react-native';
 import AppRouter from './src/router/AppRouter';
 import {Provider} from 'react-redux';
 import store from './src/store/store';
@@ -20,8 +20,11 @@ import {mobile_siteConfig} from './src/services/mobile-siteConfig';
 import {getDataWithToken} from './src/services/mobile-api';
 import {VendorCallProvider} from './src/context/VendorCallContext';
 import IncomingCallModal from './src/Component/IncomingCallModal';
-import {navigationRef} from './src/router/navigationRef';
+import {navigationRef, flushPendingVideoCallNavigation} from './src/router/navigationRef';
 import {VendorCallBridge} from './src/router/VendorCallBridge';
+import {isCallLaunchGuardActive} from './src/services/callLaunchGuard';
+import {loadPendingCallAction} from './src/services/pendingCallAction';
+import {requestNotificationPermission} from './src/services/notificationPermission';
 
 const isLoggedInValue = (value: string | null) =>
   value === 'TRUE' || value === 'true' || value === '1';
@@ -38,11 +41,25 @@ const AppContent = () => {
   const dispatch = useDispatch();
   const [isReady, setIsReady] = React.useState(false);
   const [initialRoute, setInitialRoute] = React.useState<string | undefined>(undefined);
+  const [skipSplash, setSkipSplash] = React.useState(false);
 
   // Initialize app and check login state
   useEffect(() => {
     const initializeApp = async () => {
       try {
+        await requestNotificationPermission();
+
+        const callLaunchActive = await isCallLaunchGuardActive();
+        const pendingCallAction = await loadPendingCallAction();
+        const isPendingAccept = pendingCallAction?.action === 'accept';
+        const isPendingReject = pendingCallAction?.action === 'reject';
+        const resumeIncomingCall =
+          callLaunchActive || isPendingAccept || isPendingReject;
+
+        if (resumeIncomingCall) {
+          setSkipSplash(true);
+        }
+
         // Check if user is logged in
         const isLogin = await getDataFromAsyncStorage(mobile_siteConfig.IS_LOGIN);
         const token = sanitizeToken(
@@ -51,29 +68,46 @@ const AppContent = () => {
         
         // If user is logged in and has token, navigate to VendorDrawer
         if (isLoggedInValue(isLogin) && token) {
-          setInitialRoute('VendorDrawer');
-          
-          // Initialize user details in Redux store
-          const email = await getDataFromAsyncStorage(mobile_siteConfig.EMAIL);
-          const slug = await getDataFromAsyncStorage(mobile_siteConfig.SLUG);
-          
-          try {
-            const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
-            const data: any = await res.json();
-            
-            if (data?.success && data?.vendorDetail) {
-              dispatch({
-                type: 'SET_USER_DETAILS',
-                payload: {
-                  email: data.vendorDetail.email || email || '',
-                  mobile: data.vendorDetail.mobile || '',
-                  name: data.vendorDetail.name || '',
-                  slug: data.vendorDetail.slug || slug || '',
-                  is_company: data.vendorDetail.is_company || '0',
-                },
-              });
-            } else {
-              // Fallback to AsyncStorage values
+          // Cold-start accept should not mount VendorDrawer/Reanimated first.
+          setInitialRoute(isPendingAccept ? 'VideoCallScreen' : 'VendorDrawer');
+
+          if (!resumeIncomingCall) {
+            // Initialize user details in Redux store
+            const email = await getDataFromAsyncStorage(mobile_siteConfig.EMAIL);
+            const slug = await getDataFromAsyncStorage(mobile_siteConfig.SLUG);
+
+            try {
+              const res: any = await getDataWithToken(
+                {},
+                mobile_siteConfig.GET_USER_DETAILS,
+              );
+              const data: any = await res.json();
+
+              if (data?.success && data?.vendorDetail) {
+                dispatch({
+                  type: 'SET_USER_DETAILS',
+                  payload: {
+                    email: data.vendorDetail.email || email || '',
+                    mobile: data.vendorDetail.mobile || '',
+                    name: data.vendorDetail.name || '',
+                    slug: data.vendorDetail.slug || slug || '',
+                    is_company: data.vendorDetail.is_company || '0',
+                  },
+                });
+              } else {
+                dispatch({
+                  type: 'SET_USER_DETAILS',
+                  payload: {
+                    email: email || '',
+                    mobile: '',
+                    name: '',
+                    slug: slug || '',
+                    is_company: '0',
+                  },
+                });
+              }
+            } catch (error) {
+              console.log('Error fetching user details from API:', error);
               dispatch({
                 type: 'SET_USER_DETAILS',
                 payload: {
@@ -85,22 +119,10 @@ const AppContent = () => {
                 },
               });
             }
-          } catch (error) {
-            console.log('Error fetching user details from API:', error);
-            // Fallback to AsyncStorage values
-            dispatch({
-              type: 'SET_USER_DETAILS',
-              payload: {
-                email: email || '',
-                mobile: '',
-                name: '',
-                slug: slug || '',
-                is_company: '0',
-              },
-            });
           }
+        } else if (callLaunchActive) {
+          setInitialRoute('VendorDrawer');
         } else {
-          // User not logged in, go to login screen
           setInitialRoute('EnterMobileNumber');
         }
       } catch (error) {
@@ -121,13 +143,17 @@ const AppContent = () => {
 
   return (
     <VendorCallProvider>
-      <NavigationContainer ref={navigationRef}>
+      <NavigationContainer
+        ref={navigationRef}
+        onReady={() => {
+          flushPendingVideoCallNavigation();
+        }}>
         <GestureHandlerRootView style={{flex: 1}}>
           <VendorCallBridge />
-          <AppRouter initialRouteName={initialRoute} />
+          <AppRouter initialRouteName={initialRoute} skipSplash={skipSplash} />
         </GestureHandlerRootView>
       </NavigationContainer>
-      <IncomingCallModal />
+      {Platform.OS !== 'android' ? <IncomingCallModal /> : null}
       <Toast />
     </VendorCallProvider>
   );

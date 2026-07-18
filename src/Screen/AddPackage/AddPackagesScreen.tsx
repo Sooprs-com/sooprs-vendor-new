@@ -10,6 +10,7 @@ import {
   Alert,
   Platform,
   PermissionsAndroid,
+  Switch,
 } from 'react-native';
 import React, {useState, useEffect} from 'react';
 import {useNavigation} from '@react-navigation/native';
@@ -21,6 +22,7 @@ import FSize from '../../assets/commonCSS/FSize';
 import Images from '../../assets/image';
 import { postDataWithToken, getDataWithToken, putDataWithTokenFormData } from '../../services/mobile-api';
 import { mobile_siteConfig } from '../../services/mobile-siteConfig';
+import {canEnablePackageAppointment} from '../../services/vendorAvailabilityApi';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AddPackagesScreen = ({route}: any) => {
@@ -75,6 +77,8 @@ const AddPackagesScreen = ({route}: any) => {
   const [discountPrice, setDiscountPrice] = useState('');
   const [chargesPerDay, setChargesPerDay] = useState('');
   const [categoryId, setCategoryId] = useState<string>('');
+  const [requiresAppointment, setRequiresAppointment] = useState(false);
+  const [showAppointmentField, setShowAppointmentField] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Images - Thumbnail (1 image) and Default (max 4 images)
@@ -89,6 +93,12 @@ const AddPackagesScreen = ({route}: any) => {
       console.log('Vendor profile data:::::', data);
       
       if (data?.success && data?.vendorDetail) {
+        const appointmentEnabled = canEnablePackageAppointment(data);
+        setShowAppointmentField(appointmentEnabled);
+        if (!appointmentEnabled) {
+          setRequiresAppointment(false);
+        }
+
         // Set category_id from vendor profile
         if (data.vendorDetail.category_id) {
           setCategoryId(String(data.vendorDetail.category_id));
@@ -178,6 +188,23 @@ const AddPackagesScreen = ({route}: any) => {
       // Set category ID
       if (editPackageData.category_id) {
         setCategoryId(String(editPackageData.category_id));
+      }
+
+      const requiresAppointmentValue =
+        editPackageData.requires_appointment ??
+        editPackageData.requiresAppointment;
+      if (
+        requiresAppointmentValue === 1 ||
+        requiresAppointmentValue === '1' ||
+        requiresAppointmentValue === true
+      ) {
+        setRequiresAppointment(true);
+      } else if (
+        requiresAppointmentValue === 0 ||
+        requiresAppointmentValue === '0' ||
+        requiresAppointmentValue === false
+      ) {
+        setRequiresAppointment(false);
       }
       
       // Set images - convert URLs to local URIs if needed
@@ -456,6 +483,10 @@ const AddPackagesScreen = ({route}: any) => {
       formData.append('location1', location1.trim());
       formData.append('location2', location2.trim() || '');
       formData.append('status', '1');
+      formData.append(
+        'requires_appointment',
+        showAppointmentField && requiresAppointment ? '1' : '0',
+      );
 
       // Add inclusions as JSON array string
       formData.append('included', JSON.stringify(inclusionsTags));
@@ -806,6 +837,26 @@ const AddPackagesScreen = ({route}: any) => {
           keyboardType="numeric"
         /> */}
 
+        {/* Appointment Available — only when consultation_config allows package appointments */}
+        {showAppointmentField && (
+          <View style={styles.toggleRow}>
+            <View style={styles.toggleInfo}>
+              <Text style={styles.toggleLabel}>Appointment Available</Text>
+              <Text style={styles.toggleSubLabel}>
+                {requiresAppointment
+                  ? 'Customers can book appointments for this package'
+                  : 'Appointments are not required for this package'}
+              </Text>
+            </View>
+            <Switch
+              value={requiresAppointment}
+              onValueChange={setRequiresAppointment}
+              trackColor={{false: '#E2E8F0', true: '#B3D9FF'}}
+              thumbColor={requiresAppointment ? Colors.sooprsblue : '#F8FAFC'}
+            />
+          </View>
+        )}
+
         {/* Upload Photos */}
         <Text style={styles.label}>
           Upload Photos<Text style={styles.required}>*</Text>
@@ -931,6 +982,34 @@ const styles = StyleSheet.create({
   },
   required: {
     color: 'red',
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '90%',
+    alignSelf: 'center',
+    marginTop: hp(2),
+    paddingVertical: hp(1.5),
+    paddingHorizontal: wp(3),
+    borderWidth: 1,
+    borderColor: '#A2A2A2',
+    borderRadius: wp(2),
+    backgroundColor: Colors.white,
+  },
+  toggleInfo: {
+    flex: 1,
+    marginRight: wp(3),
+  },
+  toggleLabel: {
+    fontSize: FSize.fs13,
+    fontWeight: '600',
+    color: Colors.black,
+  },
+  toggleSubLabel: {
+    fontSize: FSize.fs11,
+    color: Colors.grey,
+    marginTop: hp(0.5),
   },
   rowContainer: {
     flexDirection: 'row',

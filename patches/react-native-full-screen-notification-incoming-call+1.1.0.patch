@@ -1,0 +1,1394 @@
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/997a78ec0d24e309df36de3db45db504/results.bin b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/997a78ec0d24e309df36de3db45db504/results.bin
+new file mode 100644
+index 0000000..0d259dd
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/997a78ec0d24e309df36de3db45db504/results.bin
+@@ -0,0 +1 @@
++o/classes
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/997a78ec0d24e309df36de3db45db504/transformed/classes/classes_dex/classes.dex b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/997a78ec0d24e309df36de3db45db504/transformed/classes/classes_dex/classes.dex
+new file mode 100644
+index 0000000..9a120a3
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/997a78ec0d24e309df36de3db45db504/transformed/classes/classes_dex/classes.dex differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/results.bin b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/results.bin
+new file mode 100644
+index 0000000..7ed749e
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/results.bin
+@@ -0,0 +1 @@
++o/bundleLibRuntimeToDirDebug
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/BuildConfig.dex b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/BuildConfig.dex
+new file mode 100644
+index 0000000..b8972ae
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/BuildConfig.dex differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/CircleTransform.dex b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/CircleTransform.dex
+new file mode 100644
+index 0000000..f54eca4
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/CircleTransform.dex differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/Constants.dex b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/Constants.dex
+new file mode 100644
+index 0000000..3a50d1c
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/Constants.dex differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallModule$1.dex b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallModule$1.dex
+new file mode 100644
+index 0000000..4ceefc6
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallModule$1.dex differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallModule.dex b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallModule.dex
+new file mode 100644
+index 0000000..84bda51
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallModule.dex differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallPackage.dex b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallPackage.dex
+new file mode 100644
+index 0000000..2103ccf
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallPackage.dex differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/IncomingCallActivity.dex b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/IncomingCallActivity.dex
+new file mode 100644
+index 0000000..043c1c0
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/IncomingCallActivity.dex differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/IncomingCallService$1.dex b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/IncomingCallService$1.dex
+new file mode 100644
+index 0000000..cda1c5f
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/IncomingCallService$1.dex differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/IncomingCallService$2.dex b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/IncomingCallService$2.dex
+new file mode 100644
+index 0000000..4af3e33
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/IncomingCallService$2.dex differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/IncomingCallService$3.dex b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/IncomingCallService$3.dex
+new file mode 100644
+index 0000000..177a880
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/IncomingCallService$3.dex differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/IncomingCallService.dex b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/IncomingCallService.dex
+new file mode 100644
+index 0000000..06cf0df
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/IncomingCallService.dex differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/NotificationReceiverActivity.dex b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/NotificationReceiverActivity.dex
+new file mode 100644
+index 0000000..3ce8eb6
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/NotificationReceiverActivity.dex differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/NotificationReceiverHandler.dex b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/NotificationReceiverHandler.dex
+new file mode 100644
+index 0000000..e5158b2
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/reactnativefullscreennotificationincomingcall/NotificationReceiverHandler.dex differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/desugar_graph.bin b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/desugar_graph.bin
+new file mode 100644
+index 0000000..83484a5
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/.transforms/e0ed4ff6601690cf4a6d85e368581e42/transformed/bundleLibRuntimeToDirDebug/desugar_graph.bin differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/buildConfig/debug/com/reactnativefullscreennotificationincomingcall/BuildConfig.java b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/buildConfig/debug/com/reactnativefullscreennotificationincomingcall/BuildConfig.java
+new file mode 100644
+index 0000000..faa0f2e
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/buildConfig/debug/com/reactnativefullscreennotificationincomingcall/BuildConfig.java
+@@ -0,0 +1,10 @@
++/**
++ * Automatically generated file. DO NOT MODIFY
++ */
++package com.reactnativefullscreennotificationincomingcall;
++
++public final class BuildConfig {
++  public static final boolean DEBUG = Boolean.parseBoolean("true");
++  public static final String LIBRARY_PACKAGE_NAME = "com.reactnativefullscreennotificationincomingcall";
++  public static final String BUILD_TYPE = "debug";
++}
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/CMakeLists.txt b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/CMakeLists.txt
+new file mode 100644
+index 0000000..3fee09d
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/CMakeLists.txt
+@@ -0,0 +1,28 @@
++# Copyright (c) Meta Platforms, Inc. and affiliates.
++#
++# This source code is licensed under the MIT license found in the
++# LICENSE file in the root directory of this source tree.
++
++cmake_minimum_required(VERSION 3.13)
++set(CMAKE_VERBOSE_MAKEFILE on)
++
++file(GLOB react_codegen_SRCS CONFIGURE_DEPENDS *.cpp react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/*.cpp)
++
++add_library(
++  react_codegen_ReactNativeFullScreenNotificationIncomingCallSpec
++  OBJECT
++  ${react_codegen_SRCS}
++)
++
++target_include_directories(react_codegen_ReactNativeFullScreenNotificationIncomingCallSpec PUBLIC . react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec)
++
++target_link_libraries(
++  react_codegen_ReactNativeFullScreenNotificationIncomingCallSpec
++  fbjni
++  jsi
++  # We need to link different libraries based on whether we are building rncore or not, that's necessary
++  # because we want to break a circular dependency between react_codegen_rncore and reactnative
++  reactnative
++)
++
++target_compile_reactnative_options(react_codegen_ReactNativeFullScreenNotificationIncomingCallSpec PRIVATE)
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/ReactNativeFullScreenNotificationIncomingCallSpec-generated.cpp b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/ReactNativeFullScreenNotificationIncomingCallSpec-generated.cpp
+new file mode 100644
+index 0000000..4047b3c
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/ReactNativeFullScreenNotificationIncomingCallSpec-generated.cpp
+@@ -0,0 +1,22 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateModuleJniCpp.js
++ */
++
++#include "ReactNativeFullScreenNotificationIncomingCallSpec.h"
++
++namespace facebook::react {
++
++
++
++std::shared_ptr<TurboModule> ReactNativeFullScreenNotificationIncomingCallSpec_ModuleProvider(const std::string &moduleName, const JavaTurboModule::InitParams &params) {
++
++  return nullptr;
++}
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/ReactNativeFullScreenNotificationIncomingCallSpec.h b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/ReactNativeFullScreenNotificationIncomingCallSpec.h
+new file mode 100644
+index 0000000..6832d5e
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/ReactNativeFullScreenNotificationIncomingCallSpec.h
+@@ -0,0 +1,24 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateModuleJniH.js
++ */
++
++#pragma once
++
++#include <ReactCommon/JavaTurboModule.h>
++#include <ReactCommon/TurboModule.h>
++#include <jsi/jsi.h>
++
++namespace facebook::react {
++
++
++
++JSI_EXPORT
++std::shared_ptr<TurboModule> ReactNativeFullScreenNotificationIncomingCallSpec_ModuleProvider(const std::string &moduleName, const JavaTurboModule::InitParams &params);
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/ComponentDescriptors.cpp b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/ComponentDescriptors.cpp
+new file mode 100644
+index 0000000..cade45e
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/ComponentDescriptors.cpp
+@@ -0,0 +1,22 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateComponentDescriptorCpp.js
++ */
++
++#include <react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/ComponentDescriptors.h>
++#include <react/renderer/core/ConcreteComponentDescriptor.h>
++#include <react/renderer/componentregistry/ComponentDescriptorProviderRegistry.h>
++
++namespace facebook::react {
++
++void ReactNativeFullScreenNotificationIncomingCallSpec_registerComponentDescriptorsFromCodegen(
++  std::shared_ptr<const ComponentDescriptorProviderRegistry> registry) {
++
++}
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/ComponentDescriptors.h b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/ComponentDescriptors.h
+new file mode 100644
+index 0000000..a998958
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/ComponentDescriptors.h
+@@ -0,0 +1,24 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateComponentDescriptorH.js
++ */
++
++#pragma once
++
++#include <react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/ShadowNodes.h>
++#include <react/renderer/core/ConcreteComponentDescriptor.h>
++#include <react/renderer/componentregistry/ComponentDescriptorProviderRegistry.h>
++
++namespace facebook::react {
++
++
++
++void ReactNativeFullScreenNotificationIncomingCallSpec_registerComponentDescriptorsFromCodegen(
++  std::shared_ptr<const ComponentDescriptorProviderRegistry> registry);
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/EventEmitters.cpp b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/EventEmitters.cpp
+new file mode 100644
+index 0000000..a682388
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/EventEmitters.cpp
+@@ -0,0 +1,16 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateEventEmitterCpp.js
++ */
++
++#include <react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/EventEmitters.h>
++
++
++namespace facebook::react {
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/EventEmitters.h b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/EventEmitters.h
+new file mode 100644
+index 0000000..2845a63
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/EventEmitters.h
+@@ -0,0 +1,17 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateEventEmitterH.js
++ */
++#pragma once
++
++#include <react/renderer/components/view/ViewEventEmitter.h>
++
++
++namespace facebook::react {
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/Props.cpp b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/Props.cpp
+new file mode 100644
+index 0000000..fecce79
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/Props.cpp
+@@ -0,0 +1,19 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GeneratePropsCpp.js
++ */
++
++#include <react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/Props.h>
++#include <react/renderer/core/PropsParserContext.h>
++#include <react/renderer/core/propsConversions.h>
++
++namespace facebook::react {
++
++
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/Props.h b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/Props.h
+new file mode 100644
+index 0000000..870864b
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/Props.h
+@@ -0,0 +1,18 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GeneratePropsH.js
++ */
++#pragma once
++
++
++
++namespace facebook::react {
++
++
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/ReactNativeFullScreenNotificationIncomingCallSpecJSI-generated.cpp b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/ReactNativeFullScreenNotificationIncomingCallSpecJSI-generated.cpp
+new file mode 100644
+index 0000000..05e09a6
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/ReactNativeFullScreenNotificationIncomingCallSpecJSI-generated.cpp
+@@ -0,0 +1,17 @@
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateModuleCpp.js
++ */
++
++#include "ReactNativeFullScreenNotificationIncomingCallSpecJSI.h"
++
++namespace facebook::react {
++
++
++
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/ReactNativeFullScreenNotificationIncomingCallSpecJSI.h b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/ReactNativeFullScreenNotificationIncomingCallSpecJSI.h
+new file mode 100644
+index 0000000..ec16260
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/ReactNativeFullScreenNotificationIncomingCallSpecJSI.h
+@@ -0,0 +1,19 @@
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateModuleH.js
++ */
++
++#pragma once
++
++#include <ReactCommon/TurboModule.h>
++#include <react/bridging/Bridging.h>
++
++namespace facebook::react {
++
++
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/ShadowNodes.cpp b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/ShadowNodes.cpp
+new file mode 100644
+index 0000000..e99ef54
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/ShadowNodes.cpp
+@@ -0,0 +1,17 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateShadowNodeCpp.js
++ */
++
++#include <react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/ShadowNodes.h>
++
++namespace facebook::react {
++
++
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/ShadowNodes.h b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/ShadowNodes.h
+new file mode 100644
+index 0000000..aeb4ab3
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/ShadowNodes.h
+@@ -0,0 +1,23 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateShadowNodeH.js
++ */
++
++#pragma once
++
++#include <react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/EventEmitters.h>
++#include <react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/Props.h>
++#include <react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/States.h>
++#include <react/renderer/components/view/ConcreteViewShadowNode.h>
++#include <jsi/jsi.h>
++
++namespace facebook::react {
++
++
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/States.cpp b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/States.cpp
+new file mode 100644
+index 0000000..1412014
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/States.cpp
+@@ -0,0 +1,16 @@
++
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateStateCpp.js
++ */
++#include <react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/States.h>
++
++namespace facebook::react {
++
++
++
++} // namespace facebook::react
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/States.h b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/States.h
+new file mode 100644
+index 0000000..2e55bce
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/jni/react/renderer/components/ReactNativeFullScreenNotificationIncomingCallSpec/States.h
+@@ -0,0 +1,20 @@
++/**
++ * This code was generated by [react-native-codegen](https://www.npmjs.com/package/react-native-codegen).
++ *
++ * Do not edit this file as changes may cause incorrect behavior and will be lost
++ * once the code is regenerated.
++ *
++ * @generated by codegen project: GenerateStateH.js
++ */
++#pragma once
++
++#include <react/renderer/core/StateData.h>
++#ifdef RN_SERIALIZABLE_STATE
++#include <folly/dynamic.h>
++#endif
++
++namespace facebook::react {
++
++
++
++} // namespace facebook::react
+\ No newline at end of file
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/schema.json b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/schema.json
+new file mode 100644
+index 0000000..c845b54
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/source/codegen/schema.json
+@@ -0,0 +1 @@
++{"libraryName":"","modules":{}}
+\ No newline at end of file
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml
+new file mode 100644
+index 0000000..fe95140
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml
+@@ -0,0 +1,9 @@
++<?xml version="1.0" encoding="utf-8"?>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="com.reactnativefullscreennotificationincomingcall" >
++
++    <uses-sdk android:minSdkVersion="24" />
++
++    <uses-permission android:name="android.permission.BROADCAST_CLOSE_SYSTEM_DIALOGS" />
++
++</manifest>
+\ No newline at end of file
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json
+new file mode 100644
+index 0000000..90514e3
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json
+@@ -0,0 +1,18 @@
++{
++  "version": 3,
++  "artifactType": {
++    "type": "AAPT_FRIENDLY_MERGED_MANIFESTS",
++    "kind": "Directory"
++  },
++  "applicationId": "com.reactnativefullscreennotificationincomingcall",
++  "variantName": "debug",
++  "elements": [
++    {
++      "type": "SINGLE",
++      "filters": [],
++      "attributes": [],
++      "outputFile": "AndroidManifest.xml"
++    }
++  ],
++  "elementType": "File"
++}
+\ No newline at end of file
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties
+new file mode 100644
+index 0000000..1211b1e
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties
+@@ -0,0 +1,6 @@
++aarFormatVersion=1.0
++aarMetadataVersion=1.0
++minCompileSdk=1
++minCompileSdkExtension=0
++minAndroidGradlePluginVersion=1.0.0
++coreLibraryDesugaringEnabled=false
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json
+new file mode 100644
+index 0000000..9e26dfe
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json
+@@ -0,0 +1 @@
++{}
+\ No newline at end of file
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/assets/debug/mergeDebugAssets/phone-decline.json b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/assets/debug/mergeDebugAssets/phone-decline.json
+new file mode 100644
+index 0000000..913c3e1
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/assets/debug/mergeDebugAssets/phone-decline.json
+@@ -0,0 +1 @@
++{"v":"5.6.6","ip":0,"op":1,"fr":60,"w":62,"h":63,"layers":[{"ind":815,"nm":"surface2468","ao":0,"ip":0,"op":60,"st":0,"ty":4,"ks":{"ty":"tr","o":{"k":100},"r":{"k":0},"p":{"k":[0,0]},"a":{"k":[0,0]},"s":{"k":[133.33,133.33]},"sk":{"k":0},"sa":{"k":0}},"shapes":[{"ty":"gr","hd":false,"nm":"surface2468","it":[{"ty":"gr","hd":false,"it":[{"ty":"sh","ks":{"k":{"i":[[0,0],[-1.05,0.53],[-0.03,0.56],[0,0],[-2.5,-0.84],[0,0],[-0.53,-0.27],[-0.84,-0.84],[-0.61,0.61],[0,0],[0.61,0.61],[4.75,0],[3.36,-3.36],[-0.61,-0.61],[0,0],[-0.61,0.61]],"o":[[0.83,-0.84],[0.5,-0.26],[0,0],[2.5,-0.84],[0,0],[0,0.59],[1.05,0.53],[0.61,0.61],[0,0],[0.61,-0.61],[-3.37,-3.36],[-4.75,0],[-0.61,0.61],[0,0],[0.61,0.61],[0,0]],"v":[[15.5,28.57],[18.35,26.51],[19.21,25.18],[19.59,22.46],[27.29,22.46],[27.67,25.11],[28.52,26.51],[31.38,28.58],[33.59,28.58],[36.12,26.05],[36.12,23.84],[23.44,18.59],[10.76,23.84],[10.76,26.05],[13.29,28.57],[15.5,28.57]],"c":true}}},{"ty":"fl","o":{"k":100},"c":{"k":[1,1,1,1]}},{"ty":"tr","o":{"k":100},"r":{"k":0},"p":{"k":[0,0]},"a":{"k":[0,0]},"s":{"k":[100,100]},"sk":{"k":0},"sa":{"k":0},"hd":false}]},{"ty":"gr","hd":false,"it":[{"ty":"sh","ks":{"k":{"i":[[0,0],[12.84,0],[0,13.05],[-12.84,0],[0,-13.05]],"o":[[0,13.05],[-12.84,0],[0,-13.05],[12.84,0],[0,0]],"v":[[46.5,23.62],[23.25,47.25],[0,23.62],[23.25,0],[46.5,23.62]],"c":false}}},{"ty":"fl","o":{"k":100},"c":{"k":[1,0.12,0.27,1]}},{"ty":"tr","o":{"k":100},"r":{"k":0},"p":{"k":[0,0]},"a":{"k":[0,0]},"s":{"k":[100,100]},"sk":{"k":0},"sa":{"k":0},"hd":false}]},{"ty":"tr","o":{"k":100},"r":{"k":0},"p":{"k":[0,0]},"a":{"k":[0,0]},"s":{"k":[100,100]},"sk":{"k":0},"sa":{"k":0},"hd":false}]}]}],"meta":{"g":"LF SVG to Lottie"}}
+\ No newline at end of file
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/assets/debug/mergeDebugAssets/phone-ring.json b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/assets/debug/mergeDebugAssets/phone-ring.json
+new file mode 100644
+index 0000000..6bb928f
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/assets/debug/mergeDebugAssets/phone-ring.json
+@@ -0,0 +1 @@
++{"v":"5.6.3","fr":30,"ip":0,"op":59,"w":150,"h":150,"nm":"call green","ddd":0,"assets":[],"layers":[{"ddd":0,"ind":1,"ty":4,"nm":"phone","sr":1,"ks":{"o":{"a":0,"k":100,"ix":11},"r":{"a":1,"k":[{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":5,"s":[-4]},{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":8.879,"s":[-8]},{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":12.759,"s":[4]},{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":16.638,"s":[-8]},{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":20.517,"s":[4]},{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":24.397,"s":[-8]},{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":28.275,"s":[4]},{"t":32,"s":[-4]}],"ix":10},"p":{"a":0,"k":[75,75,0],"ix":2},"a":{"a":0,"k":[0,0,0],"ix":1},"s":{"a":0,"k":[94,94,100],"ix":6}},"ao":0,"shapes":[{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":0,"k":{"i":[[7.165,-13.804],[-7.226,-11.159],[0,0],[-11.625,8],[3.439,0.824],[4.25,-0.25],[0.254,2.542],[-0.606,3.985]],"o":[[-1.79,3.974],[4.902,8.3],[0,0],[10.511,-6.31],[-5.375,0.937],[-4.25,0.25],[1.625,-4.5],[0.298,-3.341]],"v":[[-23.013,-21.156],[-20.109,0.263],[-4.762,18.424],[20.625,21.75],[14.75,5.5],[6,10.125],[-9.5,-6.875],[-5.114,-15.082]],"c":true},"ix":2},"nm":"路径 1","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"fl","c":{"a":0,"k":[1,1,1,1],"ix":4},"o":{"a":0,"k":100,"ix":5},"r":1,"bm":0,"nm":"填充 1","mn":"ADBE Vector Graphic - Fill","hd":false},{"ty":"tr","p":{"a":0,"k":[0,0],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"变换"}],"nm":"形状 1","np":3,"cix":2,"bm":0,"ix":1,"mn":"ADBE Vector Group","hd":false}],"ip":0,"op":59,"st":0,"bm":0},{"ddd":0,"ind":2,"ty":4,"nm":"circle","sr":1,"ks":{"o":{"a":0,"k":100,"ix":11},"r":{"a":0,"k":0,"ix":10},"p":{"a":0,"k":[75,75,0],"ix":2},"a":{"a":0,"k":[0,0,0],"ix":1},"s":{"a":1,"k":[{"i":{"x":[0.667,0.667,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":3,"s":[62.2,62.2,100]},{"i":{"x":[0.667,0.667,0.667],"y":[1,1,1]},"o":{"x":[0.333,0.333,0.333],"y":[0,0,0]},"t":29,"s":[70.2,70.2,100]},{"t":55,"s":[62.2,62.2,100]}],"ix":6}},"ao":0,"shapes":[{"ty":"gr","it":[{"d":1,"ty":"el","s":{"a":0,"k":[150,150],"ix":2},"p":{"a":0,"k":[0,0],"ix":3},"nm":"Ellipse Path 1","mn":"ADBE Vector Shape - Ellipse","hd":false},{"ty":"fl","c":{"a":0,"k":[0.0392156862745098,0.6784313725490196,0.7137254901960784,1],"ix":4},"o":{"a":0,"k":100,"ix":5},"r":1,"bm":0,"nm":"填充 1","mn":"ADBE Vector Graphic - Fill","hd":false},{"ty":"tr","p":{"a":0,"k":[0,0],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"变换"}],"nm":"Ellipse 1","np":2,"cix":2,"bm":0,"ix":1,"mn":"ADBE Vector Group","hd":false}],"ip":0,"op":59,"st":0,"bm":0},{"ddd":0,"ind":3,"ty":4,"nm":"circle 4","sr":1,"ks":{"o":{"a":1,"k":[{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":5,"s":[25]},{"t":29,"s":[0]}],"ix":11},"r":{"a":0,"k":0,"ix":10},"p":{"a":0,"k":[75,75,0],"ix":2},"a":{"a":0,"k":[0,0,0],"ix":1},"s":{"a":1,"k":[{"i":{"x":[0.314,0.314,0.667],"y":[1,1,1]},"o":{"x":[0.167,0.167,0.167],"y":[0.167,0.167,0]},"t":3,"s":[62.2,62.2,100]},{"t":29,"s":[100,100,100]}],"ix":6}},"ao":0,"shapes":[{"ty":"gr","it":[{"d":1,"ty":"el","s":{"a":0,"k":[150,150],"ix":2},"p":{"a":0,"k":[0,0],"ix":3},"nm":"Ellipse Path 1","mn":"ADBE Vector Shape - Ellipse","hd":false},{"ty":"tr","p":{"a":0,"k":[0,0],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"变换"}],"nm":"Ellipse 1","np":1,"cix":2,"bm":0,"ix":1,"mn":"ADBE Vector Group","hd":false},{"ty":"fl","c":{"a":0,"k":[0.11764705882352941,0.8156862745098039,0.8549019607843137,1],"ix":4},"o":{"a":0,"k":100,"ix":5},"r":1,"bm":0,"nm":"Fill 1","mn":"ADBE Vector Graphic - Fill","hd":false}],"ip":0,"op":59,"st":0,"bm":0},{"ddd":0,"ind":4,"ty":4,"nm":"circle 5","sr":1,"ks":{"o":{"a":1,"k":[{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":10,"s":[25]},{"t":34,"s":[0]}],"ix":11},"r":{"a":0,"k":0,"ix":10},"p":{"a":0,"k":[75,75,0],"ix":2},"a":{"a":0,"k":[0,0,0],"ix":1},"s":{"a":1,"k":[{"i":{"x":[0.314,0.314,0.667],"y":[1,1,1]},"o":{"x":[0.167,0.167,0.167],"y":[0.167,0.167,0]},"t":8,"s":[62.2,62.2,100]},{"t":34,"s":[100,100,100]}],"ix":6}},"ao":0,"shapes":[{"ty":"gr","it":[{"d":1,"ty":"el","s":{"a":0,"k":[150,150],"ix":2},"p":{"a":0,"k":[0,0],"ix":3},"nm":"Ellipse Path 1","mn":"ADBE Vector Shape - Ellipse","hd":false},{"ty":"tr","p":{"a":0,"k":[0,0],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"变换"}],"nm":"Ellipse 1","np":1,"cix":2,"bm":0,"ix":1,"mn":"ADBE Vector Group","hd":false},{"ty":"fl","c":{"a":0,"k":[0.26666666666666666,0.8980392156862745,0.9333333333333333,1],"ix":4},"o":{"a":0,"k":100,"ix":5},"r":1,"bm":0,"nm":"Fill 1","mn":"ADBE Vector Graphic - Fill","hd":false}],"ip":5,"op":64,"st":5,"bm":0},{"ddd":0,"ind":5,"ty":4,"nm":"circle 3","sr":1,"ks":{"o":{"a":1,"k":[{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":15,"s":[25]},{"t":39,"s":[0]}],"ix":11},"r":{"a":0,"k":0,"ix":10},"p":{"a":0,"k":[75,75,0],"ix":2},"a":{"a":0,"k":[0,0,0],"ix":1},"s":{"a":1,"k":[{"i":{"x":[0.314,0.314,0.667],"y":[1,1,1]},"o":{"x":[0.167,0.167,0.167],"y":[0.167,0.167,0]},"t":13,"s":[62.2,62.2,100]},{"t":39,"s":[100,100,100]}],"ix":6}},"ao":0,"shapes":[{"ty":"gr","it":[{"d":1,"ty":"el","s":{"a":0,"k":[150,150],"ix":2},"p":{"a":0,"k":[0,0],"ix":3},"nm":"Ellipse Path 1","mn":"ADBE Vector Shape - Ellipse","hd":false},{"ty":"tr","p":{"a":0,"k":[0,0],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"变换"}],"nm":"Ellipse 1","np":1,"cix":2,"bm":0,"ix":1,"mn":"ADBE Vector Group","hd":false},{"ty":"fl","c":{"a":0,"k":[0.5568627450980392,0.9764705882352941,1,1],"ix":4},"o":{"a":0,"k":100,"ix":5},"r":1,"bm":0,"nm":"Fill 1","mn":"ADBE Vector Graphic - Fill","hd":false}],"ip":10,"op":69,"st":10,"bm":0}],"markers":[]}
+\ No newline at end of file
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar
+new file mode 100644
+index 0000000..cb4cb36
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar
+new file mode 100644
+index 0000000..87506c0
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compile_symbol_list/debug/generateDebugRFile/R.txt b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compile_symbol_list/debug/generateDebugRFile/R.txt
+new file mode 100644
+index 0000000..61b8a4c
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compile_symbol_list/debug/generateDebugRFile/R.txt
+@@ -0,0 +1,25 @@
++int color background 0x0
++int color colorAccent 0x0
++int color notification_action_accept 0x0
++int color notification_action_decline 0x0
++int color primary_dark 0x0
++int drawable ic_answer 0x0
++int drawable ic_avatar_default 0x0
++int drawable ic_decline 0x0
++int drawable ic_launcher_background 0x0
++int drawable ic_launcher_foreground 0x0
++int drawable splash_screen_background 0x0
++int id ivAcceptCall 0x0
++int id ivAvatar 0x0
++int id ivDeclineCall 0x0
++int id lnAcceptCall 0x0
++int id lnDeclineCall 0x0
++int id reactNativeFragment 0x0
++int id tvAccept 0x0
++int id tvDecline 0x0
++int id tvInfo 0x0
++int id tvName 0x0
++int layout activity_call_incoming 0x0
++int layout custom_ingcoming_call_rn 0x0
++int string accept 0x0
++int string decline 0x0
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable-v24_ic_launcher_foreground.xml.flat b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable-v24_ic_launcher_foreground.xml.flat
+new file mode 100644
+index 0000000..03e7a52
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable-v24_ic_launcher_foreground.xml.flat differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_answer.png.flat b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_answer.png.flat
+new file mode 100644
+index 0000000..5fe7f9b
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_answer.png.flat differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_avatar_default.png.flat b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_avatar_default.png.flat
+new file mode 100644
+index 0000000..61294ae
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_avatar_default.png.flat differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_decline.png.flat b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_decline.png.flat
+new file mode 100644
+index 0000000..4774b24
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_decline.png.flat differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_launcher_background.xml.flat b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_launcher_background.xml.flat
+new file mode 100644
+index 0000000..714b420
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_launcher_background.xml.flat differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_splash_screen_background.png.flat b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_splash_screen_background.png.flat
+new file mode 100644
+index 0000000..33a1948
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_splash_screen_background.png.flat differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/layout_activity_call_incoming.xml.flat b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/layout_activity_call_incoming.xml.flat
+new file mode 100644
+index 0000000..e0a0fe9
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/layout_activity_call_incoming.xml.flat differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/layout_custom_ingcoming_call_rn.xml.flat b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/layout_custom_ingcoming_call_rn.xml.flat
+new file mode 100644
+index 0000000..50c6709
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/layout_custom_ingcoming_call_rn.xml.flat differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
+new file mode 100644
+index 0000000..9fea5f8
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
+@@ -0,0 +1,9 @@
++#Sat Jul 11 18:22:17 IST 2026
++com.reactnativefullscreennotificationincomingcall.react-native-full-screen-notification-incoming-call-main-6\:/drawable/splash_screen_background.png=/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/drawable/splash_screen_background.png
++com.reactnativefullscreennotificationincomingcall.react-native-full-screen-notification-incoming-call-main-6\:/drawable/ic_answer.png=/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/drawable/ic_answer.png
++com.reactnativefullscreennotificationincomingcall.react-native-full-screen-notification-incoming-call-main-6\:/drawable/ic_launcher_background.xml=/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/drawable/ic_launcher_background.xml
++com.reactnativefullscreennotificationincomingcall.react-native-full-screen-notification-incoming-call-main-6\:/layout/custom_ingcoming_call_rn.xml=/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/layout/custom_ingcoming_call_rn.xml
++com.reactnativefullscreennotificationincomingcall.react-native-full-screen-notification-incoming-call-main-6\:/drawable/ic_decline.png=/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/drawable/ic_decline.png
++com.reactnativefullscreennotificationincomingcall.react-native-full-screen-notification-incoming-call-main-6\:/drawable-v24/ic_launcher_foreground.xml=/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/drawable-v24/ic_launcher_foreground.xml
++com.reactnativefullscreennotificationincomingcall.react-native-full-screen-notification-incoming-call-main-6\:/drawable/ic_avatar_default.png=/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/drawable/ic_avatar_default.png
++com.reactnativefullscreennotificationincomingcall.react-native-full-screen-notification-incoming-call-main-6\:/layout/activity_call_incoming.xml=/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/layout/activity_call_incoming.xml
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/incremental/debug/packageDebugResources/merged.dir/values/values.xml b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/incremental/debug/packageDebugResources/merged.dir/values/values.xml
+new file mode 100644
+index 0000000..62a9e7f
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/incremental/debug/packageDebugResources/merged.dir/values/values.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <color name="background">#141C2E</color>
++    <color name="colorAccent">#55237C</color>
++    <color name="notification_action_accept">#12B76A</color>
++    <color name="notification_action_decline">#FF2525</color>
++    <color name="primary_dark">#000000</color>
++    <string name="accept">Answer</string>
++    <string name="decline">Decline</string>
++</resources>
+\ No newline at end of file
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
+new file mode 100644
+index 0000000..2b57a0a
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main" generated-set="main$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/res"><file name="ic_launcher_foreground" path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/res/drawable-v24/ic_launcher_foreground.xml" qualifiers="v24" type="drawable"/><file name="ic_answer" path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/res/drawable/ic_answer.png" qualifiers="" type="drawable"/><file name="ic_avatar_default" path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/res/drawable/ic_avatar_default.png" qualifiers="" type="drawable"/><file name="splash_screen_background" path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/res/drawable/splash_screen_background.png" qualifiers="" type="drawable"/><file name="ic_decline" path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/res/drawable/ic_decline.png" qualifiers="" type="drawable"/><file name="ic_launcher_background" path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/res/drawable/ic_launcher_background.xml" qualifiers="" type="drawable"/><file name="custom_ingcoming_call_rn" path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/res/layout/custom_ingcoming_call_rn.xml" qualifiers="" type="layout"/><file name="activity_call_incoming" path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/res/layout/activity_call_incoming.xml" qualifiers="" type="layout"/><file path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/res/values/colors.xml" qualifiers=""><color name="primary_dark">#000000</color><color name="colorAccent">#55237C</color><color name="background">#141C2E</color><color name="notification_action_accept">#12B76A</color><color name="notification_action_decline">#FF2525</color></file><file path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/res/values/strings.xml" qualifiers=""><string name="accept">Answer</string><string name="decline">Decline</string></file></source></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/debug/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug" generated-set="debug$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/debug/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/res/resValues/debug"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated" generated-set="generated$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/build/generated/res/resValues/debug"/></dataSet><mergedItems/></merger>
+\ No newline at end of file
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/incremental/mergeDebugAssets/merger.xml b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/incremental/mergeDebugAssets/merger.xml
+new file mode 100644
+index 0000000..44b25c8
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/incremental/mergeDebugAssets/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/assets"><file name="phone-ring.json" path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/assets/phone-ring.json"/><file name="phone-decline.json" path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/assets/phone-decline.json"/></source></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/debug/assets"/></dataSet><dataSet config="generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/shader_assets/debug/compileDebugShaders/out"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml
+new file mode 100644
+index 0000000..74d3ca6
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/jniLibs"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/debug/jniLibs"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/incremental/mergeDebugShaders/merger.xml b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/incremental/mergeDebugShaders/merger.xml
+new file mode 100644
+index 0000000..67f84e0
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/incremental/mergeDebugShaders/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/shaders"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/debug/shaders"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/BuildConfig.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/BuildConfig.class
+new file mode 100644
+index 0000000..3544398
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/BuildConfig.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/CircleTransform.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/CircleTransform.class
+new file mode 100644
+index 0000000..9020294
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/CircleTransform.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/Constants.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/Constants.class
+new file mode 100644
+index 0000000..c73e94a
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/Constants.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallModule$1.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallModule$1.class
+new file mode 100644
+index 0000000..617647e
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallModule$1.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallModule.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallModule.class
+new file mode 100644
+index 0000000..3c29289
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallModule.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallPackage.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallPackage.class
+new file mode 100644
+index 0000000..6214ca6
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallPackage.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/IncomingCallActivity.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/IncomingCallActivity.class
+new file mode 100644
+index 0000000..c661d7a
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/IncomingCallActivity.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/IncomingCallService$1.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/IncomingCallService$1.class
+new file mode 100644
+index 0000000..4d8a3df
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/IncomingCallService$1.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/IncomingCallService$2.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/IncomingCallService$2.class
+new file mode 100644
+index 0000000..b99c6b7
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/IncomingCallService$2.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/IncomingCallService$3.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/IncomingCallService$3.class
+new file mode 100644
+index 0000000..26a586b
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/IncomingCallService$3.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/IncomingCallService.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/IncomingCallService.class
+new file mode 100644
+index 0000000..14b70dc
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/IncomingCallService.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/NotificationReceiverActivity.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/NotificationReceiverActivity.class
+new file mode 100644
+index 0000000..d119ee6
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/NotificationReceiverActivity.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/NotificationReceiverHandler.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/NotificationReceiverHandler.class
+new file mode 100644
+index 0000000..d506bdc
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/reactnativefullscreennotificationincomingcall/NotificationReceiverHandler.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt
+new file mode 100644
+index 0000000..e42789c
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt
+@@ -0,0 +1,27 @@
++R_DEF: Internal format may change without notice
++local
++color background
++color colorAccent
++color notification_action_accept
++color notification_action_decline
++color primary_dark
++drawable ic_answer
++drawable ic_avatar_default
++drawable ic_decline
++drawable ic_launcher_background
++drawable ic_launcher_foreground
++drawable splash_screen_background
++id ivAcceptCall
++id ivAvatar
++id ivDeclineCall
++id lnAcceptCall
++id lnDeclineCall
++id reactNativeFragment
++id tvAccept
++id tvDecline
++id tvInfo
++id tvName
++layout activity_call_incoming
++layout custom_ingcoming_call_rn
++string accept
++string decline
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt
+new file mode 100644
+index 0000000..c36f49d
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt
+@@ -0,0 +1,11 @@
++1<?xml version="1.0" encoding="utf-8"?>
++2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++3    package="com.reactnativefullscreennotificationincomingcall" >
++4
++5    <uses-sdk android:minSdkVersion="24" />
++6
++7    <uses-permission android:name="android.permission.BROADCAST_CLOSE_SYSTEM_DIALOGS" />
++7-->/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/AndroidManifestNew.xml:3:5-89
++7-->/Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/AndroidManifestNew.xml:3:22-86
++8
++9</manifest>
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml
+new file mode 100644
+index 0000000..fe95140
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml
+@@ -0,0 +1,9 @@
++<?xml version="1.0" encoding="utf-8"?>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="com.reactnativefullscreennotificationincomingcall" >
++
++    <uses-sdk android:minSdkVersion="24" />
++
++    <uses-permission android:name="android.permission.BROADCAST_CLOSE_SYSTEM_DIALOGS" />
++
++</manifest>
+\ No newline at end of file
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json
+new file mode 100644
+index 0000000..0637a08
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json
+@@ -0,0 +1 @@
++[]
+\ No newline at end of file
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt
+new file mode 100644
+index 0000000..08f4ebe
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt
+@@ -0,0 +1 @@
++0 Warning/Error
+\ No newline at end of file
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/drawable-v24/ic_launcher_foreground.xml b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/drawable-v24/ic_launcher_foreground.xml
+new file mode 100644
+index 0000000..da1dcd9
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/drawable-v24/ic_launcher_foreground.xml
+@@ -0,0 +1,31 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:aapt="http://schemas.android.com/aapt"
++    android:width="108dp"
++    android:height="108dp"
++    android:viewportWidth="108"
++    android:viewportHeight="108">
++    <path
++        android:pathData="M31,63.928c0,0 6.4,-11 12.1,-13.1c7.2,-2.6 26,-1.4 26,-1.4l38.1,38.1L107,108.928l-32,-1L31,63.928z">
++        <aapt:attr name="android:fillColor">
++            <gradient
++                android:startY="49.59793"
++                android:startX="42.9492"
++                android:endY="92.4963"
++                android:endX="85.84757"
++                android:type="linear">
++                <item
++                    android:color="#44000000"
++                    android:offset="0.0" />
++                <item
++                    android:color="#00000000"
++                    android:offset="1.0" />
++            </gradient>
++        </aapt:attr>
++    </path>
++    <path
++        android:pathData="M65.3,45.828l3.8,-6.6c0.2,-0.4 0.1,-0.9 -0.3,-1.1c-0.4,-0.2 -0.9,-0.1 -1.1,0.3l-3.9,6.7c-6.3,-2.8 -13.4,-2.8 -19.7,0l-3.9,-6.7c-0.2,-0.4 -0.7,-0.5 -1.1,-0.3C38.8,38.328 38.7,38.828 38.9,39.228l3.8,6.6C36.2,49.428 31.7,56.028 31,63.928h46C76.3,56.028 71.8,49.428 65.3,45.828zM43.4,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2c-0.3,-0.7 -0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C45.3,56.528 44.5,57.328 43.4,57.328L43.4,57.328zM64.6,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2s-0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C66.5,56.528 65.6,57.328 64.6,57.328L64.6,57.328z"
++        android:fillColor="#FFFFFF"
++        android:fillType="nonZero"
++        android:strokeWidth="1"
++        android:strokeColor="#00000000"/>
++</vector>
+\ No newline at end of file
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/drawable/ic_answer.png b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/drawable/ic_answer.png
+new file mode 100644
+index 0000000..aad6a61
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/drawable/ic_answer.png differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/drawable/ic_avatar_default.png b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/drawable/ic_avatar_default.png
+new file mode 100644
+index 0000000..d77ce73
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/drawable/ic_avatar_default.png differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/drawable/ic_decline.png b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/drawable/ic_decline.png
+new file mode 100644
+index 0000000..950f9f7
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/drawable/ic_decline.png differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/drawable/ic_launcher_background.xml b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/drawable/ic_launcher_background.xml
+new file mode 100644
+index 0000000..ca3826a
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/drawable/ic_launcher_background.xml
+@@ -0,0 +1,74 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector
++    android:height="108dp"
++    android:width="108dp"
++    android:viewportHeight="108"
++    android:viewportWidth="108"
++    xmlns:android="http://schemas.android.com/apk/res/android">
++    <path android:fillColor="#3DDC84"
++          android:pathData="M0,0h108v108h-108z"/>
++    <path android:fillColor="#00000000" android:pathData="M9,0L9,108"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M19,0L19,108"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M29,0L29,108"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M39,0L39,108"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M49,0L49,108"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M59,0L59,108"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M69,0L69,108"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M79,0L79,108"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M89,0L89,108"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M99,0L99,108"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M0,9L108,9"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M0,19L108,19"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M0,29L108,29"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M0,39L108,39"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M0,49L108,49"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M0,59L108,59"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M0,69L108,69"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M0,79L108,79"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M0,89L108,89"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M0,99L108,99"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M19,29L89,29"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M19,39L89,39"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M19,49L89,49"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M19,59L89,59"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M19,69L89,69"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M19,79L89,79"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M29,19L29,89"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M39,19L39,89"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M49,19L49,89"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M59,19L59,89"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M69,19L69,89"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++    <path android:fillColor="#00000000" android:pathData="M79,19L79,89"
++          android:strokeColor="#33FFFFFF" android:strokeWidth="0.8"/>
++</vector>
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/drawable/splash_screen_background.png b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/drawable/splash_screen_background.png
+new file mode 100644
+index 0000000..889454e
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/drawable/splash_screen_background.png differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/layout/activity_call_incoming.xml b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/layout/activity_call_incoming.xml
+new file mode 100644
+index 0000000..e75c341
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/layout/activity_call_incoming.xml
+@@ -0,0 +1,143 @@
++<?xml version="1.0" encoding="utf-8"?>
++<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
++  xmlns:app="http://schemas.android.com/apk/res-auto"
++  android:background="@drawable/splash_screen_background"
++  android:layout_width="fill_parent"
++  android:layout_height="fill_parent"
++  android:orientation="vertical">
++
++  <LinearLayout
++    android:layout_width="wrap_content"
++    android:layout_height="wrap_content"
++    android:orientation="vertical"
++    android:layout_centerHorizontal="true"
++    android:layout_marginTop="100dp"
++    android:layout_marginStart="20dp"
++    android:layout_marginEnd="20dp"
++    android:gravity="center_horizontal"
++    >
++
++    <RelativeLayout
++      android:layout_width="170dp"
++      android:layout_height="170dp"
++      >
++      <ImageView
++        android:id="@+id/ivAvatar"
++        android:layout_width="130dp"
++        android:layout_height="130dp"
++        android:scaleType="fitXY"
++        android:layout_marginTop="20dp"
++        android:src="@drawable/ic_avatar_default"
++        android:layout_centerVertical="true"
++        android:layout_centerHorizontal="true"
++        />
++    </RelativeLayout>
++
++    <TextView
++      android:id="@+id/tvName"
++      android:layout_width="wrap_content"
++      android:layout_height="wrap_content"
++      android:layout_marginTop="20dp"
++      android:textSize="22sp"
++      android:fontFamily="sans-serif"
++      android:textColor="#FFFFFF"
++      />
++
++    <TextView
++      android:id="@+id/tvInfo"
++      android:layout_width="wrap_content"
++      android:layout_height="wrap_content"
++      android:layout_marginTop="10dp"
++      android:textSize="14sp"
++      android:fontFamily="sans-serif"
++      android:textColor="#ADADAD"
++      />
++
++  </LinearLayout>
++
++  <LinearLayout
++    android:layout_width="wrap_content"
++    android:layout_height="wrap_content"
++    android:orientation="horizontal"
++    android:layout_alignParentBottom="true"
++    android:layout_centerHorizontal="true"
++    android:layout_marginBottom="60dp"
++    >
++
++    <LinearLayout
++      android:layout_width="wrap_content"
++      android:layout_height="wrap_content"
++      android:orientation="vertical"
++      android:layout_centerHorizontal="true"
++      android:layout_centerVertical="true"
++      android:layout_marginBottom="60dp"
++      android:layout_marginEnd="140dp"
++      >
++      <LinearLayout
++        android:id="@+id/lnDeclineCall"
++        android:layout_width="80dp"
++        android:layout_height="80dp"
++        android:orientation="vertical"
++        android:layout_gravity="center"
++        android:gravity="center"
++        >
++        <com.airbnb.lottie.LottieAnimationView
++          android:id="@+id/ivDeclineCall"
++          android:layout_width="55dp"
++          android:layout_height="55dp"
++          app:lottie_fileName="phone-decline.json"
++          app:lottie_loop="true"
++          app:lottie_autoPlay="true" />
++      </LinearLayout>
++      <TextView
++        android:id="@+id/tvDecline"
++        android:layout_width="match_parent"
++        android:layout_height="match_parent"
++        android:layout_marginTop="10dp"
++        android:textSize="14sp"
++        android:fontFamily="sans-serif"
++        android:textColor="#ADADAD"
++        android:text="@string/call_notification_decline_action"
++        android:gravity="center"
++        />
++    </LinearLayout>
++
++    <LinearLayout
++      android:layout_width="wrap_content"
++      android:layout_height="wrap_content"
++      android:orientation="vertical"
++      android:layout_centerHorizontal="true"
++      android:layout_centerVertical="true"
++      android:layout_marginBottom="60dp"
++      >
++      <LinearLayout
++        android:id="@+id/lnAcceptCall"
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:orientation="vertical"
++        android:layout_gravity="center"
++        android:gravity="center"
++        >
++      <com.airbnb.lottie.LottieAnimationView
++        android:id="@+id/ivAcceptCall"
++        android:layout_width="80dp"
++        android:layout_height="80dp"
++        app:lottie_fileName="phone-ring.json"
++        app:lottie_loop="true"
++        app:lottie_autoPlay="true" />
++      </LinearLayout>
++      <TextView
++        android:id="@+id/tvAccept"
++        android:layout_width="match_parent"
++        android:layout_height="match_parent"
++        android:layout_marginTop="10dp"
++        android:textSize="14sp"
++        android:fontFamily="sans-serif"
++        android:textColor="#ADADAD"
++        android:text="@string/call_notification_answer_action"
++        android:gravity="center"
++        />
++    </LinearLayout>
++
++  </LinearLayout>
++</RelativeLayout>
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/layout/custom_ingcoming_call_rn.xml b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/layout/custom_ingcoming_call_rn.xml
+new file mode 100644
+index 0000000..ac3363a
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/layout/custom_ingcoming_call_rn.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
++  android:id="@+id/reactNativeFragment"
++  android:layout_width="match_parent"
++  android:layout_height="match_parent">
++
++</FrameLayout>
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/values/values.xml b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/values/values.xml
+new file mode 100644
+index 0000000..62a9e7f
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/packaged_res/debug/packageDebugResources/values/values.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <color name="background">#141C2E</color>
++    <color name="colorAccent">#55237C</color>
++    <color name="notification_action_accept">#12B76A</color>
++    <color name="notification_action_decline">#FF2525</color>
++    <color name="primary_dark">#000000</color>
++    <string name="accept">Answer</string>
++    <string name="decline">Decline</string>
++</resources>
+\ No newline at end of file
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/BuildConfig.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/BuildConfig.class
+new file mode 100644
+index 0000000..3544398
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/BuildConfig.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/CircleTransform.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/CircleTransform.class
+new file mode 100644
+index 0000000..9020294
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/CircleTransform.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/Constants.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/Constants.class
+new file mode 100644
+index 0000000..c73e94a
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/Constants.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallModule$1.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallModule$1.class
+new file mode 100644
+index 0000000..617647e
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallModule$1.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallModule.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallModule.class
+new file mode 100644
+index 0000000..3c29289
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallModule.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallPackage.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallPackage.class
+new file mode 100644
+index 0000000..6214ca6
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallPackage.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/IncomingCallActivity.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/IncomingCallActivity.class
+new file mode 100644
+index 0000000..c661d7a
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/IncomingCallActivity.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/IncomingCallService$1.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/IncomingCallService$1.class
+new file mode 100644
+index 0000000..4d8a3df
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/IncomingCallService$1.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/IncomingCallService$2.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/IncomingCallService$2.class
+new file mode 100644
+index 0000000..b99c6b7
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/IncomingCallService$2.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/IncomingCallService$3.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/IncomingCallService$3.class
+new file mode 100644
+index 0000000..26a586b
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/IncomingCallService$3.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/IncomingCallService.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/IncomingCallService.class
+new file mode 100644
+index 0000000..14b70dc
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/IncomingCallService.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/NotificationReceiverActivity.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/NotificationReceiverActivity.class
+new file mode 100644
+index 0000000..d119ee6
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/NotificationReceiverActivity.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/NotificationReceiverHandler.class b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/NotificationReceiverHandler.class
+new file mode 100644
+index 0000000..d506bdc
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/reactnativefullscreennotificationincomingcall/NotificationReceiverHandler.class differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar
+new file mode 100644
+index 0000000..fb1b2e4
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt
+new file mode 100644
+index 0000000..2b4aa25
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt
+@@ -0,0 +1,26 @@
++com.reactnativefullscreennotificationincomingcall
++color background
++color colorAccent
++color notification_action_accept
++color notification_action_decline
++color primary_dark
++drawable ic_answer
++drawable ic_avatar_default
++drawable ic_decline
++drawable ic_launcher_background
++drawable ic_launcher_foreground
++drawable splash_screen_background
++id ivAcceptCall
++id ivAvatar
++id ivDeclineCall
++id lnAcceptCall
++id lnDeclineCall
++id reactNativeFragment
++id tvAccept
++id tvDecline
++id tvInfo
++id tvName
++layout activity_call_incoming
++layout custom_ingcoming_call_rn
++string accept
++string decline
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/outputs/logs/manifest-merger-debug-report.txt b/node_modules/react-native-full-screen-notification-incoming-call/android/build/outputs/logs/manifest-merger-debug-report.txt
+new file mode 100644
+index 0000000..2a81c30
+--- /dev/null
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/build/outputs/logs/manifest-merger-debug-report.txt
+@@ -0,0 +1,20 @@
++-- Merging decision tree log ---
++manifest
++ADDED from /Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/AndroidManifestNew.xml:1:1-4:12
++INJECTED from /Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/AndroidManifestNew.xml:1:1-4:12
++	package
++		INJECTED from /Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/AndroidManifestNew.xml
++	xmlns:android
++		ADDED from /Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/AndroidManifestNew.xml:1:11-69
++uses-permission#android.permission.BROADCAST_CLOSE_SYSTEM_DIALOGS
++ADDED from /Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/AndroidManifestNew.xml:3:5-89
++	android:name
++		ADDED from /Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/AndroidManifestNew.xml:3:22-86
++uses-sdk
++INJECTED from /Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/AndroidManifestNew.xml reason: use-sdk injection requested
++INJECTED from /Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/AndroidManifestNew.xml
++INJECTED from /Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/AndroidManifestNew.xml
++	android:targetSdkVersion
++		INJECTED from /Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/AndroidManifestNew.xml
++	android:minSdkVersion
++		INJECTED from /Users/vgisooprstechnologypvtltd/Downloads/Sooprs_Vendor/sooprsVendor/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/AndroidManifestNew.xml
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin b/node_modules/react-native-full-screen-notification-incoming-call/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin
+new file mode 100644
+index 0000000..9b45dbf
+Binary files /dev/null and b/node_modules/react-native-full-screen-notification-incoming-call/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin differ
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/java/com/reactnativefullscreennotificationincomingcall/Constants.java b/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/java/com/reactnativefullscreennotificationincomingcall/Constants.java
+index ef216a4..fd0d930 100644
+--- a/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/java/com/reactnativefullscreennotificationincomingcall/Constants.java
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/java/com/reactnativefullscreennotificationincomingcall/Constants.java
+@@ -15,5 +15,12 @@ public class Constants {
+   public static final String RNNotificationEndCallAction="RNNotificationEndCallAction";
+   public static final String onPressNotification="onPressNotification";
+ 
++  public static final String ACTION_INCOMING_CALL_ANSWERED =
++    "com.sooprsvendor.action.INCOMING_CALL_ANSWERED";
++  public static final String ACTION_INCOMING_CALL_DECLINED =
++    "com.sooprsvendor.action.INCOMING_CALL_DECLINED";
++  public static final String ACTION_STOP_INCOMING_RINGTONE =
++    "com.sooprsvendor.action.STOP_INCOMING_RINGTONE";
++  
+ 
+ }
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/java/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallModule.java b/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/java/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallModule.java
+index 7f6e7af..d071c42 100644
+--- a/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/java/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallModule.java
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/java/com/reactnativefullscreennotificationincomingcall/FullScreenNotificationIncomingCallModule.java
+@@ -89,6 +89,9 @@ public class FullScreenNotificationIncomingCallModule extends ReactContextBaseJa
+   }
+ 
+   public static void sendEventToJs(String eventName, @Nullable WritableMap params) {
++    if (reactContext == null || !reactContext.hasActiveReactInstance()) {
++      return;
++    }
+     reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(eventName, params);
+   }
+ 
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/java/com/reactnativefullscreennotificationincomingcall/IncomingCallActivity.java b/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/java/com/reactnativefullscreennotificationincomingcall/IncomingCallActivity.java
+index 3395f00..531bbda 100644
+--- a/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/java/com/reactnativefullscreennotificationincomingcall/IncomingCallActivity.java
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/java/com/reactnativefullscreennotificationincomingcall/IncomingCallActivity.java
+@@ -93,10 +93,20 @@ public class IncomingCallActivity extends AppCompatActivity implements DefaultHa
+     if (bundle.containsKey("mainComponent") && bundle.getString("mainComponent") != null) {
+       String mainComponent = bundle.getString("mainComponent");
+       setContentView(R.layout.custom_ingcoming_call_rn);
+-      Fragment reactNativeFragment = new ReactFragment.Builder()
+-        .setComponentName(mainComponent)
+-        .setLaunchOptions(bundle)
+-        .build();
++      ReactFragment.Builder builder = new ReactFragment.Builder();
++      try {
++        // RN 0.82 exposes both Kotlin property setters and fluent setters with
++        // these Java signatures. Reflection avoids javac's ambiguous call.
++        builder.getClass()
++          .getMethod("setComponentName", String.class)
++          .invoke(builder, mainComponent);
++        builder.getClass()
++          .getMethod("setLaunchOptions", Bundle.class)
++          .invoke(builder, bundle);
++      } catch (ReflectiveOperationException exception) {
++        throw new RuntimeException("Unable to configure ReactFragment", exception);
++      }
++      Fragment reactNativeFragment = builder.build();
+ 
+       getSupportFragmentManager()
+         .beginTransaction()
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/java/com/reactnativefullscreennotificationincomingcall/IncomingCallService.java b/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/java/com/reactnativefullscreennotificationincomingcall/IncomingCallService.java
+index 502fe36..427dad9 100644
+--- a/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/java/com/reactnativefullscreennotificationincomingcall/IncomingCallService.java
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/java/com/reactnativefullscreennotificationincomingcall/IncomingCallService.java
+@@ -340,6 +340,7 @@ public class IncomingCallService extends Service {
+         params.putString("callUUID", uuid);
+         params.putString("endAction", Constants.ACTION_HIDE_CALL);
+         FullScreenNotificationIncomingCallModule.sendEventToJs(Constants.RNNotificationEndCallAction, params);
++        sendAppBroadcast(Constants.ACTION_STOP_INCOMING_RINGTONE, bundleData);
+         cancelTimer();
+         stopForeground(true);
+       }
+@@ -372,6 +373,15 @@ public class IncomingCallService extends Service {
+     return desiredColor;
+   }
+ 
++  private void sendAppBroadcast(String action, Bundle bundle) {
++    Intent intent = new Intent(action);
++    intent.setPackage(getPackageName());
++    if (bundle != null) {
++      intent.putExtras(bundle);
++    }
++    sendBroadcast(intent);
++  }
++
+   private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+     @Override
+     public void onReceive(Context context, Intent intent) {
+@@ -392,6 +402,7 @@ public class IncomingCallService extends Service {
+           params.putString("callUUID", uuid);
+           params.putString("endAction", Constants.ACTION_REJECTED_CALL);
+           FullScreenNotificationIncomingCallModule.sendEventToJs(Constants.RNNotificationEndCallAction, params);
++          sendAppBroadcast(Constants.ACTION_INCOMING_CALL_DECLINED, bundleData);
+           stopForeground(true);
+         }
+       }
+diff --git a/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/java/com/reactnativefullscreennotificationincomingcall/NotificationReceiverHandler.java b/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/java/com/reactnativefullscreennotificationincomingcall/NotificationReceiverHandler.java
+index beb50db..8b3ca06 100644
+--- a/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/java/com/reactnativefullscreennotificationincomingcall/NotificationReceiverHandler.java
++++ b/node_modules/react-native-full-screen-notification-incoming-call/android/src/main/java/com/reactnativefullscreennotificationincomingcall/NotificationReceiverHandler.java
+@@ -72,6 +72,7 @@ public class NotificationReceiverHandler {
+     }
+     params.putBoolean("accept", true);
+     params.putString("callUUID", uuid);
++    sendAppBroadcast(context, Constants.ACTION_INCOMING_CALL_ANSWERED, bundle);
+     FullScreenNotificationIncomingCallModule.sendEventToJs(eventName, params);
+     context.stopService(new Intent(context, IncomingCallService.class));
+   }
+@@ -87,4 +88,13 @@ public class NotificationReceiverHandler {
+     newIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+     context.startActivity(newIntent);
+   }
++
++  private static void sendAppBroadcast(Context context, String action, Bundle bundle) {
++    Intent intent = new Intent(action);
++    intent.setPackage(context.getPackageName());
++    if (bundle != null) {
++      intent.putExtras(bundle);
++    }
++    context.sendBroadcast(intent);
++  }
+ }

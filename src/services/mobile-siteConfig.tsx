@@ -35,7 +35,10 @@ export const mobile_siteConfig = {
   GET_CONTACT_LIST:"get-contact-list",
    GET_ALL_ORDERS:"user/vendor/all-orders",
   GET_ORDER_DETAILS:"user/vendor/orders-detail-by-order_id/",
-  SHOW_LEAD_MOBILE:"show-lead-mobile"
+  SHOW_LEAD_MOBILE:"show-lead-mobile",
+
+  VENDOR_AVAILABILITY: 'user/health-consultation/vendor/availability',
+  VENDOR_BLOCKED_DATES: 'user/health-consultation/vendor/blocked-dates',
 
 };
 

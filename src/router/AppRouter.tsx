@@ -12,6 +12,7 @@ import AddPackagesScreen from '../Screen/AddPackage/AddPackagesScreen';
 import CabRideReviewScreen from '../Screen/CabDetails/CabRideDetailsScreen';
 import ProfileScreen from '../Screen/Profile/ProfileScreen';
 import EditProfileScreen from '../Screen/Profile/EditProfileScreen';
+import AvailableSlotsScreen from '../Screen/Profile/AvailableSlotsScreen';
 import RegistrationScreen from '../auth/RegistrationScreen';
 import CompleteProfileScreen from '../Screen/CompleteProfile/CompleteProfileScreen';
 import PackageDetailsScreen from '../Screen/Orders/PackageDetailsScreen';
@@ -105,6 +106,7 @@ const AuthenticationRouter = ({initialRoute}: {initialRoute?: string}) => {
            <Stack.Screen name="CompleteProfileScreen" component={CompleteProfileScreen} />
            <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
            <Stack.Screen name="EditProfileScreen" component={EditProfileScreen} />
+           <Stack.Screen name="AvailableSlotsScreen" component={AvailableSlotsScreen} />
            <Stack.Screen name="AddCredits" component={AddCredits} />
            <Stack.Screen name="SubscriptionScreen" component={SubscriptionScreen} />
            <Stack.Screen name="ChatSupportHome" component={ChatSupportHome} />
@@ -217,11 +219,17 @@ const AuthenticationRouter = ({initialRoute}: {initialRoute?: string}) => {
 // };
 
 
-const AppRouter = ({initialRouteName}: {initialRouteName?: string}) => {
+const AppRouter = ({
+  initialRouteName,
+  skipSplash = false,
+}: {
+  initialRouteName?: string;
+  skipSplash?: boolean;
+}) => {
   return (
     <Stack.Navigator 
       screenOptions={{headerShown: false}}
-      initialRouteName="SplashScreen">
+      initialRouteName={skipSplash ? 'Authentication' : 'SplashScreen'}>
       <Stack.Screen name="SplashScreen" component={SplashScreen} />
       <Stack.Screen name="Authentication">
         {(props) => <AuthenticationRouter {...props} initialRoute={initialRouteName} />}

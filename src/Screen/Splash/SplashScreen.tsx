@@ -14,6 +14,7 @@ import Colors from '../../assets/commonCSS/Colors';
 import {getDataFromAsyncStorage} from '../../services/CommonFunction';
 import {mobile_siteConfig} from '../../services/mobile-siteConfig';
 import {getDataWithToken} from '../../services/mobile-api';
+import {isCallLaunchGuardActive} from '../../services/callLaunchGuard';
 import FSize from '../../assets/commonCSS/FSize';
 
 interface SplashScreenProps {
@@ -25,6 +26,12 @@ const SplashScreen: React.FC<SplashScreenProps> = ({navigation}) => {
 
   const checkLoginStatus = useCallback(async () => {
     try {
+      const callLaunchActive = await isCallLaunchGuardActive();
+      if (callLaunchActive) {
+        // Accept-call flow navigates from VendorCallContext — skip drawer/splash delay.
+        return;
+      }
+
       const isLogin = await getDataFromAsyncStorage(mobile_siteConfig.IS_LOGIN);
       const token = await getDataFromAsyncStorage(mobile_siteConfig.MOB_ACCESS_TOKEN_KEY);
       
@@ -89,12 +96,29 @@ const SplashScreen: React.FC<SplashScreenProps> = ({navigation}) => {
   }, [dispatch, navigation]);
 
   useEffect(() => {
-    // Navigate after 2-3 seconds
-    const timer = setTimeout(() => {
-      checkLoginStatus();
-    }, 2500);
+    let cancelled = false;
 
-    return () => clearTimeout(timer);
+    const navigate = async () => {
+      const callLaunchActive = await isCallLaunchGuardActive();
+      if (cancelled) {
+        return;
+      }
+      if (callLaunchActive) {
+        checkLoginStatus();
+        return;
+      }
+      setTimeout(() => {
+        if (!cancelled) {
+          checkLoginStatus();
+        }
+      }, 2500);
+    };
+
+    navigate();
+
+    return () => {
+      cancelled = true;
+    };
   }, [checkLoginStatus]);
 
   return (

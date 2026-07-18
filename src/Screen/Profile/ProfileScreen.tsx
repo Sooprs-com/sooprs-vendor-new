@@ -329,6 +329,14 @@ const ProfileScreen = () => {
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionHeader}>Your Information</Text>
           {renderSectionItem(
+            Images.CalenderIcon,
+            'Available Slots',
+            'View and manage your consultation availability.',
+            () => (navigation as any).navigate('AvailableSlotsScreen'),
+            undefined,
+            false,
+          )}
+          {renderSectionItem(
             Images.creditIcon,
             'Credit',
             'Check your available credits and usage details.',

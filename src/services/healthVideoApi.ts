@@ -27,6 +27,12 @@ export const healthVideoApi = {
 
   listAppointments: (token: string) => request('/appointments', token),
 
+  startCall: (token: string, appointmentId: number) =>
+    request('/call/start', token, {
+      method: 'POST',
+      body: JSON.stringify({appointmentId}),
+    }),
+
   acceptCall: (token: string, appointmentId: number) =>
     request('/call/accept', token, {
       method: 'POST',

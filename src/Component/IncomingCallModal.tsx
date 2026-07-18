@@ -11,7 +11,6 @@ import {
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Toast from 'react-native-toast-message';
 import {useVendorCall} from '../context/VendorCallContext';
-import {navigateToVideoCall} from '../router/navigationRef';
 import {stopIncomingRingtone} from '../services/incomingRingtone';
 import Colors from '../assets/commonCSS/Colors';
 import FSize from '../assets/commonCSS/FSize';
@@ -31,16 +30,7 @@ export default function IncomingCallModal() {
     Vibration.cancel();
     stopIncomingRingtone();
     try {
-      const agoraData = await acceptCall();
-      if (agoraData) {
-        navigateToVideoCall({
-          channelName: agoraData.channelName,
-          token: agoraData.token,
-          appId: agoraData.appId,
-          uid: agoraData.uid,
-          appointmentId: agoraData.appointmentId,
-        });
-      }
+      await acceptCall();
     } catch (error: any) {
       Toast.show({
         type: 'error',

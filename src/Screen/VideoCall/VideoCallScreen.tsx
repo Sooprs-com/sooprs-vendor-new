@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {useRoute} from '@react-navigation/native';
 import {
   createAgoraRtcEngine,
   ChannelProfileType,
@@ -33,6 +33,7 @@ import {
   AGORA_TOKEN,
 } from './agoraConfig';
 import {useVendorCall} from '../../context/VendorCallContext';
+import {leaveVideoCallScreen} from '../../router/navigationRef';
 
 type VideoCallRouteParams = {
   role?: 'user' | 'vendor';
@@ -41,6 +42,7 @@ type VideoCallRouteParams = {
   appId?: string;
   uid?: number;
   appointmentId?: number;
+  callKey?: string;
 };
 
 const getPermission = async () => {
@@ -53,7 +55,6 @@ const getPermission = async () => {
 };
 
 const VideoCallScreen = () => {
-  const navigation = useNavigation();
   const route = useRoute();
   const params = (route.params || {}) as VideoCallRouteParams;
   const {endCall} = useVendorCall();
@@ -63,6 +64,12 @@ const VideoCallScreen = () => {
   const agoraToken = params.token ?? AGORA_TOKEN;
   const agoraAppId = params.appId ?? AGORA_APP_ID;
   const uid = params.uid ?? 2;
+  const hasRemoteCallCredentials = Boolean(
+    params.channelName && params.token && params.appId && params.uid != null,
+  );
+  const callKey =
+    params.callKey ??
+    `${params.appointmentId ?? channelName}-${String(agoraToken || '').slice(0, 8)}`;
 
   const isVendor = role === 'vendor';
   const roleLabel = isVendor ? 'Vendor (Doctor)' : 'User (Patient)';
@@ -157,6 +164,12 @@ const VideoCallScreen = () => {
   }, []);
 
   useEffect(() => {
+    if (!hasRemoteCallCredentials) {
+      setStatusMessage('Preparing call…');
+      setIsInitializing(true);
+      return;
+    }
+
     const init = async () => {
       await setupVideoSDKEngine();
       setupEventHandler();
@@ -166,7 +179,16 @@ const VideoCallScreen = () => {
     return () => {
       cleanupAgoraEngine();
     };
-  }, [cleanupAgoraEngine, joinChannel, setupEventHandler, setupVideoSDKEngine]);
+  },
+  
+   [
+    callKey,
+    cleanupAgoraEngine,
+    hasRemoteCallCredentials,
+    joinChannel,
+    setupEventHandler,
+    setupVideoSDKEngine,
+  ]);
 
   const handleEndCall = async () => {
     cleanupAgoraEngine();
@@ -175,7 +197,7 @@ const VideoCallScreen = () => {
     } catch (e) {
       console.warn('endCall API failed:', e);
     }
-    navigation.goBack();
+    leaveVideoCallScreen();
   };
 
   const toggleMute = () => {
