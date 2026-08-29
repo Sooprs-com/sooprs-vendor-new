@@ -6,6 +6,8 @@ import BottomTab from './BottomTab';
 import BillingBottomTab from './BillingBottomTab';
 import DrawerMenuScreen from '../Component/DrawerMenuScreen';
 import ProfileScreen from '../Screen/Profile/ProfileScreen';
+import GSTCalculatorInfoScreen from '../Screen/Profile/GSTCalculatorInfoScreen';
+import GSTCalculatorScreen from '../Screen/Profile/GSTCalculatorScreen';
 import AddCredits from '../Screen/CreditScreen/AddCredits';
 import SubscriptionScreen from '../Screen/SubscriptionScreen/SubscriptionScreen';
 import ChatSupportHome from '../Screen/Support/ChatSupportHome';
@@ -34,6 +36,8 @@ const VendorStackNavigator = () => {
       <VendorStack.Screen name="BottomTab" component={BottomTab} />
       <VendorStack.Screen name="BillingBottomTab" component={BillingBottomTab} />
       <VendorStack.Screen name="ProfileScreen" component={ProfileScreen} />
+      <VendorStack.Screen name="GSTCalculatorInfoScreen" component={GSTCalculatorInfoScreen} />
+      <VendorStack.Screen name="GSTCalculatorScreen" component={GSTCalculatorScreen} />
       <VendorStack.Screen name="PackagesScreen" component={Project} />
       <VendorStack.Screen name="BookingsScreen" component={Order} />
       <VendorStack.Screen name="AddCredits" component={AddCredits} />

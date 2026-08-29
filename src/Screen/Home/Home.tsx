@@ -424,7 +424,7 @@ const Home = () => {
 
 
       {/* ================= START BILLING ================= */}
-      <TouchableOpacity
+      {/* <TouchableOpacity
         activeOpacity={0.8}
         style={styles.startBillingCard}
         onPress={() => {
@@ -444,7 +444,7 @@ const Home = () => {
             </Text>
           </View>
         </LinearGradient>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       {/* ================= ADD PACKAGE LISTING ================= */}
       <TouchableOpacity style={styles.addListingBtn}

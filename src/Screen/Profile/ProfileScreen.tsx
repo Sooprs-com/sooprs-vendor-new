@@ -353,6 +353,14 @@ const ProfileScreen = () => {
             false,
           )}
           {renderSectionItem(
+            Images.projectsIcon,
+            'GST Calculator',
+            'Calculate Indian GST instantly for your services.',
+            () => (navigation as any).navigate('GSTCalculatorInfoScreen'),
+            undefined,
+            false,
+          )}
+          {renderSectionItem(
             Images.support1,
             'Support',
             'Get help from our support team anytime.',

@@ -18,7 +18,7 @@ import Images from '../../assets/image';
 import FSize from '../../assets/commonCSS/FSize';
 import { getDataWithToken } from '../../services/mobile-api';
 import { mobile_siteConfig } from '../../services/mobile-siteConfig';
-import { AGORA_CHANNEL_NAME } from '../VideoCall/agoraConfig';
+// import { AGORA_CHANNEL_NAME } from '../VideoCall/agoraConfig';
 
 interface ApiOrder {
   order_id: number;
@@ -127,13 +127,13 @@ const Order = () => {
     return 0;
   };
 
-  const handleJoinVideoCall = () => {
-    (navigation as any).navigate('VideoCallScreen', {
-      role: 'vendor',
-      channelName: AGORA_CHANNEL_NAME,
-      uid: 2,
-    });
-  };
+  // const handleJoinVideoCall = () => {
+  //   (navigation as any).navigate('VideoCallScreen', {
+  //     role: 'vendor',
+  //     channelName: AGORA_CHANNEL_NAME,
+  //     uid: 2,
+  //   });
+  // };
 
   const renderOrderCard = (order: ApiOrder) => {
     const discountAmount = calculateDiscount(order.package_price, order.coupon_price, order.final_pay_amount);
@@ -197,7 +197,7 @@ const Order = () => {
         {/* Divider */}
         <View style={styles.divider} />
 
-        {order.order_status === 'CONFIRMED' && (
+        {/* {order.order_status === 'CONFIRMED' && (
           <TouchableOpacity
             style={styles.videoCallButton}
             activeOpacity={0.85}
@@ -205,7 +205,7 @@ const Order = () => {
             <Image source={Images.callIcon} style={styles.videoCallIcon} />
             <Text style={styles.videoCallText}>Join Video Call</Text>
           </TouchableOpacity>
-        )}
+        )} */}
 
         {/* Bottom Footer - Payment Order ID and View Details */}
         <View style={styles.footer}>

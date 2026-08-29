@@ -85,6 +85,7 @@ const VideoCallScreen = () => {
   const [isCameraOff, setIsCameraOff] = useState(false);
   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [isSwapped, setIsSwapped] = useState(false);
 
   const joinChannel = useCallback(async () => {
     try {
@@ -121,6 +122,7 @@ const VideoCallScreen = () => {
       onUserOffline: (_connection: RtcConnection, remoteUserUid: number) => {
         setStatusMessage(`${remoteLabel} left`);
         setRemoteUid(prev => (prev === remoteUserUid ? 0 : prev));
+        setIsSwapped(false);
       },
       onError: (err: number) => {
         console.error('Agora error:', err);
@@ -222,24 +224,41 @@ const VideoCallScreen = () => {
     agoraEngineRef.current?.switchCamera();
   };
 
-  return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
+  const canSwap = isJoined && remoteUid !== 0;
 
-      <View style={styles.remoteVideo}>
-        {isJoined && remoteUid !== 0 ? (
-          <RtcSurfaceView
-            style={styles.remoteRtcView}
-            canvas={{
-              uid: remoteUid,
-              renderMode: RenderModeType.RenderModeHidden,
-            }}
-          />
+  const toggleSwap = () => {
+    // Only allow swapping when there is actually a remote user connected,
+    // otherwise there is nothing meaningful to swap into full screen.
+    if (canSwap) {
+      setIsSwapped(prev => !prev);
+    }
+  };
+
+  const renderRemoteContent = (isOverlay: boolean) => {
+    if (isJoined && remoteUid !== 0) {
+      return (
+        <RtcSurfaceView
+          key={`remote-${isOverlay ? 'small' : 'big'}`}
+          style={styles.fillVideo}
+          zOrderMediaOverlay={Platform.OS === 'android' && isOverlay}
+          canvas={{
+            uid: remoteUid,
+            renderMode: RenderModeType.RenderModeHidden,
+          }}
+        />
+      );
+    }
+    return (
+      <>
+        <View style={isOverlay ? styles.localAvatar : styles.avatarPlaceholder}>
+          <Text style={isOverlay ? styles.localEmoji : styles.avatarEmoji}>
+            {isVendor ? '👤' : '🩺'}
+          </Text>
+        </View>
+        {isOverlay ? (
+          <Text style={styles.localLabel}>{remoteLabel}</Text>
         ) : (
           <>
-            <View style={styles.avatarPlaceholder}>
-              <Text style={styles.avatarEmoji}>{isVendor ? '👤' : '🩺'}</Text>
-            </View>
             <Text style={styles.remoteName}>{remoteLabel}</Text>
             <Text style={styles.waitingText}>
               {isInitializing
@@ -250,6 +269,45 @@ const VideoCallScreen = () => {
             </Text>
           </>
         )}
+      </>
+    );
+  };
+
+  const renderLocalContent = (isOverlay: boolean) => {
+    if (isJoined && !isCameraOff) {
+      return (
+        <RtcSurfaceView
+          key={`local-${isOverlay ? 'small' : 'big'}`}
+          style={styles.fillVideo}
+          zOrderMediaOverlay={Platform.OS === 'android' && isOverlay}
+          canvas={{
+            uid: 0,
+            sourceType: VideoSourceType.VideoSourceCamera,
+            renderMode: RenderModeType.RenderModeHidden,
+          }}
+        />
+      );
+    }
+    return (
+      <>
+        <View style={isOverlay ? styles.localAvatar : styles.avatarPlaceholder}>
+          <Text style={isOverlay ? styles.localEmoji : styles.avatarEmoji}>
+            {isVendor ? '🩺' : '👤'}
+          </Text>
+        </View>
+        <Text style={isOverlay ? styles.localLabel : styles.remoteName}>
+          {isCameraOff ? 'Camera off' : 'You'}
+        </Text>
+      </>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
+
+      <View style={styles.remoteVideo}>
+        {isSwapped ? renderLocalContent(false) : renderRemoteContent(false)}
         {isInitializing && (
           <View style={styles.loadingOverlay}>
             <ActivityIndicator size="large" color={Colors.white} />
@@ -265,28 +323,21 @@ const VideoCallScreen = () => {
         <Text style={styles.channelText}>Channel: {channelName}</Text>
       </View>
 
-      <View style={styles.localVideo}>
-        {isJoined && !isCameraOff ? (
-          <RtcSurfaceView
-            style={styles.localRtcView}
-            zOrderMediaOverlay={Platform.OS === 'android'}
-            canvas={{
-              uid: 0,
-              sourceType: VideoSourceType.VideoSourceCamera,
-              renderMode: RenderModeType.RenderModeHidden,
-            }}
-          />
-        ) : (
-          <>
-            <View style={styles.localAvatar}>
-              <Text style={styles.localEmoji}>{isVendor ? '🩺' : '👤'}</Text>
-            </View>
-            <Text style={styles.localLabel}>
-              {isCameraOff ? 'Camera off' : 'You'}
-            </Text>
-          </>
+      <TouchableOpacity
+        style={styles.localVideo}
+        activeOpacity={canSwap ? 0.85 : 1}
+        onPress={toggleSwap}>
+        {isSwapped ? renderRemoteContent(true) : renderLocalContent(true)}
+        {canSwap && (
+          <View style={styles.swapBadge} pointerEvents="none">
+            <MaterialCommunityIcons
+              name="swap-horizontal"
+              size={wp(4.5)}
+              color={Colors.white}
+            />
+          </View>
         )}
-      </View>
+      </TouchableOpacity>
 
       <View style={styles.controlsBar}>
         <View style={styles.controlsRow}>
@@ -395,6 +446,11 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  fillVideo: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
   avatarPlaceholder: {
     width: wp(28),
     height: wp(28),
@@ -468,6 +524,17 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     width: '100%',
     height: '100%',
+  },
+  swapBadge: {
+    position: 'absolute',
+    top: wp(1.5),
+    left: wp(1.5),
+    width: wp(6.5),
+    height: wp(6.5),
+    borderRadius: wp(3.25),
+    backgroundColor: 'rgba(15, 23, 42, 0.7)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   localAvatar: {
     width: wp(12),
