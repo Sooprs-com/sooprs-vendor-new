@@ -131,3 +131,20 @@ dependencies {
         implementation jscFlavor
     }
 }
+
+// CMake/ninja clean fails when Gradle prefab transforms were evicted
+// (ReactAndroid::jsi include paths no longer exist). Delete native dirs
+// directly instead of regenerating stale CMake caches.
+tasks.configureEach { task ->
+    if (task.name.startsWith("externalNativeBuildClean")) {
+        task.enabled = false
+    }
+}
+
+tasks.register("deleteNativeBuildDirs", Delete) {
+    delete layout.projectDirectory.dir(".cxx")
+}
+
+tasks.named("clean").configure {
+    dependsOn("deleteNativeBuildDirs")
+}

@@ -6,28 +6,57 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
-  SafeAreaView,
   Alert,
   Platform,
   PermissionsAndroid,
   ActivityIndicator,
+  StatusBar,
+  KeyboardAvoidingView,
+  KeyboardTypeOptions,
 } from 'react-native';
-import React, {useState, useEffect} from 'react';
+import React, {useState, useCallback} from 'react';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {launchImageLibrary, ImagePickerResponse, MediaType} from 'react-native-image-picker';
 import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
+// @ts-ignore
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {hp, wp} from '../../assets/commonCSS/GlobalCSS';
 import Colors from '../../assets/commonCSS/Colors';
 import FSize from '../../assets/commonCSS/FSize';
 import Images from '../../assets/image';
-import {getDataWithToken, postDataWithToken, putDataWithTokenFormData} from '../../services/mobile-api';
+import {getDataWithToken, putDataWithTokenFormData} from '../../services/mobile-api';
 import {mobile_siteConfig} from '../../services/mobile-siteConfig';
 import Toast from 'react-native-toast-message';
 
+type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+
+type FieldConfig = {
+  key: string;
+  label: string;
+  icon: IconName;
+  value: string;
+  onChangeText?: (text: string) => void;
+  placeholder: string;
+  keyboardType?: KeyboardTypeOptions;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  editable?: boolean;
+  maxLength?: number;
+  multiline?: boolean;
+  hint?: string;
+};
+
+type SectionConfig = {
+  title: string;
+  subtitle: string;
+  icon: IconName;
+  iconColor: string;
+  iconBg: string;
+  fields: FieldConfig[];
+};
+
 const EditProfileScreen = () => {
   const navigation = useNavigation();
-  
-  // State for all form fields
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
@@ -49,6 +78,7 @@ const EditProfileScreen = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const showAlert = (type: string, text1: string, text2: string) => {
     Toast.show({
@@ -65,11 +95,10 @@ const EditProfileScreen = () => {
       const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
       const data: any = await res.json();
       console.log('Vendor profile data in EditProfileScreen:::::', data);
-      
+
       if (data?.success && data?.vendorDetail) {
         const vendor = data.vendorDetail;
-        
-        // Fill all fields from vendorDetail
+
         if (vendor.name) setName(vendor.name);
         if (vendor.email) setEmail(vendor.email);
         if (vendor.mobile) setMobile(vendor.mobile);
@@ -83,8 +112,7 @@ const EditProfileScreen = () => {
         if (vendor.country) setCountry(vendor.country);
         if (vendor.address) setAddress(vendor.address);
         if (vendor.image) setProfileImage(vendor.image);
-        
-        // Fill bank details
+
         if (vendor.bank_details) {
           if (vendor.bank_details.account_holder_name) {
             setAccountHolderName(vendor.bank_details.account_holder_name);
@@ -126,7 +154,7 @@ const EditProfileScreen = () => {
   const pickProfileImage = async () => {
     try {
       const hasPermission = await requestStoragePermission();
-      
+
       if (!hasPermission) {
         Alert.alert(
           'Permission Required',
@@ -146,7 +174,7 @@ const EditProfileScreen = () => {
         if (response.didCancel) {
           return;
         }
-        
+
         if (response.errorMessage) {
           Alert.alert('Error', response.errorMessage);
           return;
@@ -169,18 +197,14 @@ const EditProfileScreen = () => {
     setIsSubmitting(true);
 
     try {
-      // Create FormData for multipart/form-data
       const formData = new FormData();
-      
-      // Add all text fields
+
       if (name.trim()) formData.append('name', name.trim());
       if (email.trim()) formData.append('email', email.trim());
-      // Mobile number is read-only, not sent in update
       if (organisation.trim()) formData.append('organisation', organisation.trim());
       if (listingAbout.trim()) formData.append('listing_about', listingAbout.trim());
       if (gstNo.trim()) formData.append('gst_no', gstNo.trim());
       if (pan.trim()) formData.append('pan', pan.trim());
-      // Always pass category_id from API response
       if (categoryId) formData.append('category_id', categoryId);
       if (city.trim()) formData.append('city', city.trim());
       if (areaCode.trim()) formData.append('area_code', areaCode.trim());
@@ -191,11 +215,10 @@ const EditProfileScreen = () => {
       if (accountNo.trim()) formData.append('account_no', accountNo.trim());
       if (ifsc.trim()) formData.append('ifsc', ifsc.trim());
 
-      // Add profile image if selected
       if (selectedImage) {
         const imageFileName = selectedImage.split('/').pop() || 'profile_image.jpg';
         const imageFileType = imageFileName.split('.').pop() || 'jpg';
-        
+
         formData.append('profile_image', {
           uri: Platform.OS === 'android' ? selectedImage : selectedImage.replace('file://', ''),
           type: `image/${imageFileType}`,
@@ -204,7 +227,7 @@ const EditProfileScreen = () => {
       }
 
       console.log('Update Profile Payload:', formData);
-      
+
       const result: any = await putDataWithTokenFormData(formData, mobile_siteConfig.UPDATE_PROFILE);
       console.log('Update Profile result:::::', result);
 
@@ -214,17 +237,14 @@ const EditProfileScreen = () => {
         return;
       }
 
-      // Success case
       if (result?.success === true) {
         showAlert('success', 'Success', result?.message || 'Profile updated successfully');
-        
-        // Update local state with new image if uploaded
+
         if (selectedImage) {
           setProfileImage(selectedImage);
           setSelectedImage(null);
         }
-        
-        // Navigate back after successful submission
+
         setTimeout(() => {
           navigation.goBack();
         }, 1500);
@@ -240,284 +260,357 @@ const EditProfileScreen = () => {
   };
 
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       getVendorProfile();
-    }, [])
+    }, []),
   );
 
-  if (loading) {
+  const sections: SectionConfig[] = [
+    {
+      title: 'Personal Information',
+      subtitle: 'How clients see you on Sooprs',
+      icon: 'account-outline',
+      iconColor: '#2563EB',
+      iconBg: '#EEF4FF',
+      fields: [
+        {
+          key: 'name',
+          label: 'Full Name',
+          icon: 'account-outline',
+          value: name,
+          onChangeText: setName,
+          placeholder: 'Enter your full name',
+          autoCapitalize: 'words',
+        },
+        {
+          key: 'email',
+          label: 'Email Address',
+          icon: 'email-outline',
+          value: email,
+          onChangeText: setEmail,
+          placeholder: 'Enter your email',
+          keyboardType: 'email-address',
+          autoCapitalize: 'none',
+        },
+        {
+          key: 'mobile',
+          label: 'Mobile Number',
+          icon: 'phone-outline',
+          value: mobile,
+          placeholder: 'Mobile number',
+          editable: false,
+          hint: 'Mobile number cannot be changed',
+        },
+        {
+          key: 'organisation',
+          label: 'Organisation',
+          icon: 'office-building-outline',
+          value: organisation,
+          onChangeText: setOrganisation,
+          placeholder: 'Enter organisation name',
+          autoCapitalize: 'words',
+        },
+        {
+          key: 'listingAbout',
+          label: 'About You',
+          icon: 'text-box-outline',
+          value: listingAbout,
+          onChangeText: setListingAbout,
+          placeholder: 'Write a short bio for your listing',
+          multiline: true,
+        },
+      ],
+    },
+    {
+      title: 'Business & Address',
+      subtitle: 'Registration and location details',
+      icon: 'file-document-outline',
+      iconColor: '#0F766E',
+      iconBg: '#ECFDF5',
+      fields: [
+        {
+          key: 'gstNo',
+          label: 'GST Number',
+          icon: 'receipt-text-outline',
+          value: gstNo,
+          onChangeText: text => setGstNo(text.toUpperCase()),
+          placeholder: '22AAAAA0000A1Z5',
+          autoCapitalize: 'characters',
+          maxLength: 15,
+        },
+        {
+          key: 'pan',
+          label: 'PAN',
+          icon: 'card-account-details-outline',
+          value: pan,
+          onChangeText: text => setPan(text.toUpperCase()),
+          placeholder: 'ABCDE1234F',
+          autoCapitalize: 'characters',
+          maxLength: 10,
+        },
+        {
+          key: 'address',
+          label: 'Address',
+          icon: 'map-marker-outline',
+          value: address,
+          onChangeText: setAddress,
+          placeholder: 'Enter your full address',
+          autoCapitalize: 'words',
+        },
+        {
+          key: 'city',
+          label: 'City',
+          icon: 'city-variant-outline',
+          value: city,
+          onChangeText: setCity,
+          placeholder: 'Enter city',
+          autoCapitalize: 'words',
+        },
+        {
+          key: 'country',
+          label: 'Country Code',
+          icon: 'earth',
+          value: country,
+          onChangeText: text => setCountry(text.toUpperCase()),
+          placeholder: 'IN',
+          autoCapitalize: 'characters',
+          maxLength: 2,
+          hint: '2-letter country code, e.g. IN',
+        },
+        {
+          key: 'areaCode',
+          label: 'Pincode',
+          icon: 'mailbox-outline',
+          value: areaCode,
+          onChangeText: setAreaCode,
+          placeholder: 'Enter 6-digit pincode',
+          keyboardType: 'numeric',
+          maxLength: 6,
+        },
+      ],
+    },
+    {
+      title: 'Bank Details',
+      subtitle: 'Used for payouts — keep this accurate',
+      icon: 'bank-outline',
+      iconColor: '#7C3AED',
+      iconBg: '#F3EEFF',
+      fields: [
+        {
+          key: 'accountHolderName',
+          label: 'Account Holder Name',
+          icon: 'account-check-outline',
+          value: accountHolderName,
+          onChangeText: setAccountHolderName,
+          placeholder: 'Name as per bank account',
+          autoCapitalize: 'words',
+        },
+        {
+          key: 'bankName',
+          label: 'Bank Name',
+          icon: 'bank-outline',
+          value: bankName,
+          onChangeText: setBankName,
+          placeholder: 'Enter bank name',
+          autoCapitalize: 'words',
+        },
+        {
+          key: 'accountNo',
+          label: 'Account Number',
+          icon: 'numeric',
+          value: accountNo,
+          onChangeText: setAccountNo,
+          placeholder: 'Enter account number',
+          keyboardType: 'numeric',
+        },
+        {
+          key: 'ifsc',
+          label: 'IFSC Code',
+          icon: 'barcode',
+          value: ifsc,
+          onChangeText: text => setIfsc(text.toUpperCase()),
+          placeholder: 'SBIN0001234',
+          autoCapitalize: 'characters',
+          maxLength: 11,
+        },
+      ],
+    },
+  ];
+
+  const profileSource = selectedImage
+    ? {uri: selectedImage}
+    : profileImage
+      ? {uri: profileImage}
+      : Images.profileImage;
+
+  const renderField = (field: FieldConfig, isLast: boolean) => {
+    const isFocused = focusedField === field.key;
+    const isDisabled = field.editable === false;
+
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.sooprsblue} />
+      <View key={field.key} style={[styles.fieldWrap, isLast && styles.fieldWrapLast]}>
+        <Text style={styles.label}>{field.label}</Text>
+        <View
+          style={[
+            styles.inputBox,
+            field.multiline && styles.inputBoxMultiline,
+            isFocused && styles.inputBoxFocused,
+            isDisabled && styles.inputBoxDisabled,
+          ]}>
+          <MaterialCommunityIcons
+            name={field.icon}
+            size={wp(5)}
+            color={isFocused ? Colors.sooprsblue : isDisabled ? '#94A3B8' : '#64748B'}
+            style={field.multiline ? styles.multilineIcon : undefined}
+          />
+          <TextInput
+            placeholder={field.placeholder}
+            placeholderTextColor="#94A3B8"
+            style={[styles.input, field.multiline && styles.textArea, isDisabled && styles.disabledInput]}
+            value={field.value}
+            onChangeText={field.onChangeText}
+            keyboardType={field.keyboardType}
+            autoCapitalize={field.autoCapitalize}
+            editable={!isDisabled}
+            maxLength={field.maxLength}
+            multiline={field.multiline}
+            numberOfLines={field.multiline ? 4 : 1}
+            onFocus={() => setFocusedField(field.key)}
+            onBlur={() => setFocusedField(null)}
+          />
+          {isDisabled ? (
+            <MaterialCommunityIcons name="lock-outline" size={wp(4.2)} color="#94A3B8" />
+          ) : null}
         </View>
-      </SafeAreaView>
+        {field.hint ? <Text style={styles.hintText}>{field.hint}</Text> : null}
+      </View>
     );
-  }
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Image source={Images.backArrow} style={styles.backIcon} />
-          </TouchableOpacity>
+    <View style={styles.container}>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="#FFFFFF"
+        translucent={Platform.OS === 'android'}
+      />
+
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+          activeOpacity={0.7}>
+          <Image source={Images.backArrow} style={styles.backIcon} />
+        </TouchableOpacity>
+        <View style={styles.headerTextWrap}>
           <Text style={styles.headerTitle}>Edit Profile</Text>
+          <Text style={styles.headerSubtitle}>Keep your details up to date</Text>
         </View>
+        <View style={styles.headerSpacer} />
+      </View>
 
-        <View style={styles.sectionDivider} />
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? hp(1) : 0}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.scrollContent}>
+          <View style={styles.heroCard}>
+            <View style={styles.avatarWrap}>
+              {uploading ? (
+                <View style={[styles.avatar, styles.avatarLoading]}>
+                  <ActivityIndicator size="large" color={Colors.sooprsblue} />
+                </View>
+              ) : (
+                <Image source={profileSource} style={styles.avatar} />
+              )}
+              <TouchableOpacity
+                style={styles.cameraBtn}
+                onPress={pickProfileImage}
+                disabled={uploading}
+                activeOpacity={0.8}>
+                <MaterialCommunityIcons name="camera" size={wp(4.4)} color={Colors.white} />
+              </TouchableOpacity>
+            </View>
 
-        {/* Profile Image Section */}
-        <View style={styles.profileImageSection}>
-          <View style={styles.profileImageContainer}>
-            {uploading ? (
-              <View style={[styles.profileImage, styles.loadingContainer]}>
-                <ActivityIndicator size="large" color={Colors.sooprsblue} />
-              </View>
-            ) : (
-              <Image
-                source={selectedImage ? {uri: selectedImage} : (profileImage ? {uri: profileImage} : Images.profileImage)}
-                style={styles.profileImage}
-              />
-            )}
-            <TouchableOpacity 
-              style={styles.cameraIconContainer}
+            <Text style={styles.heroName} numberOfLines={1}>
+              {name || 'Your name'}
+            </Text>
+            {organisation ? (
+              <Text style={styles.heroOrg} numberOfLines={1}>
+                {organisation}
+              </Text>
+            ) : null}
+
+            <TouchableOpacity
+              style={styles.changePhotoBtn}
               onPress={pickProfileImage}
-              disabled={uploading}>
-              <Image source={Images.imageIcon} style={styles.cameraIcon} />
+              disabled={uploading}
+              activeOpacity={0.8}>
+              <MaterialCommunityIcons name="image-edit-outline" size={wp(4.2)} color={Colors.sooprsblue} />
+              <Text style={styles.changePhotoText}>
+                {selectedImage ? 'Photo selected · Change' : 'Change photo'}
+              </Text>
             </TouchableOpacity>
           </View>
-          <Text style={styles.profileImageLabel}>Profile Image</Text>
+
+          {sections.map(section => (
+            <View key={section.title} style={styles.sectionCard}>
+              <View style={styles.sectionHeader}>
+                <View style={[styles.sectionIcon, {backgroundColor: section.iconBg}]}>
+                  <MaterialCommunityIcons
+                    name={section.icon}
+                    size={wp(5.2)}
+                    color={section.iconColor}
+                  />
+                </View>
+                <View style={styles.sectionHeaderText}>
+                  <Text style={styles.sectionTitle}>{section.title}</Text>
+                  <Text style={styles.sectionSubtitle}>{section.subtitle}</Text>
+                </View>
+              </View>
+              {section.fields.map((field, index) =>
+                renderField(field, index === section.fields.length - 1),
+              )}
+              {section.title === 'Bank Details' ? (
+                <View style={styles.secureNote}>
+                  <MaterialCommunityIcons name="shield-lock-outline" size={wp(4.2)} color="#7C3AED" />
+                  <Text style={styles.secureNoteText}>
+                    Your bank details are used only for payouts and stay private.
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          ))}
+        </ScrollView>
+
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={[styles.updateBtn, isSubmitting && styles.updateBtnDisabled]}
+            onPress={handleUpdateProfile}
+            disabled={isSubmitting || loading}
+            activeOpacity={0.85}>
+            {isSubmitting ? (
+              <ActivityIndicator size="small" color={Colors.white} />
+            ) : (
+              <MaterialCommunityIcons name="check-circle-outline" size={wp(5.2)} color={Colors.white} />
+            )}
+            <Text style={styles.updateText}>
+              {isSubmitting ? 'Saving changes...' : 'Save Changes'}
+            </Text>
+          </TouchableOpacity>
         </View>
+      </KeyboardAvoidingView>
 
-        {/* Personal Information Section */}
-        <Text style={styles.sectionTitle}>Personal Information</Text>
-        <Text style={styles.sectionSubtitle}>
-          Update your personal details
-        </Text>
-
-        {/* Name */}
-        <Text style={styles.label}>Name</Text>
-        <View style={styles.inputBox}>
-          <TextInput
-            placeholder="Enter your name"
-            placeholderTextColor={Colors.lightgrey2}
-            style={styles.input}
-            value={name}
-            onChangeText={setName}
-          />
+      {loading ? (
+        <View style={styles.fullLoader}>
+          <ActivityIndicator size="large" color={Colors.sooprsblue} />
+          <Text style={styles.loaderText}>Loading profile...</Text>
         </View>
-
-        {/* Email */}
-        <Text style={styles.label}>Email</Text>
-        <View style={styles.inputBox}>
-          <TextInput
-            placeholder="Enter your email"
-            placeholderTextColor={Colors.lightgrey2}
-            style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-        </View>
-
-        {/* Mobile */}
-        <Text style={styles.label}>Mobile</Text>
-        <View style={[styles.inputBox, styles.disabledInputBox]}>
-          <TextInput
-            placeholder="Enter your mobile number"
-            placeholderTextColor={Colors.lightgrey2}
-            style={[styles.input, styles.disabledInput]}
-            value={mobile}
-            editable={false}
-            keyboardType="phone-pad"
-            maxLength={10}
-          />
-        </View>
-
-        {/* Organisation */}
-        <Text style={styles.label}>Organisation</Text>
-        <View style={styles.inputBox}>
-          <TextInput
-            placeholder="Enter organisation name"
-            placeholderTextColor={Colors.lightgrey2}
-            style={styles.input}
-            value={organisation}
-            onChangeText={setOrganisation}
-          />
-        </View>
-
-        {/* Listing About */}
-        <Text style={styles.label}>Listing About</Text>
-        <View style={styles.inputBox}>
-          <TextInput
-            placeholder="Enter about text"
-            placeholderTextColor={Colors.lightgrey2}
-            style={[styles.input, styles.textArea]}
-            value={listingAbout}
-            onChangeText={setListingAbout}
-            multiline
-            numberOfLines={4}
-          />
-        </View>
-
-        {/* Registration Details Section */}
-        <Text style={[styles.sectionTitle, {marginTop: hp(2)}]}>Registration Details</Text>
-        <Text style={styles.sectionSubtitle}>
-          Update your registration details
-        </Text>
-
-        {/* GST Number */}
-        <Text style={styles.label}>GST Number</Text>
-        <View style={styles.inputBox}>
-          <TextInput
-            placeholder="Enter GST number"
-            placeholderTextColor={Colors.lightgrey2}
-            style={styles.input}
-            value={gstNo}
-            onChangeText={setGstNo}
-            maxLength={15}
-          />
-        </View>
-
-        {/* PAN */}
-        <Text style={styles.label}>PAN</Text>
-        <View style={styles.inputBox}>
-          <TextInput
-            placeholder="Enter PAN number"
-            placeholderTextColor={Colors.lightgrey2}
-            style={styles.input}
-            value={pan}
-            onChangeText={setPan}
-            maxLength={10}
-          />
-        </View>
-
-        {/* Address */}
-        <Text style={styles.label}>Address</Text>
-        <View style={styles.inputBox}>
-          <View style={styles.iconInputRow}>
-            <Image source={Images.searchIcon} style={styles.inputIcon} />
-            <TextInput
-              placeholder="Enter your address"
-              placeholderTextColor={Colors.lightgrey2}
-              style={styles.inputWithIcon}
-              value={address}
-              onChangeText={setAddress}
-            />
-          </View>
-        </View>
-
-        {/* City */}
-        <Text style={styles.label}>City</Text>
-        <View style={styles.inputBox}>
-          <TextInput
-            placeholder="Enter city"
-            placeholderTextColor={Colors.lightgrey2}
-            style={styles.input}
-            value={city}
-            onChangeText={setCity}
-          />
-        </View>
-
-        {/* Country */}
-        <Text style={styles.label}>Country</Text>
-        <View style={styles.inputBox}>
-          <TextInput
-            placeholder="Enter country code (e.g., IN)"
-            placeholderTextColor={Colors.lightgrey2}
-            style={styles.input}
-            value={country}
-            onChangeText={setCountry}
-            maxLength={2}
-          />
-        </View>
-
-        {/* Area Code (Pincode) */}
-        <Text style={styles.label}>Area Code (Pincode)</Text>
-        <View style={styles.inputBox}>
-          <TextInput
-            placeholder="Enter pincode"
-            placeholderTextColor={Colors.lightgrey2}
-            style={styles.input}
-            value={areaCode}
-            onChangeText={setAreaCode}
-            keyboardType="numeric"
-            maxLength={6}
-          />
-        </View>
-
-        {/* Bank Details Section */}
-        <Text style={[styles.sectionTitle, {marginTop: hp(2)}]}>Bank Details</Text>
-        <Text style={styles.sectionSubtitle}>
-          Update your bank details
-        </Text>
-
-        {/* Account Holder Name */}
-        <Text style={styles.label}>Account Holder Name</Text>
-        <View style={styles.inputBox}>
-          <TextInput
-            placeholder="Enter account holder name"
-            placeholderTextColor={Colors.lightgrey2}
-            style={styles.input}
-            value={accountHolderName}
-            onChangeText={setAccountHolderName}
-          />
-        </View>
-
-        {/* Bank Name */}
-        <Text style={styles.label}>Bank Name</Text>
-        <View style={styles.inputBox}>
-          <TextInput
-            placeholder="Enter bank name"
-            placeholderTextColor={Colors.lightgrey2}
-            style={styles.input}
-            value={bankName}
-            onChangeText={setBankName}
-          />
-        </View>
-
-        {/* Account Number */}
-        <Text style={styles.label}>Account Number</Text>
-        <View style={styles.inputBox}>
-          <TextInput
-            placeholder="Enter account number"
-            placeholderTextColor={Colors.lightgrey2}
-            style={styles.input}
-            value={accountNo}
-            onChangeText={setAccountNo}
-            keyboardType="numeric"
-          />
-        </View>
-
-        {/* IFSC Code */}
-        <Text style={styles.label}>IFSC Code</Text>
-        <View style={styles.inputBox}>
-          <TextInput
-            placeholder="Enter IFSC code"
-            placeholderTextColor={Colors.lightgrey2}
-            style={styles.input}
-            value={ifsc}
-            onChangeText={setIfsc}
-            maxLength={11}
-          />
-        </View>
-
-        {/* Update Button */}
-        <TouchableOpacity 
-          style={[styles.updateBtn, isSubmitting && styles.updateBtnDisabled]}
-          onPress={handleUpdateProfile}
-          disabled={isSubmitting}
-          activeOpacity={0.8}>
-          <Text style={styles.updateText}>
-            {isSubmitting ? 'Updating...' : 'Update Profile'}
-          </Text>
-        </TouchableOpacity>
-
-      </ScrollView>
-    </SafeAreaView>
+      ) : null}
+    </View>
   );
 };
 
@@ -526,149 +619,315 @@ export default EditProfileScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
-    paddingTop: hp(2),
-    paddingHorizontal: wp(5),
+    backgroundColor: '#F8FAFC',
   },
-  scrollContent: {
-    paddingBottom: hp(3),
-  },
-  loadingContainer: {
+  flex: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: hp(50),
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: hp(2),
-    marginBottom: hp(1),
+    paddingHorizontal: wp(2.5),
+    paddingTop:
+      Platform.OS === 'ios'
+        ? hp(6.5)
+        : (StatusBar.currentHeight || hp(3)) + hp(1.2),
+    paddingBottom: hp(1.4),
+    backgroundColor: Colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  backButton: {
+    padding: wp(2),
   },
   backIcon: {
     width: wp(8),
     height: wp(8),
-    tintColor: Colors.black,
-    marginRight: wp(3),
+    tintColor: '#0F172A',
+  },
+  headerTextWrap: {
+    flex: 1,
+    alignItems: 'center',
   },
   headerTitle: {
-    fontSize: FSize.fs18,
-    fontWeight: '700',
-    color: Colors.black,
+    fontSize: FSize.fs22,
+    fontWeight: '800',
+    color: '#0F172A',
   },
-  sectionDivider: {
-    width: '100%',
-    height: hp(0.1),
-    backgroundColor: Colors.lightgrey2,
-    marginBottom: hp(2),
+  headerSubtitle: {
+    marginTop: hp(0.12),
+    fontSize: FSize.fs14,
+    color: '#94A3B8',
+    fontWeight: '600',
   },
-  profileImageSection: {
+  headerSpacer: {
+    width: wp(10),
+  },
+  scrollContent: {
+    paddingHorizontal: wp(4),
+    paddingTop: hp(1.8),
+    paddingBottom: hp(2),
+  },
+  heroCard: {
+    backgroundColor: Colors.white,
+    borderRadius: wp(4.5),
+    paddingVertical: hp(2.4),
+    paddingHorizontal: wp(4.4),
     alignItems: 'center',
-    marginBottom: hp(2),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0F172A',
+        shadowOffset: {width: 0, height: 6},
+        shadowOpacity: 0.06,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
-  profileImageContainer: {
+  avatarWrap: {
     position: 'relative',
-    marginBottom: hp(1),
+    marginBottom: hp(1.2),
   },
-  profileImage: {
-    width: wp(25),
-    height: wp(25),
-    borderRadius: wp(12.5),
+  avatar: {
+    width: wp(26),
+    height: wp(26),
+    borderRadius: wp(13),
+    backgroundColor: '#EEF4FF',
+    borderWidth: 3,
+    borderColor: '#DBEAFE',
   },
-  cameraIconContainer: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: wp(8),
-    height: wp(8),
-    borderRadius: wp(4),
-    backgroundColor: Colors.sooprsblue,
+  avatarLoading: {
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
+  },
+  cameraBtn: {
+    position: 'absolute',
+    right: -wp(0.6),
+    bottom: -wp(0.4),
+    width: wp(8.4),
+    height: wp(8.4),
+    borderRadius: wp(4.2),
+    backgroundColor: Colors.sooprsblue,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2.5,
     borderColor: Colors.white,
   },
-  cameraIcon: {
-    width: wp(8),
-    height: wp(8),
-    resizeMode: 'contain',
+  heroName: {
+    fontSize: FSize.fs20,
+    fontWeight: '800',
+    color: '#0F172A',
   },
-  profileImageLabel: {
-    fontSize: FSize.fs12,
-    color: Colors.grey,
-  },
-  sectionTitle: {
-    fontSize: FSize.fs18,
-    fontWeight: '700',
-    color: Colors.black,
-    marginTop: hp(1),
-  },
-  sectionSubtitle: {
-    fontSize: FSize.fs12,
-    color: Colors.gray,
-    marginBottom: hp(2),
-  },
-  label: {
+  heroOrg: {
+    marginTop: hp(0.25),
     fontSize: FSize.fs13,
-    color: Colors.gray,
     fontWeight: '600',
-    marginBottom: hp(0.6),
-    marginTop: hp(1),
+    color: '#64748B',
   },
-  inputBox: {
-    borderWidth: 1,
-    borderColor: Colors.lightgrey2,
-    borderRadius: wp(2),
-    paddingHorizontal: wp(3),
-    paddingVertical: hp(1.2),
-    marginBottom: hp(1),
-  },
-  input: {
-    fontSize: FSize.fs14,
-    color: Colors.black,
-  },
-  disabledInputBox: {
-    backgroundColor: Colors.lightgrey1 || '#f5f5f5',
-    opacity: 0.7,
-  },
-  disabledInput: {
-    color: Colors.grey,
-  },
-  textArea: {
-    minHeight: hp(8),
-    textAlignVertical: 'top',
-  },
-  iconInputRow: {
+  changePhotoBtn: {
+    marginTop: hp(1.2),
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#EEF4FF',
+    borderRadius: wp(5),
+    paddingHorizontal: wp(3.4),
+    paddingVertical: hp(0.7),
+    gap: wp(1.4),
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
   },
-  inputIcon: {
-    width: wp(5),
-    height: wp(5),
-    tintColor: Colors.gray,
+  changePhotoText: {
+    fontSize: FSize.fs13,
+    fontWeight: '700',
+    color: Colors.sooprsblue,
+  },
+  sectionCard: {
+    backgroundColor: Colors.white,
+    borderRadius: wp(4.5),
+    paddingHorizontal: wp(4),
+    paddingTop: hp(1.6),
+    paddingBottom: hp(1.4),
+    marginTop: hp(1.6),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0F172A',
+        shadowOffset: {width: 0, height: 4},
+        shadowOpacity: 0.04,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 1,
+      },
+    }),
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: hp(1.4),
+    paddingBottom: hp(1.2),
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  sectionIcon: {
+    width: wp(10.5),
+    height: wp(10.5),
+    borderRadius: wp(3),
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: wp(3),
   },
-  inputWithIcon: {
+  sectionHeaderText: {
+    flex: 1,
+  },
+  sectionTitle: {
+    fontSize: FSize.fs16,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  sectionSubtitle: {
+    marginTop: hp(0.15),
+    fontSize: FSize.fs12,
+    color: '#94A3B8',
+    fontWeight: '600',
+  },
+  fieldWrap: {
+    marginBottom: hp(1.4),
+  },
+  fieldWrapLast: {
+    marginBottom: hp(0.4),
+  },
+  label: {
+    fontSize: FSize.fs12,
+    color: '#475569',
+    fontWeight: '700',
+    marginBottom: hp(0.55),
+    letterSpacing: 0.2,
+  },
+  inputBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: wp(3),
+    paddingHorizontal: wp(3.2),
+    minHeight: hp(6.2),
+    gap: wp(2.2),
+  },
+  inputBoxMultiline: {
+    alignItems: 'flex-start',
+    paddingTop: hp(1.2),
+    minHeight: hp(12),
+  },
+  inputBoxFocused: {
+    borderColor: Colors.sooprsblue,
+    backgroundColor: '#F8FBFF',
+  },
+  inputBoxDisabled: {
+    backgroundColor: '#F1F5F9',
+    borderColor: '#E2E8F0',
+  },
+  input: {
     flex: 1,
     fontSize: FSize.fs14,
-    color: Colors.black,
+    color: '#0F172A',
+    fontWeight: '600',
+    paddingVertical: Platform.OS === 'ios' ? hp(1.1) : hp(0.8),
+  },
+  disabledInput: {
+    color: '#64748B',
+  },
+  textArea: {
+    minHeight: hp(9),
+    textAlignVertical: 'top',
+  },
+  multilineIcon: {
+    marginTop: hp(0.2),
+  },
+  hintText: {
+    marginTop: hp(0.45),
+    fontSize: FSize.fs11,
+    color: '#94A3B8',
+    fontWeight: '600',
+  },
+  secureNote: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#F5F3FF',
+    borderRadius: wp(2.8),
+    paddingHorizontal: wp(3),
+    paddingVertical: hp(1),
+    marginTop: hp(0.8),
+    gap: wp(2),
+  },
+  secureNoteText: {
+    flex: 1,
+    fontSize: FSize.fs12,
+    color: '#6D28D9',
+    fontWeight: '600',
+    lineHeight: hp(2.1),
+  },
+  footer: {
+    paddingHorizontal: wp(4),
+    paddingTop: hp(1),
+    paddingBottom: Platform.OS === 'ios' ? hp(2.6) : hp(1.6),
+    backgroundColor: Colors.white,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
   },
   updateBtn: {
     backgroundColor: Colors.sooprsblue,
-    paddingVertical: hp(2),
-    borderRadius: wp(3),
+    paddingVertical: hp(1.7),
+    borderRadius: wp(3.2),
     alignItems: 'center',
-    marginTop: hp(3),
-    marginBottom: hp(5),
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: wp(2),
+    ...Platform.select({
+      ios: {
+        shadowColor: Colors.sooprsblue,
+        shadowOffset: {width: 0, height: 6},
+        shadowOpacity: 0.28,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   updateBtnDisabled: {
-    backgroundColor: Colors.gray,
-    opacity: 0.6,
+    backgroundColor: '#94A3B8',
+    opacity: 0.9,
+    ...Platform.select({
+      ios: {
+        shadowOpacity: 0,
+      },
+      android: {
+        elevation: 0,
+      },
+    }),
   },
   updateText: {
     color: Colors.white,
     fontSize: FSize.fs15,
-    fontWeight: '700',
+    fontWeight: '800',
+  },
+  fullLoader: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(248, 250, 252, 0.72)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loaderText: {
+    marginTop: hp(1),
+    fontSize: FSize.fs13,
+    fontWeight: '600',
+    color: '#64748B',
   },
 });
-

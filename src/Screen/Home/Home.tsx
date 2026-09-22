@@ -6,16 +6,16 @@ import {
   TouchableOpacity,
   Image,
   SafeAreaView,
-  FlatList,
   ActivityIndicator,
   Modal,
   Alert,
   StatusBar,
+  Platform,
 } from 'react-native';
-import React, {useEffect, useState, useCallback} from 'react';
+import React, {useState, useCallback} from 'react';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
-import LinearGradient from 'react-native-linear-gradient';
-import {hp, wp, GlobalCss} from '../../assets/commonCSS/GlobalCSS';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import {hp, wp} from '../../assets/commonCSS/GlobalCSS';
 import Colors from '../../assets/commonCSS/Colors';
 import Images from '../../assets/image';
 import FSize from '../../assets/commonCSS/FSize';
@@ -23,15 +23,105 @@ import { getDataWithToken, postDataWithTokenBase2 } from '../../services/mobile-
 import { mobile_siteConfig } from '../../services/mobile-siteConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
-import Animated from 'react-native-reanimated';
 import AnimatedButton from '../../Component/AnimatedButton';
+import LinearGradient from 'react-native-linear-gradient';
+
+const REQUEST_PREVIEW_COUNT = 5;
+
+const decodeHtml = (text: string) =>
+  String(text || '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ');
+
+const formatWallet = (amount: any) => {
+  const n = parseFloat(String(amount ?? 0).replace(/,/g, ''));
+  if (isNaN(n)) {
+    return '0';
+  }
+  if (Math.abs(n - Math.round(n)) < 0.001) {
+    return Math.round(n).toLocaleString('en-IN');
+  }
+  return n.toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+const formatINR = (amount: any) => {
+  if (amount === null || amount === undefined || amount === 'N/A') {
+    return 'N/A';
+  }
+  const n = Number(String(amount).replace(/[^0-9.]/g, ''));
+  if (isNaN(n)) {
+    return String(amount);
+  }
+  return n.toLocaleString('en-IN');
+};
+
+const getLeadVisual = (lead: any) => {
+  const haystack = `${lead?.project_title || ''} ${lead?.projectTitle || ''} ${lead?.category || ''} ${lead?.category_name || ''} ${lead?.service_name || ''}`.toLowerCase();
+
+  if (/health|fitness|gym|yoga|wellness|heal/.test(haystack)) {
+    return {name: 'dumbbell', color: '#3B82F6', bg: '#EEF4FF'};
+  }
+  if (/mobile|app|android|ios/.test(haystack)) {
+    return {name: 'cellphone', color: '#22C55E', bg: '#E8F8EF'};
+  }
+  if (/web|website|frontend|backend/.test(haystack)) {
+    return {name: 'web', color: '#0EA5E9', bg: '#E0F2FE'};
+  }
+  if (/design|ui|ux|graphic/.test(haystack)) {
+    return {name: 'palette-outline', color: '#EC4899', bg: '#FDF2F8'};
+  }
+  if (/market|seo|ads|social/.test(haystack)) {
+    return {name: 'bullhorn-outline', color: '#F59E0B', bg: '#FFF7ED'};
+  }
+  if (/video|photo|edit/.test(haystack)) {
+    return {name: 'video-outline', color: '#EF4444', bg: '#FEF2F2'};
+  }
+  return {name: 'briefcase-outline', color: '#3B82F6', bg: '#EEF4FF'};
+};
+
+const isLeadNew = (lead: any, index: number) => {
+  if (lead?.is_new === 1 || lead?.is_new === true || lead?.new === 1) {
+    return true;
+  }
+  const created = lead?.created_at || lead?.createdAt || lead?.posted_at;
+  if (created) {
+    const d = new Date(created);
+    if (!isNaN(d.getTime())) {
+      const days = (Date.now() - d.getTime()) / (1000 * 60 * 60 * 24);
+      return days <= 14;
+    }
+  }
+  return index < 5;
+};
+
+const getLeadBadge = (lead: any, index: number): 'new' | 'review' | null => {
+  const raw = String(
+    lead?.status ||
+      lead?.lead_status ||
+      lead?.project_status ||
+      lead?.review_status ||
+      lead?.badge ||
+      '',
+  ).toLowerCase();
+  if (/review|pending|in_review|in review/.test(raw)) {
+    return 'review';
+  }
+  if (/new/.test(raw) || isLeadNew(lead, index)) {
+    return 'new';
+  }
+  return null;
+};
 
 const Home = () => {
   const navigation = useNavigation();
   const [userName, setUserName] = useState('');
-  const [totalEarnings, setTotalEarnings] = useState('10,550');
-  const [activeTrips, setActiveTrips] = useState(8);
-  const [rating, setRating] = useState(4.9);
   const [userData,setUserData] = useState<any>(null);
   const [leads, setLeads] = useState<any[]>([]);
   const [loadingLeads, setLoadingLeads] = useState(false);
@@ -46,7 +136,7 @@ const Home = () => {
   const [contactDetails, setContactDetails] = useState<any>(null);
   const [loadingContact, setLoadingContact] = useState(false);
   const [loadingUserDetails, setLoadingUserDetails] = useState(true);
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [showAllRequests, setShowAllRequests] = useState(false);
 
   const getUserDetails = async () => {
     try {
@@ -55,40 +145,28 @@ const Home = () => {
       const data: any = await res.json();
       console.log('User details data:::::', data);
       console.log('User membership data:::::', data?.membership?.plan?.plan_name);
-      // console.log('User membership data:::::123', data?.membership?.plan?.plan_name==="Standard" ? Images.standardPlanIcon :userData?.membership?.plan?.plan_name==="Elite" ? Images.ElitePlanIcon : Images.starIcon);
 
       setUserData(data);
-      // Check if profile is completed
       if (data?.success && data?.vendorDetail) {
         const isProfileCompleted = data.vendorDetail.is_profile_completed;
         
-        // Set stats data
         if (data.stats) {
           setStatus(data.stats);
         }
         
-        // Update user name from API response
         if (data.vendorDetail.name) {
           setUserName(data.vendorDetail.name);
         } else {
           setUserName('User');
         }
         
-        // Set profile image from API response
-        if (data.vendorDetail.image) {
-          setProfileImage(data.vendorDetail.image);
-        }
-        
-        // Get category_id from vendor profile
         if (data.vendorDetail.category_id) {
           setCategoryId(String(data.vendorDetail.category_id));
         }
         
-        // If profile is not completed (0), replace with HomeVerification screen
         if (isProfileCompleted === 0) {
           (navigation as any).replace('HomeVerification');
         }
-        // If profile is completed (1), stay on Home screen (already here)
       }
     } catch (err: any) {
       console.log('Error fetching user details:::::', err);
@@ -131,14 +209,11 @@ const Home = () => {
       }
       
       if (append) {
-        // Append new leads to existing ones
         setLeads(prevLeads => [...prevLeads, ...newLeads]);
       } else {
-        // Replace leads for first page
         setLeads(newLeads);
       }
       
-      // Check if there are more pages
       if (newLeads.length < 20) {
         setHasMore(false);
       } else {
@@ -197,7 +272,6 @@ const Home = () => {
       setLoadingContact(true);
       const leadId = selectedLead.id || selectedLead.lead_id || selectedLead.leadId;
       
-      // Create URL-encoded data
       const formData = `id=${encodeURIComponent(leadId)}`;
       
       const token = await AsyncStorage.getItem(mobile_siteConfig.MOB_ACCESS_TOKEN_KEY);
@@ -214,7 +288,6 @@ const Home = () => {
       const result = await response.json();
       console.log('Contact details API response:', result);
       
-      // Check for insufficient wallet balance error
       if (result.status === 402 && result.msg === 'Insufficient wallet balance!') {
         Toast.show({
           type: 'error',
@@ -234,8 +307,6 @@ const Home = () => {
         return;
       }
       
-      // API should return mobile_number directly (decoded)
-      // If encrypted_mobile_number exists, use it as mobile_number
       if (result.encrypted_mobile_number && !result.mobile_number && !result.mobile) {
         result.mobile_number = result.encrypted_mobile_number;
       }
@@ -249,15 +320,13 @@ const Home = () => {
     }
   };
 
-  // Check profile status and fetch leads when screen comes into focus
   useFocusEffect(
     useCallback(() => {
       const fetchData = async () => {
         await getUserDetails();
-        // Reset pagination when screen comes into focus
         setCurrentPage(1);
         setHasMore(true);
-        // Small delay to ensure categoryId state is updated
+        setShowAllRequests(false);
         setTimeout(() => {
           getLeads(1, false);
         }, 100);
@@ -266,16 +335,6 @@ const Home = () => {
     }, [])
   );
 
-  // Get image URI helper function
-  const getImageUri = (imagePath: string | null): any => {
-    if (imagePath) {
-      // const baseUrl = mobile_siteConfig.BASE_URL.replace('/api/', '');
-      return { uri:  imagePath };
-    }
-    return Images.profileImage;
-  };
-
-  // Show loader while user details are loading
   if (loadingUserDetails) {
     return (
       <SafeAreaView style={styles.container}>
@@ -292,7 +351,7 @@ const Home = () => {
     const paddingToBottom = 20;
     const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
     
-    if (isCloseToBottom && hasMore && !loadingMore && !loadingLeads) {
+    if (showAllRequests && isCloseToBottom && hasMore && !loadingMore && !loadingLeads) {
       loadMoreLeads();
     }
   };
@@ -301,15 +360,27 @@ const Home = () => {
     (navigation as any).openDrawer();
   };
 
+  const displayedLeads = showAllRequests ? leads : leads.slice(0, REQUEST_PREVIEW_COUNT);
+  const firstName = (userName || 'User').split(' ')[0];
+  const planName = userData?.membership?.plan?.plan_name;
+  const upgradeIcon =
+    planName === 'STANDARD'
+      ? Images.standardPlanIcon
+      : planName === 'ELITE'
+      ? Images.ElitePlanIcon
+      : Images.starIcon;
+
+  const avatarLetter = (firstName || 'U').charAt(0).toUpperCase();
+
   return (
     <SafeAreaView style={styles.container}>
-    <StatusBar barStyle="light-content" backgroundColor={"white"} />
+    <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
     <ScrollView 
       showsVerticalScrollIndicator={false}
       onScroll={handleScroll}
       scrollEventThrottle={400}
+      contentContainerStyle={styles.scrollContent}
     >
-      
 
       {/* ================= HEADER ================= */}
       <View style={styles.header}>
@@ -317,145 +388,218 @@ const Home = () => {
           <TouchableOpacity onPress={openDrawer} style={styles.drawerIconContainer}>
             <Image source={Images.drawer} style={styles.drawerIcon} />
           </TouchableOpacity>
-          <Text style={styles.helloText}>Hello {userName || 'User'}</Text>
+          <View style={styles.avatarCircle}>
+            <Text style={styles.avatarLetter}>{avatarLetter}</Text>
+          </View>
+          <View style={styles.greetingWrap}>
+            <Text style={styles.helloText} numberOfLines={1}>
+              Hello {firstName} 👋
+            </Text>
+            <Text style={styles.welcomeText} numberOfLines={1}>
+              Welcome back to Sooprs
+            </Text>
+          </View>
         </View>
 
         <View style={styles.headerRight}>
-          {/* <TouchableOpacity 
-            style={styles.upgradeButton}
+          <AnimatedButton
+            icon={upgradeIcon}
+            title="Upgrade"
             onPress={() => (navigation as any).navigate('SubscriptionScreen')}
-          >
-            <LinearGradient
-              colors={['#3B82F6', '#2563EB']}
-              start={{x: 0, y: 0}}
-              end={{x: 1, y: 1}}
-              style={styles.upgradeButtonGradient}
-            >
-              <Image source={Images.starIcon} style={styles.upgradeIcon} />
-              <Text style={styles.upgradeText}>Upgrade</Text>
-            </LinearGradient>
-          </TouchableOpacity> */}
-
-
-          <AnimatedButton 
-          icon={userData?.membership?.plan?.plan_name==="STANDARD" ? Images.standardPlanIcon :userData?.membership?.plan?.plan_name==="ELITE" ? Images.ElitePlanIcon : Images.starIcon}
-          title={"Upgrade"}
-         onPress={() => (navigation as any).navigate('SubscriptionScreen')}
-           buttonStyle={undefined} 
-           textStyle={undefined}/>
+            buttonStyle={styles.upgradeButton}
+            textStyle={styles.upgradeText}
+          />
 
           <TouchableOpacity 
             style={styles.notificationBadgeContainer}
             onPress={() => (navigation as any).navigate('NotificationScreen')}
           >
-            <Image source={Images.bellIcon} style={styles.bellIcon} />
-            {/* <View style={styles.notificationBadge}>
-              <Text style={styles.badgeText}>1</Text>
-            </View> */}
+            <MaterialCommunityIcons name="bell-outline" size={wp(6)} color="#1F2937" />
+            <View style={styles.notificationDot} />
           </TouchableOpacity>
-
-          {/* <TouchableOpacity onPress={() => navigation.navigate('ProfileScreen' as never)}>
-            <Image source={getImageUri(profileImage)} style={styles.profileImg} />
-          </TouchableOpacity> */}
-
-
         </View>
       </View>
 
-      <View style={styles.headerDivider} />
-
 
       {/* ================= STATS BOX ================= */}
-
       <View style={styles.statsRow}>
-
-        {/* Wallet Amount */}
         <TouchableOpacity
-          activeOpacity={0.7}
+          activeOpacity={0.85}
+          style={[styles.statCardWrap, styles.statShadowBlue]}
           onPress={() => (navigation as any).navigate('AddCredits')}
         >
           <LinearGradient
-            colors={['#E4F2FD', '#C2DFFC']}
+            colors={['#E8F3FF', '#F7FBFF']}
             start={{x: 0, y: 0}}
             end={{x: 1, y: 1}}
             style={styles.statCard}
           >
-            <Image source={Images.walletIcon} style={styles.statIcon} />
-            <Text style={styles.statValueWallet}>₹ {status?.wallet_balance || '0'}</Text>
-            <Text style={styles.statLabelWallet}>Wallet Amount</Text>
+            <View style={[styles.statDecor, {backgroundColor: '#BFDBFE'}]} />
+            <View style={styles.statTopRow}>
+              <View style={[styles.statIconWrap, {backgroundColor: '#FFFFFF'}]}>
+                <LinearGradient
+                  colors={['#0077FF', '#3B9BFF']}
+                  start={{x: 0, y: 0}}
+                  end={{x: 1, y: 1}}
+                  style={styles.statIconInner}
+                >
+                  <MaterialCommunityIcons name="wallet-outline" size={wp(4.6)} color={Colors.white} />
+                </LinearGradient>
+              </View>
+              <View style={[styles.statChevronWrap, {backgroundColor: '#D6E8FF'}]}>
+                <MaterialCommunityIcons name="chevron-right" size={wp(3.8)} color="#0077FF" />
+              </View>
+            </View>
+            <Text style={styles.statLabel}>Wallet Amount</Text>
+            <Text
+              style={[styles.statValue, {color: '#0B3A8A'}]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.72}
+            >
+              ₹{formatWallet(status?.wallet_balance)}
+            </Text>
+            <View style={[styles.statAccent, {backgroundColor: '#0077FF'}]} />
           </LinearGradient>
         </TouchableOpacity>
 
-        {/* Total Packages */}
         <TouchableOpacity
-          activeOpacity={0.7}
+          activeOpacity={0.85}
+          style={[styles.statCardWrap, styles.statShadowPurple]}
           onPress={() => (navigation as any).navigate('PackagesScreen')}
         >
-          
           <LinearGradient
-            colors={['#F0E2FF', '#E5C7FF']}
+            colors={['#F3EEFF', '#FBFAFF']}
             start={{x: 0, y: 0}}
             end={{x: 1, y: 1}}
             style={styles.statCard}
           >
-            <Image source={Images.activeTripIcon} style={styles.statIcon} />
-            <Text style={styles.statValueLeads}>{status?.total_packages || '0'}</Text>
-            <Text style={styles.statLabelLeads}>Total Packages</Text>
+            <View style={[styles.statDecor, {backgroundColor: '#DDD6FE'}]} />
+            <View style={styles.statTopRow}>
+              <View style={[styles.statIconWrap, {backgroundColor: '#FFFFFF'}]}>
+                <LinearGradient
+                  colors={['#7C3AED', '#A78BFA']}
+                  start={{x: 0, y: 0}}
+                  end={{x: 1, y: 1}}
+                  style={styles.statIconInner}
+                >
+                  <MaterialCommunityIcons name="package-variant-closed" size={wp(4.6)} color={Colors.white} />
+                </LinearGradient>
+              </View>
+              <View style={[styles.statChevronWrap, {backgroundColor: '#EDE9FE'}]}>
+                <MaterialCommunityIcons name="chevron-right" size={wp(3.8)} color="#7C3AED" />
+              </View>
+            </View>
+            <Text style={styles.statLabel}>Total Packages</Text>
+            <Text
+              style={[styles.statValue, {color: '#5B21B6'}]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.72}
+            >
+              {status?.total_packages || '0'}
+            </Text>
+            <View style={[styles.statAccent, {backgroundColor: '#7C3AED'}]} />
           </LinearGradient>
         </TouchableOpacity>
 
-        {/* Total Orders */}
         <TouchableOpacity
-          activeOpacity={0.7}
+          activeOpacity={0.85}
+          style={[styles.statCardWrap, styles.statShadowAmber]}
           onPress={() => (navigation as any).navigate('BookingsScreen')}
         >
           <LinearGradient
-            colors={['#FFF7DE', '#FEEBBB']}
+            colors={['#FFF6E8', '#FFFBF4']}
             start={{x: 0, y: 0}}
             end={{x: 1, y: 1}}
             style={styles.statCard}
           >
-            <Image source={Images.ratingStar} style={styles.statIcon} />
-            <Text style={styles.statValueOrders}>{status?.total_orders || '0'}</Text>
-            <Text style={styles.statLabelOrders}>Total Orders</Text>
+            <View style={[styles.statDecor, {backgroundColor: '#FDE68A'}]} />
+            <View style={styles.statTopRow}>
+              <View style={[styles.statIconWrap, {backgroundColor: '#FFFFFF'}]}>
+                <LinearGradient
+                  colors={['#D97706', '#FBBF24']}
+                  start={{x: 0, y: 0}}
+                  end={{x: 1, y: 1}}
+                  style={styles.statIconInner}
+                >
+                  <MaterialCommunityIcons name="cart-outline" size={wp(4.6)} color={Colors.white} />
+                </LinearGradient>
+              </View>
+              <View style={[styles.statChevronWrap, {backgroundColor: '#FEF3C7'}]}>
+                <MaterialCommunityIcons name="chevron-right" size={wp(3.8)} color="#D97706" />
+              </View>
+            </View>
+            <Text style={styles.statLabel}>Total Orders</Text>
+            <Text
+              style={[styles.statValue, {color: '#92400E'}]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.72}
+            >
+              {status?.total_orders || '0'}
+            </Text>
+            <View style={[styles.statAccent, {backgroundColor: '#D97706'}]} />
           </LinearGradient>
         </TouchableOpacity>
       </View>
 
 
       {/* ================= START BILLING ================= */}
-      <TouchableOpacity
+      {/* <TouchableOpacity
         activeOpacity={0.8}
         style={styles.startBillingCard}
         onPress={() => {
-          // Navigate to BillingBottomTab via drawer's screen (nested nav - works from any depth)
           (navigation as any).navigate('VendorHomeScreen', { screen: 'BillingBottomTab' });
         }}>
-        <LinearGradient
-          colors={['#E8F5E9', '#C8E6C9']}
-          start={{x: 0, y: 0}}
-          end={{x: 1, y: 1}}
-          style={styles.startBillingGradient}>
-          <Image source={Images.dollarIcon} style={styles.startBillingIcon} />
+        <View style={styles.startBillingInner}>
+          <View style={styles.startBillingIconWrap}>
+            <MaterialCommunityIcons name="format-list-bulleted" size={wp(5)} color={Colors.white} />
+          </View>
           <View style={styles.startBillingTextWrap}>
             <Text style={styles.startBillingTitle}>Start Billing</Text>
             <Text style={styles.startBillingSubtitle}>
               Create customers & invoices
             </Text>
           </View>
-        </LinearGradient>
-      </TouchableOpacity>
+          <View style={styles.startBillingArrow}>
+            <MaterialCommunityIcons name="chevron-right" size={wp(5.5)} color={Colors.white} />
+          </View>
+        </View>
+      </TouchableOpacity> */}
 
       {/* ================= ADD PACKAGE LISTING ================= */}
-      <TouchableOpacity style={styles.addListingBtn}
-          onPress={() => (navigation as any).navigate("AddPackagesScreen")}
->
-        <Text style={styles.addText}>+   Add New Package Listing</Text>
+      <TouchableOpacity
+        style={styles.addListingBtn}
+        onPress={() => (navigation as any).navigate('AddPackagesScreen')}
+        activeOpacity={0.8}
+      >
+        <View style={styles.addPlusCircle}>
+          <MaterialCommunityIcons name="plus" size={wp(4.4)} color="#2563EB" />
+        </View>
+        <View style={styles.addListingTextWrap}>
+          <Text style={styles.addText}>+ Add New Package Listing</Text>
+          <Text style={styles.addSubText}>
+            List your service package & reach more customers
+          </Text>
+        </View>
+        <MaterialCommunityIcons name="chevron-right" size={wp(6)} color="#94A3B8" />
       </TouchableOpacity>
 
 
       {/* ================= REQUESTS TITLE ================= */}
-      <Text style={styles.reqTitle}>Requests</Text>
+      <View style={styles.reqHeaderRow}>
+        <Text style={styles.reqTitle}>Requests</Text>
+        {/* {!showAllRequests && (
+          <TouchableOpacity
+            onPress={() => setShowAllRequests(true)}
+            activeOpacity={0.7}
+            style={styles.viewAllBtn}
+          >
+            <Text style={styles.viewAllText}>View All</Text>
+          </TouchableOpacity>
+        )} */}
+      </View>
 
       {/* ================= EACH REQUEST CARD ================= */}
       {loadingLeads ? (
@@ -463,59 +607,100 @@ const Home = () => {
           <ActivityIndicator size="large" color={Colors.sooprsblue} />
           <Text style={styles.loadingText}>Loading leads...</Text>
         </View>
-      ) : leads.length > 0 ? (
+      ) : displayedLeads.length > 0 ? (
         <>
-          {leads.map((lead, index) => {
+          {displayedLeads.map((lead, index) => {
             const leadId = lead.id || lead.lead_id || lead.leadId;
             const isExpanded = expandedLeads.has(leadId);
-            const description = lead.description || lead.desc || 'The customer wants to book a cab trip.';
+            const description = decodeHtml(
+              lead.description || lead.desc || '',
+            );
             const maxBudget = lead.max_budget_amount || lead.maxBudgetAmount || lead.max_budget || 'N/A';
-            // Check if description needs truncation (more than 4 lines or very long)
             const lineCount = description.split('\n').length;
-            const shouldTruncate = lineCount > 4 || description.length > 300;
+            const shouldTruncate = lineCount > 4 || description.length > 160;
+            // const visual = getLeadVisual(lead);
+            const title = decodeHtml(
+              lead.project_title || lead.projectTitle || lead.category_name || lead.category || 'Project Title',
+            );
+            const badge = getLeadBadge(lead, index);
 
             return (
               <View key={leadId?.toString() || index.toString()} style={styles.reqCard}>
-                <Text style={styles.reqTitle2}>
-                  {lead.project_title || lead.projectTitle || 'Project Title'}
-                </Text>
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={() => (navigation as any).navigate('LeadDetailsScreen', {lead})}
+                >
+                  <View style={styles.reqCardTop}>
+                    {/* <View style={[styles.leadIconBox, {backgroundColor: visual.bg}]}>
+                      <MaterialCommunityIcons name={visual.name} size={wp(6.5)} color={visual.color} />
+                    </View> */}
 
-                <Text style={styles.reqDesc} numberOfLines={isExpanded ? undefined : 4}>
-                  {description}
-                </Text>
+                    <View style={styles.reqTitleBlock}>
+                      <View style={styles.reqTitleRow}>
+                        <Text style={styles.reqTitle2} numberOfLines={1}>
+                          {title}
+                        </Text>
+                        {badge === 'new' && (
+                          <View style={styles.newBadge}>
+                            <Text style={styles.newBadgeText}>New</Text>
+                          </View>
+                        )}
+                        {badge === 'review' && (
+                          <View style={styles.reviewBadge}>
+                            <Text style={styles.reviewBadgeText}>In Review</Text>
+                          </View>
+                        )}
+                        <MaterialCommunityIcons name="chevron-right" size={wp(5.2)} color="#94A3B8" />
+                      </View>
 
-                {shouldTruncate && (
-                  <TouchableOpacity 
-                    onPress={() => toggleDescription(leadId)}
-                    style={styles.moreButton}
+                      <Text style={styles.reqDesc} numberOfLines={isExpanded ? undefined : 3}>
+                        {description || 'No content found in the response.'}
+                      </Text>
+
+                      {/* {shouldTruncate && (
+                        <TouchableOpacity
+                          onPress={() => toggleDescription(leadId)}
+                          style={styles.moreButton}
+                        >
+                          <Text style={styles.moreText}>
+                            {isExpanded ? 'Less' : 'More'}
+                          </Text>
+                        </TouchableOpacity>
+                      )} */}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+
+                <View style={styles.leadDivider} />
+
+                <View style={styles.reqCardFooter}>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={styles.maxAmountPress}
+                    onPress={() => (navigation as any).navigate('LeadDetailsScreen', {lead})}
                   >
-                    <Text style={styles.moreText}>
-                      {isExpanded ? 'Less' : 'More'}
+                    <Text style={styles.maxAmountLine} numberOfLines={1}>
+                      Max Amount:{' '}
+                      <Text style={styles.maxAmountValue}>₹{formatINR(maxBudget)}</Text>
                     </Text>
                   </TouchableOpacity>
-                )}
-                
-                <View style={styles.Desc}>
-                  <Text style={[styles.reqDesc, {marginTop: 10, fontWeight: '600', color: Colors.gray}]}>Max Amount: </Text>
-                  <Text style={styles.reqDate}>
-                    ₹{typeof maxBudget === 'number' ? maxBudget.toLocaleString('en-IN') : maxBudget}
-                  </Text>
+
+                  <TouchableOpacity
+                    style={styles.getContactBtn}
+                    onPress={() => {
+                      console.log('Button pressed for lead:', lead);
+                      openContactModal(lead);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.getContactText}>Get Contact Details</Text>
+                    <MaterialCommunityIcons name="chevron-right" size={wp(4)} color={Colors.white} />
+                  </TouchableOpacity>
                 </View>
-               
-                <TouchableOpacity 
-                  style={styles.getContactBtn}
-                  onPress={() => {
-                    console.log('Button pressed for lead:', lead);
-                    openContactModal(lead);
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.getContactText}>Get Contact Details</Text>
-                </TouchableOpacity>
               </View>
             );
           })}
-          {loadingMore && (
+          {showAllRequests && loadingMore && (
             <View style={styles.loadingMoreContainer}>
               <ActivityIndicator size="small" color={Colors.sooprsblue} />
               <Text style={styles.loadingMoreText}>Loading more...</Text>
@@ -524,12 +709,15 @@ const Home = () => {
         </>
       ) : (
         <View style={styles.emptyContainer}>
+          <View style={styles.emptyIconWrap}>
+            <MaterialCommunityIcons name="inbox-outline" size={wp(10)} color="#94A3B8" />
+          </View>
           <Text style={styles.emptyText}>No leads available</Text>
+          <Text style={styles.emptySubText}>New requests will show up here</Text>
         </View>
       )}
 
     </ScrollView>
-        {/* Contact Details Modal */}
         <Modal
           visible={showContactModal}
           transparent={true}
@@ -544,7 +732,7 @@ const Home = () => {
                   <View style={styles.modalInfoRow}>
                     <Text style={styles.modalLabel}>Project Title:</Text>
                     <Text style={styles.modalValue}>
-                      {selectedLead.project_title || selectedLead.projectTitle || 'N/A'}
+                      {decodeHtml(selectedLead.project_title || selectedLead.projectTitle || 'N/A')}
                     </Text>
                   </View>
                   
@@ -561,7 +749,6 @@ const Home = () => {
                 <View style={styles.contactDetailsContainer}>
                   <Text style={styles.contactDetailsTitle}>Contact Information:</Text>
                   
-                  {/* Mobile Number - decode encrypted_mobile_number */}
                   {(contactDetails.mobile || contactDetails.mobile_number || contactDetails.encrypted_mobile_number) && (
                     <View style={styles.modalInfoRow}>
                       <Text style={styles.modalLabel}>Mobile Number:</Text>
@@ -571,7 +758,6 @@ const Home = () => {
                     </View>
                   )}
                   
-                  {/* Email */}
                   {contactDetails.email && (
                     <View style={styles.modalInfoRow}>
                       <Text style={styles.modalLabel}>Email:</Text>
@@ -579,7 +765,6 @@ const Home = () => {
                     </View>
                   )}
                   
-                  {/* Name */}
                   {contactDetails.name && (
                     <View style={styles.modalInfoRow}>
                       <Text style={styles.modalLabel}>Name:</Text>
@@ -587,10 +772,8 @@ const Home = () => {
                     </View>
                   )}
                   
-                  {/* Display other fields except null values and excluded keys */}
                   {Object.keys(contactDetails).map((key) => {
                     const value = contactDetails[key];
-                    // Skip if null, undefined, empty string, or excluded keys
                     if (
                       value === null || 
                       value === undefined || 
@@ -652,177 +835,258 @@ export default Home;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
-    paddingTop: hp(2),
+    backgroundColor: '#FFFFFF',
+    paddingTop: hp(4),
   },
-  /* ------------ HEADER ------------ */
+  scrollContent: {
+    paddingBottom: hp(4),
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: wp(5),
-    paddingVertical: hp(2),
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(1.2),
     alignItems: 'center',
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    marginRight: wp(1.5),
+  },
+  greetingWrap: {
+    flex: 1,
+    marginLeft: wp(2),
   },
   helloText: {
-    fontSize: FSize.fs18,
-    fontWeight: '700',
-    color: Colors.black,
-    marginLeft: wp(3),
+    fontSize: FSize.fs16,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  welcomeText: {
+    fontSize: FSize.fs11,
+    color: '#94A3B8',
+    marginTop: hp(0.15),
+    fontWeight: '500',
+  },
+  avatarCircle: {
+    width: wp(9.5),
+    height: wp(9.5),
+    borderRadius: wp(4.75),
+    backgroundColor: '#0B1F4D',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: wp(1.5),
+  },
+  avatarLetter: {
+    color: Colors.white,
+    fontSize: FSize.fs15,
+    fontWeight: '800',
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: wp(3),
+    gap: wp(2),
   },
   upgradeButton: {
-    borderRadius: wp(5),
-    overflow: 'hidden',
-    paddingHorizontal: wp(3),
-    paddingVertical: hp(0.8),
-  },
-  upgradeButtonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: wp(3),
-    paddingVertical: hp(1),
-    borderRadius: wp(5),
-  },
-  upgradeIcon: {
-    width: wp(4),
-    height: wp(4),
-    marginRight: wp(1.5),
-    tintColor: Colors.white,
+    backgroundColor: '#0077FF',
+    borderRadius: wp(7),
+    paddingHorizontal: wp(3.4),
+    paddingVertical: hp(0.85),
+    marginVertical: 0,
+    gap: wp(1.2),
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0077FF',
+        shadowOffset: {width: 0, height: 3},
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 6,
+        shadowColor: '#0077FF',
+      },
+    }),
   },
   upgradeText: {
-    fontSize: FSize.fs13,
-    fontWeight: '700',
+    fontSize: FSize.fs12,
+    fontWeight: '800',
     color: Colors.white,
+    letterSpacing: 0.2,
   },
   notificationBadgeContainer: {
-    position: 'relative',
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: -5,
-    right: -5,
-    backgroundColor: '#EF4444',
-    borderRadius: wp(3),
-    width: wp(4),
-    height: wp(4),
-    justifyContent: 'center',
+    width: wp(8),
+    height: wp(8),
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  badgeText: {
-    color: Colors.white,
-    fontSize: FSize.fs10,
-    fontWeight: '700',
+  notificationDot: {
+    position: 'absolute',
+    top: hp(0.35),
+    right: wp(0.6),
+    width: wp(2.1),
+    height: wp(2.1),
+    borderRadius: wp(1.05),
+    backgroundColor: '#EF4444',
+    borderWidth: 1.5,
+    borderColor: Colors.white,
   },
-  bellIcon: {
-    width: wp(5),
-    height: wp(5),
-    tintColor: Colors.yellow,
+  drawerIconContainer: {
+    padding: wp(0.4),
   },
-  profileImg: {
-    width: wp(6),
-    height: wp(6),
-    borderRadius: wp(5),
+  drawerIcon: {
+    width: wp(5.6),
+    height: wp(5.6),
+    tintColor: '#1F2937',
   },
-headerDivider: {
-  width: '100%',
-  height: hp(0.1),
-  backgroundColor: Colors.lightgrey2,
-  marginTop: hp(0.5),
-},
 
-  /* ------------ STATS ------------ */
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginHorizontal: wp(5),
-    marginTop: hp(2),
+    marginHorizontal: wp(4),
+    marginTop: hp(0.6),
+    gap: wp(2.4),
   },
-
+  statCardWrap: {
+    flex: 1,
+    borderRadius: wp(4.2),
+    backgroundColor: Colors.white,
+  },
   statCard: {
-    width: wp(28),
-    elevation: 3,
-    borderRadius: wp(3),
-    paddingVertical: hp(2),
-    alignItems: 'center',
+    borderRadius: wp(4.2),
+    paddingTop: hp(1.35),
+    paddingBottom: hp(1.45),
+    paddingHorizontal: wp(2.8),
+    minHeight: hp(15.4),
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.7)',
   },
-  statIcon: {
-    width: wp(8),
-    height: wp(8),
-    marginBottom: hp(1),
+  statShadowBlue: {
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0077FF',
+        shadowOffset: {width: 0, height: 6},
+        shadowOpacity: 0.16,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 5,
+        shadowColor: '#0077FF',
+      },
+    }),
+  },
+  statShadowPurple: {
+    ...Platform.select({
+      ios: {
+        shadowColor: '#7C3AED',
+        shadowOffset: {width: 0, height: 6},
+        shadowOpacity: 0.16,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 5,
+        shadowColor: '#7C3AED',
+      },
+    }),
+  },
+  statShadowAmber: {
+    ...Platform.select({
+      ios: {
+        shadowColor: '#D97706',
+        shadowOffset: {width: 0, height: 6},
+        shadowOpacity: 0.16,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 5,
+        shadowColor: '#D97706',
+      },
+    }),
+  },
+  statDecor: {
+    position: 'absolute',
+    width: wp(18),
+    height: wp(18),
+    borderRadius: wp(9),
+    top: -wp(7),
+    right: -wp(5),
+    opacity: 0.45,
+  },
+  statTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  statIconWrap: {
+    width: wp(9.2),
+    height: wp(9.2),
+    borderRadius: wp(2.8),
+    padding: wp(0.45),
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0F172A',
+        shadowOffset: {width: 0, height: 2},
+        shadowOpacity: 0.08,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  statIconInner: {
+    flex: 1,
+    borderRadius: wp(2.3),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statChevronWrap: {
+    width: wp(6),
+    height: wp(6),
+    borderRadius: wp(3),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statLabel: {
+    fontSize: FSize.fs10,
+    color: '#64748B',
+    fontWeight: '600',
+    marginTop: hp(1.35),
+    letterSpacing: 0.2,
   },
   statValue: {
     fontSize: FSize.fs16,
-    fontWeight: '700',
-    color: Colors.black,
+    fontWeight: '800',
+    marginTop: hp(0.35),
+    letterSpacing: -0.3,
   },
-  statLabel: {
-    fontSize: FSize.fs11,
-    color: Colors.grey,
-    marginTop: hp(0.3),
-  },
-  statValueWallet: {
-    fontSize: FSize.fs16,
-    fontWeight: '700',
-    color: '#00498F',
-  },
-  statLabelWallet: {
-    fontSize: FSize.fs11,
-    color: '#00498F',
-    fontWeight: '500',
-    marginTop: hp(0.3),
-  },
-  statValueLeads: {
-    fontSize: FSize.fs16,
-    fontWeight: '700',
-    color: '#42007C',
-  },
-  statLabelLeads: {
-    fontSize: FSize.fs11,
-    color: '#42007C',
-    fontWeight: '500',
-    marginTop: hp(0.3),
-  },
-  statValueOrders: {
-    fontSize: FSize.fs16,
-    fontWeight: '700',
-    color: '#9F7200',
-  },
-  statLabelOrders: {
-    fontSize: FSize.fs11,
-    color: '#9F7200',
-    fontWeight: '500',
-    marginTop: hp(0.3),
+  statAccent: {
+    height: 3,
+    width: wp(8),
+    borderRadius: 2,
+    marginTop: hp(1.05),
   },
 
-  /* ------------ Start Billing ------------ */
   startBillingCard: {
-    marginHorizontal: wp(5),
-    marginTop: hp(2),
-    borderRadius: wp(3),
-    overflow: 'hidden',
+    marginHorizontal: wp(4),
+    marginTop: hp(1.8),
+    borderRadius: wp(4),
+    backgroundColor: '#E8F8EE',
   },
-  startBillingGradient: {
+  startBillingInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: hp(1.8),
-    paddingHorizontal: wp(4),
-    borderRadius: wp(3),
-    borderWidth: 1,
-    borderColor: 'rgba(76, 175, 80, 0.3)',
+    paddingVertical: hp(1.55),
+    paddingHorizontal: wp(3.4),
   },
-  startBillingIcon: {
-    width: wp(10),
-    height: wp(10),
-    tintColor: Colors.sooprsblue,
+  startBillingIconWrap: {
+    width: wp(10.5),
+    height: wp(10.5),
+    borderRadius: wp(5.25),
+    backgroundColor: '#22C55E',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: wp(3),
   },
   startBillingTextWrap: {
@@ -830,114 +1094,194 @@ headerDivider: {
   },
   startBillingTitle: {
     fontSize: FSize.fs16,
-    fontWeight: '700',
-    color: Colors.black,
+    fontWeight: '800',
+    color: '#0F172A',
   },
   startBillingSubtitle: {
     fontSize: FSize.fs12,
-    color: Colors.gray,
-    marginTop: hp(0.3),
+    color: '#64748B',
+    marginTop: hp(0.15),
+    fontWeight: '400',
+  },
+  startBillingArrow: {
+    width: wp(8.5),
+    height: wp(8.5),
+    borderRadius: wp(4.25),
+    backgroundColor: '#22C55E',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
-  /* ------------ Add New Package Button ------------ */
   addListingBtn: {
-    marginHorizontal: wp(5),
-    marginTop: hp(2),
-    paddingVertical: hp(1.8),
-    borderWidth: 1.5,
-    borderColor: Colors.sooprsblue,
-    borderRadius: wp(3),
-     borderStyle: 'dashed', 
+    marginHorizontal: wp(4),
+    marginTop: hp(1.6),
+    paddingVertical: hp(1.5),
+    paddingHorizontal: wp(3.2),
+    borderWidth: 1.4,
+    borderColor: '#60A5FA',
+    borderRadius: wp(5),
+    borderStyle: 'dashed',
+    backgroundColor: '#FFFFFF',
+    flexDirection: 'row',
     alignItems: 'center',
   },
+  addPlusCircle: {
+    width: wp(9),
+    height: wp(9),
+    borderRadius: wp(4.5),
+    borderWidth: 1.4,
+    borderColor: '#93C5FD',
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: wp(2.6),
+  },
+  addListingTextWrap: {
+    flex: 1,
+  },
   addText: {
-    fontSize: FSize.fs13,
-    color: Colors.sooprsblue,
-    fontWeight: '600',
+    fontSize: FSize.fs14,
+    color: '#2563EB',
+    fontWeight: '800',
+  },
+  addSubText: {
+    fontSize: FSize.fs11,
+    color: '#94A3B8',
+    marginTop: hp(0.2),
+    fontWeight: '400',
   },
 
-  /* ------------ Request Section ------------ */
+  reqHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: wp(4),
+    marginTop: hp(2.2),
+  },
   reqTitle: {
-    marginLeft: wp(5),
-    marginTop: hp(2),
-    fontSize: FSize.fs16,
+    fontSize: FSize.fs18,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  viewAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  viewAllText: {
+    fontSize: FSize.fs13,
+    color: '#2563EB',
     fontWeight: '700',
-    color: Colors.gray,
   },
 
-  /* ------------ Request Cards ------------ */
   reqCard: {
-    marginHorizontal: wp(5),
+    marginHorizontal: wp(4),
     backgroundColor: Colors.white,
+    marginTop: hp(1.5),
+    borderRadius: wp(4),
+    padding: wp(3.6),
     borderWidth: 1,
-    borderColor: Colors.lightgrey2,
-    // elevation: 3,
-    marginTop: hp(2),
-    padding: wp(4),
-    borderRadius: wp(3),
+    borderColor: '#F1F5F9',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#94A3B8',
+        shadowOffset: {width: 0, height: 6},
+        shadowOpacity: 0.12,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  reqCardTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  leadIconBox: {
+    width: wp(12.5),
+    height: wp(12.5),
+    borderRadius: wp(3.2),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: wp(2.8),
+  },
+  reqTitleBlock: {
+    flex: 1,
+  },
+  reqTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(1.4),
   },
   reqTitle2: {
-    fontSize: FSize.fs17,
-    fontWeight: '700',
-    color: Colors.black,
+    flex: 1,
+    fontSize: FSize.fs20,
+    fontWeight: '800',
+    color: '#0F172A',
   },
-  Desc:{
-     flexDirection: 'row',
-    alignItems:'center',
-    // marginTop: hp(1),
+  newBadge: {
+    backgroundColor: '#EEF4FF',
+    paddingHorizontal: wp(2.4),
+    paddingVertical: hp(0.28),
+    borderRadius: wp(1.6),
+  },
+  newBadgeText: {
+    fontSize: FSize.fs12,
+    color: '#3B82F6',
+    fontWeight: '700',
+  },
+  reviewBadge: {
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: wp(2.4),
+    paddingVertical: hp(0.28),
+    borderRadius: wp(1.6),
+  },
+  reviewBadgeText: {
+    fontSize: FSize.fs12,
+    color: '#059669',
+    fontWeight: '700',
   },
   reqDesc: {
     fontSize: FSize.fs14,
-    marginTop: hp(1),
-    color: Colors.black,
-    lineHeight: hp(2.2),
+    marginTop: hp(0.55),
+    color: '#64748B',
+    lineHeight: hp(2.4),
   },
-  reqDate: {
-    marginTop: hp(1.4),
-    fontSize: FSize.fs17,
-    fontWeight: '700',
-    color: Colors.darkGray,
+  leadDivider: {
+    height: 1,
+    backgroundColor: '#F1F5F9',
+    marginTop: hp(1.2),
+    marginBottom: hp(1),
   },
-
-  reqBtnRow: {
+  reqCardFooter: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: hp(2),
+    gap: wp(2),
   },
-  ignoreBtn: {
-    width: '48%',
-    paddingVertical: hp(1.4),
-    borderRadius: wp(3),
-    borderWidth: 1,
-    borderColor: Colors.grey,
-    backgroundColor: Colors.white,
-    alignItems: 'center',
+  maxAmountPress: {
+    flex: 1,
   },
-  acceptBtn: {
-    width: '48%',
-    paddingVertical: hp(1.4),
-    borderRadius: wp(3),
-    backgroundColor: Colors.sooprsblue,
-    alignItems: 'center',
-  },
-  ignoreText: {
-    fontSize: FSize.fs13,
-    color: Colors.grey,
+  maxAmountLine: {
+    flex: 1,
+    fontSize: FSize.fs14,
     fontWeight: '600',
+    color: '#475569',
   },
-  acceptText: {
-    fontSize: FSize.fs13,
-    color: Colors.white,
-    fontWeight: '700',
+  maxAmountValue: {
+    fontSize: FSize.fs16,
+    fontWeight: '800',
+    color: '#16A34A',
   },
   loadingContainer: {
     padding: wp(5),
     alignItems: 'center',
   },
   loadingText: {
-    fontSize: FSize.fs14,
+    fontSize: FSize.fs15,
     color: Colors.grey,
     marginTop: hp(1),
+    fontWeight: '600',
   },
   loadingMoreContainer: {
     padding: wp(5),
@@ -949,34 +1293,54 @@ headerDivider: {
     marginTop: hp(0.5),
   },
   emptyContainer: {
-    padding: wp(5),
+    padding: wp(6),
     alignItems: 'center',
+    marginTop: hp(1),
+  },
+  emptyIconWrap: {
+    width: wp(16),
+    height: wp(16),
+    borderRadius: wp(8),
+    backgroundColor: '#EEF2F7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: hp(1.2),
   },
   emptyText: {
-    fontSize: FSize.fs14,
-    color: Colors.grey,
+    fontSize: FSize.fs16,
+    color: '#374151',
+    fontWeight: '700',
+  },
+  emptySubText: {
+    fontSize: FSize.fs13,
+    color: '#9CA3AF',
+    marginTop: hp(0.4),
   },
   moreButton: {
-    marginTop: hp(0.5),
+    marginTop: hp(0.25),
     alignSelf: 'flex-start',
   },
   moreText: {
-    fontSize: FSize.fs12,
-    color: Colors.sooprsblue,
-    fontWeight: '600',
+    fontSize: FSize.fs14,
+    color: '#2563EB',
+    fontWeight: '700',
   },
   getContactBtn: {
-    width: '100%',
-    paddingVertical: hp(1.4),
-    borderRadius: wp(3),
-    backgroundColor: Colors.sooprsblue,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: hp(2),
+    justifyContent: 'center',
+    alignSelf: 'flex-end',
+    paddingVertical: hp(0.85),
+    paddingHorizontal: wp(3),
+    borderRadius: wp(2),
+    backgroundColor: '#2563EB',
+    flexShrink: 0,
+    gap: wp(0.4),
   },
   getContactText: {
     fontSize: FSize.fs13,
     color: Colors.white,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   modalOverlay: {
     flex: 1,
@@ -1073,13 +1437,5 @@ headerDivider: {
     fontSize: FSize.fs14,
     color: Colors.grey,
     marginTop: hp(2),
-  },
-  drawerIconContainer: {
-    // Icon is now on the left side
-  },
-  drawerIcon: {
-    width: wp(6),
-    height: wp(6),
-    tintColor: Colors.gray,
   },
 });

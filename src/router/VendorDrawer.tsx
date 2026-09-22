@@ -21,6 +21,7 @@ import AllCustomersScreen from '../Screen/Billing/AllCustomersScreen';
 import InvoicePreviewScreen from '../Screen/Billing/InvoicePreviewScreen';
 import VideoCallScreen from '../Screen/VideoCall/VideoCallScreen';
 import PackageDetailsScreen from '../Screen/Orders/PackageDetailsScreen';
+import LeadDetailsScreen from '../Screen/Leads/LeadDetailsScreen';
 
 const MainDrawer = createDrawerNavigator();
 const {width} = Dimensions.get('window');
@@ -48,6 +49,7 @@ const VendorStackNavigator = () => {
       <VendorStack.Screen name="CreateInvoiceScreen" component={CreateInvoiceScreen} />
       <VendorStack.Screen name="InvoicePreviewScreen" component={InvoicePreviewScreen} />
       <VendorStack.Screen name="PackageDetailsScreen" component={PackageDetailsScreen} />
+      <VendorStack.Screen name="LeadDetailsScreen" component={LeadDetailsScreen} />
       <VendorStack.Screen name="VideoCallScreen" component={VideoCallScreen} />
     </VendorStack.Navigator>
   );

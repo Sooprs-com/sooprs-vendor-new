@@ -12,7 +12,7 @@ const Colors = {
   sooprsblue: '#0077FF',
   sooprsblue2: '#70a8e9ff',
   successbackground: '#D4E3FC',
-  selectedBottomTab: '#F78000',
+  selectedBottomTab: '#0077FF',
   yellow:'#FFC107',
   sooprslight: '#DEE8FF',
   sooprsDark:'#00366B',

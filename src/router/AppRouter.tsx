@@ -22,6 +22,7 @@ import SubscriptionScreen from '../Screen/SubscriptionScreen/SubscriptionScreen'
 import WebView from '../Component/WebView';
 import SplashScreen from '../Screen/Splash/SplashScreen';
 import NotificationScreen from '../Screen/Notifications/NotificationScreen';
+import LeadDetailsScreen from '../Screen/Leads/LeadDetailsScreen';
 import ChatSupportHome from '../Screen/Support/ChatSupportHome';
 import ChatbotSupport from '../Screen/Support/ChatbotSupport';
 import CategorySelectionScreen from '../auth/CategorySelectionScreen';
@@ -115,6 +116,7 @@ const AuthenticationRouter = ({initialRoute}: {initialRoute?: string}) => {
            <Stack.Screen name="PackageDetailsScreen" component={PackageDetailsScreen} />
            <Stack.Screen name="VideoCallScreen" component={VideoCallScreen} />
            <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
+           <Stack.Screen name="LeadDetailsScreen" component={LeadDetailsScreen} />
       <Stack.Screen name="VendorDrawer" component={VendorDrawer} />
       <Stack.Screen name="BottomTab" component={BottomTab} />
       {/* <Stack.Screen name="ProfileSelection" component={ProfileSelection} />

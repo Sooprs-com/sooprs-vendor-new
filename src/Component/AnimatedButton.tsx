@@ -12,7 +12,6 @@ import LinearGradient from 'react-native-linear-gradient';
 import Colors from '../assets/commonCSS/Colors';
 import FSize from '../assets/commonCSS/FSize';
 import { hp, wp } from '../assets/commonCSS/GlobalCSS';
-import Images from '../assets/image';
 
 const AnimatedGradient = Animated.createAnimatedComponent(LinearGradient);
 
@@ -58,13 +57,14 @@ const AnimatedButton = ({
             }}
         >
 
-            <Image source={icon} style={{width: hp(1.9), height: hp(1.9),tintColor:"rgba(249, 203, 21, 1)"}}/>
+            <Image source={icon} style={styles.icon} />
             <Text style={[styles.text, textStyle]}>{title}</Text>
             {width > 0 && (
                 <AnimatedGradient
                     colors={gradientColors}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
+                    pointerEvents="none"
                     style={[
                         styles.overlay,
                         { width: width / 1.2 },
@@ -96,17 +96,23 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    icon: {
+        width: hp(2.1),
+        height: hp(2.1),
+        tintColor: 'rgba(249, 203, 21, 1)',
+        zIndex: 1,
+    },
     text: {
         color: Colors.white,
         fontSize: FSize.fs16,
-        fontWeight: '600',
+        fontWeight: '700',
         zIndex: 1,
     },
     overlay: {
         position: 'absolute',
         top: 0,
         bottom: 0,
-        opacity: 0.75,
+        opacity: 0.85,
     },
 });
 

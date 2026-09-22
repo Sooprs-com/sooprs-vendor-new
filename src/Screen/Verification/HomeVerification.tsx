@@ -294,7 +294,17 @@ const HomeVerificationScreen = () => {
                 const shouldTruncate = lineCount > 4 || description.length > 300;
 
                 return (
-                  <View key={leadId?.toString() || index.toString()} style={styles.reqCard}>
+                  <TouchableOpacity
+                    key={leadId?.toString() || index.toString()}
+                    style={styles.reqCard}
+                    activeOpacity={0.85}
+                    onPress={() =>
+                      (navigation as any).navigate('LeadDetailsScreen', {
+                        lead,
+                        contactLocked: true,
+                      })
+                    }
+                  >
                     <Text style={styles.reqTitle2}>
                       {lead.project_title || lead.projectTitle || 'Project Title'}
                     </Text>
@@ -314,27 +324,27 @@ const HomeVerificationScreen = () => {
                       </TouchableOpacity>
                     )}
                     
-                    <View style={styles.Desc}>
-                      <Text style={[styles.reqDesc, {marginTop: 10, fontWeight: '600', color: Colors.gray}]}>Max Amount: </Text>
-                      <Text style={styles.reqDate}>
-                        ₹{typeof maxBudget === 'number' ? maxBudget.toLocaleString('en-IN') : maxBudget}
-                      </Text>
+                    <View style={styles.reqCardFooter}>
+                      <View style={styles.Desc}>
+                        <Text style={[styles.reqDesc, {marginTop: 10, fontWeight: '600', color: Colors.gray}]}>Max Amount: </Text>
+                        <Text style={styles.reqDate}>
+                          ₹{typeof maxBudget === 'number' ? maxBudget.toLocaleString('en-IN') : maxBudget}
+                        </Text>
+                      </View>
+
+                      <TouchableOpacity
+                        style={[styles.getContactBtn, styles.getContactBtnDisabled]}
+                        disabled={true}
+                        activeOpacity={1}
+                      >
+                        <Text style={styles.getContactText}>Get Contact Details</Text>
+                      </TouchableOpacity>
                     </View>
-                   
-                    {/* Contact Button - Disabled */}
-                    <TouchableOpacity 
-                      style={[styles.getContactBtn, styles.getContactBtnDisabled]}
-                      disabled={true}
-                      activeOpacity={1}
-                    >
-                      <Text style={styles.getContactText}>Get Contact Details</Text>
-                    </TouchableOpacity>
-                    
-                    {/* Info text for disabled button */}
+
                     <Text style={styles.disabledInfoText}>
                       Complete your profile verification to contact leads
                     </Text>
-                  </View>
+                  </TouchableOpacity>
                 );
               })}
               {loadingMore && (
@@ -548,8 +558,15 @@ arrowIcon: {
     color: Colors.black,
   },
   Desc: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  reqCardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: wp(2),
   },
   reqDesc: {
     fontSize: FSize.fs14,
@@ -599,27 +616,31 @@ arrowIcon: {
     fontWeight: '600',
   },
   getContactBtn: {
-    width: '100%',
-    paddingVertical: hp(1.4),
-    borderRadius: wp(3),
-    backgroundColor: Colors.sooprsblue,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: hp(2),
+    justifyContent: 'center',
+    alignSelf: 'flex-end',
+    paddingVertical: hp(0.7),
+    paddingHorizontal: wp(2.6),
+    borderRadius: wp(2),
+    backgroundColor: Colors.sooprsblue,
+    flexShrink: 0,
+    marginTop: hp(1),
   },
   getContactBtnDisabled: {
     backgroundColor: Colors.grey,
     opacity: 0.6,
   },
   getContactText: {
-    fontSize: FSize.fs13,
+    fontSize: FSize.fs11,
     color: Colors.white,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   disabledInfoText: {
     fontSize: FSize.fs11,
     color: Colors.grey,
-    textAlign: 'center',
-    marginTop: hp(1),
+    textAlign: 'left',
+    marginTop: hp(0.8),
     fontStyle: 'italic',
   },
 });

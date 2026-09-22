@@ -29,6 +29,7 @@ const HomeFlowScreen = () => {
     </HomeFlow.Navigator>
   );
 };
+
 const BottomTab = () => {
   const Tab = createBottomTabNavigator();
   // const getUserDetails = useSelector(state => state?.getUserDetails);
@@ -53,6 +54,7 @@ const BottomTab = () => {
       name: 'Leads',
       component: Leads,
       icon: Images.leadsIcon,
+      label: 'My Leads',
     },
     {
       name: 'Packages',
@@ -105,8 +107,10 @@ const BottomTab = () => {
                 style={[styles.icon, isFocused && styles.focusedIcon]}
                 resizeMode="contain"
               />
-              <Text style={[styles.label, isFocused && styles.focusedLabel]}>
-                {route.name}
+              <Text
+                style={[styles.label, isFocused && styles.focusedLabel]}
+                numberOfLines={1}>
+                {tabConfigs[index]?.label || route.name}
               </Text>
             </TouchableOpacity>
           );
@@ -147,14 +151,14 @@ const styles = StyleSheet.create({
     tintColor: Colors.lightgrey2,
   },
   focusedIcon: {
-    tintColor: Colors.sooprsDark,
+    tintColor: Colors.sooprsblue,
   },
   activeBorder: {
     position: 'absolute',
     top: -hp(1.4),
     height: 3,
     width: '100%',
-    backgroundColor: Colors.sooprsDark,
+    backgroundColor: Colors.sooprsblue,
   },
   label: {
     fontSize: hp(1.5),
@@ -162,7 +166,7 @@ const styles = StyleSheet.create({
     marginTop: hp(0.5),
   },
   focusedLabel: {
-    color: Colors.sooprsDark,
+    color: Colors.sooprsblue,
     fontWeight: '600',
   },
 });

@@ -4,17 +4,19 @@ import {
   View,
   TouchableOpacity,
   Image,
-  SafeAreaView,
   ScrollView,
-  Alert,  
+  Alert,
   Platform,
   PermissionsAndroid,
   ActivityIndicator,
+  StatusBar,
 } from 'react-native';
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useCallback} from 'react';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {launchImageLibrary, ImagePickerResponse, MediaType} from 'react-native-image-picker';
 import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
+// @ts-ignore
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {hp, wp} from '../../assets/commonCSS/GlobalCSS';
 import Colors from '../../assets/commonCSS/Colors';
 import Images from '../../assets/image';
@@ -23,6 +25,18 @@ import {getDataWithToken, postDataWithToken} from '../../services/mobile-api';
 import {mobile_siteConfig} from '../../services/mobile-siteConfig';
 import {clearAllAsyncStorage} from '../../services/CommonFunction';
 import {useDispatch} from 'react-redux';
+
+type MenuIconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+
+type MenuItem = {
+  icon: MenuIconName;
+  iconColor: string;
+  iconBg: string;
+  title: string;
+  subtitle: string;
+  onPress: () => void;
+  danger?: boolean;
+};
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
@@ -48,15 +62,10 @@ const ProfileScreen = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              // Clear all AsyncStorage data
               await clearAllAsyncStorage();
-              
-              // Clear Redux store
               dispatch({
                 type: 'CLEAR_USER_DETAILS',
               });
-              
-              // Navigate to login screen
               (navigation as any).reset({
                 index: 0,
                 routes: [{name: 'EnterMobileNumber'}],
@@ -78,19 +87,14 @@ const ProfileScreen = () => {
       const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
       const data: any = await res.json();
       console.log('Vendor profile data in ProfileScreen:::::', data);
-      
+
       if (data?.success && data?.vendorDetail) {
-        // Update name
         if (data.vendorDetail.name) {
           setVendorName(data.vendorDetail.name);
         }
-        
-        // Update mobile number
         if (data.vendorDetail.mobile) {
           setVendorMobile(data.vendorDetail.mobile);
         }
-        
-        // Update profile image
         if (data.vendorDetail.image) {
           setVendorImage(data.vendorDetail.image);
         }
@@ -105,24 +109,22 @@ const ProfileScreen = () => {
   const requestStoragePermission = async (): Promise<boolean> => {
     if (Platform.OS === 'android') {
       if (Platform.Version >= 33) {
-        // Android 13+ (API 33+)
         const result = await request(PERMISSIONS.ANDROID.READ_MEDIA_IMAGES);
         return result === RESULTS.GRANTED;
       } else {
-        // Android 12 and below
         const result = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
         );
         return result === PermissionsAndroid.RESULTS.GRANTED;
       }
     }
-    return true; // iOS permissions are handled automatically
+    return true;
   };
 
   const pickProfileImage = async () => {
     try {
       const hasPermission = await requestStoragePermission();
-      
+
       if (!hasPermission) {
         Alert.alert(
           'Permission Required',
@@ -142,7 +144,7 @@ const ProfileScreen = () => {
         if (response.didCancel) {
           return;
         }
-        
+
         if (response.errorMessage) {
           Alert.alert('Error', response.errorMessage);
           return;
@@ -152,7 +154,6 @@ const ProfileScreen = () => {
           const imageUri = response.assets[0].uri;
           if (imageUri) {
             setSelectedImage(imageUri);
-            // Upload image immediately after selection
             await uploadProfileImage(imageUri);
           }
         }
@@ -166,12 +167,11 @@ const ProfileScreen = () => {
   const uploadProfileImage = async (imageUri: string) => {
     try {
       setUploading(true);
-      
-      // Create FormData
+
       const formData = new FormData();
       const imageFileName = imageUri.split('/').pop() || 'profile_image.jpg';
       const imageFileType = imageFileName.split('.').pop() || 'jpg';
-      
+
       formData.append('profile_image', {
         uri: Platform.OS === 'android' ? imageUri : imageUri.replace('file://', ''),
         type: `image/${imageFileType}`,
@@ -179,18 +179,14 @@ const ProfileScreen = () => {
       } as any);
 
       console.log('Uploading profile image...');
-      
-      // Use COMPLETE_PROFILE endpoint or create a new UPDATE_PROFILE endpoint
-      // For now, using COMPLETE_PROFILE as it might support image updates
+
       const result: any = await postDataWithToken(formData, mobile_siteConfig.COMPLETE_PROFILE);
       console.log('Profile image upload result:::::', result);
 
       if (result?.success === true || result?.status === 200) {
-        // Update local state with new image
         setVendorImage(imageUri);
         setSelectedImage(null);
         Alert.alert('Success', 'Profile image updated successfully');
-        // Refresh profile data
         await getVendorProfile();
       } else {
         Alert.alert('Error', result?.msg || result?.message || 'Failed to upload image');
@@ -208,230 +204,237 @@ const ProfileScreen = () => {
   useFocusEffect(
     useCallback(() => {
       getVendorProfile();
-    }, [])
+    }, []),
   );
 
-  const renderSectionItem = (
-    icon: any,
-    title: string,
-    subtitle: string,
-    onPress?: () => void,
-    iconStyle?: any,
-    showDivider: boolean = true,
-  ) => (
+  const renderMenuItem = (item: MenuItem, isLast: boolean) => (
     <TouchableOpacity
-      style={[styles.sectionItem, !showDivider && styles.sectionItemNoDivider]}
-      onPress={onPress}
-      activeOpacity={0.7}>
-      <View style={styles.sectionItemLeft}>
-        <View style={styles.iconContainer}>
-          <Image source={icon} style={[styles.sectionIcon, iconStyle]} />
-        </View>
-        <View style={styles.sectionTextContainer}>
-          <Text style={styles.sectionTitle}>{title}</Text>
-          <Text style={styles.sectionSubtitle}>{subtitle}</Text>
-        </View>
+      key={item.title}
+      style={[styles.menuItem, isLast && styles.menuItemLast]}
+      onPress={item.onPress}
+      activeOpacity={0.72}>
+      <View style={[styles.menuIconWrap, {backgroundColor: item.iconBg}]}>
+        <MaterialCommunityIcons name={item.icon} size={wp(5.6)} color={item.iconColor} />
       </View>
-      <Image source={Images.chevronRight} style={styles.chevronIcon} />
+      <View style={styles.menuTextWrap}>
+        <Text style={[styles.menuTitle, item.danger && styles.menuTitleDanger]}>{item.title}</Text>
+        {!!item.subtitle && (
+          <Text style={styles.menuSubtitle} numberOfLines={2}>
+            {item.subtitle}
+          </Text>
+        )}
+      </View>
+      <MaterialCommunityIcons
+        name="chevron-right"
+        size={wp(6)}
+        color={item.danger ? '#FCA5A5' : '#94A3B8'}
+      />
     </TouchableOpacity>
   );
 
+  const informationItems: MenuItem[] = [
+    {
+      icon: 'calendar-clock',
+      iconColor: '#2563EB',
+      iconBg: '#EEF4FF',
+      title: 'Available Slots',
+      subtitle: 'View and manage your consultation availability.',
+      onPress: () => (navigation as any).navigate('AvailableSlotsScreen'),
+    },
+    {
+      icon: 'wallet-outline',
+      iconColor: '#0EA5E9',
+      iconBg: '#E0F2FE',
+      title: 'Credit',
+      subtitle: 'Check your available credits and usage details.',
+      onPress: () => (navigation as any).navigate('AddCredits'),
+    },
+    {
+      icon: 'crown-outline',
+      iconColor: '#7C3AED',
+      iconBg: '#F3EEFF',
+      title: 'Subscription',
+      subtitle: 'Manage your active plans and renewals.',
+      onPress: () => (navigation as any).navigate('SubscriptionScreen'),
+    },
+    {
+      icon: 'headset',
+      iconColor: '#D97706',
+      iconBg: '#FFF6E8',
+      title: 'Support',
+      subtitle: 'Get help from our support team anytime.',
+      onPress: () => (navigation as any).navigate('ChatSupportHome'),
+    },
+  ];
+
+  const aboutItems: MenuItem[] = [
+    {
+      icon: 'shield-lock-outline',
+      iconColor: '#2563EB',
+      iconBg: '#EEF4FF',
+      title: 'Privacy Policy',
+      subtitle: 'Learn how we protect and use your data.',
+      onPress: () => (navigation as any).navigate('WebView', {header: 'Privacy Policy'}),
+    },
+    {
+      icon: 'file-document-outline',
+      iconColor: '#0F766E',
+      iconBg: '#ECFDF5',
+      title: 'Terms & Conditions',
+      subtitle: 'Understand the rules and guidelines of our platform.',
+      onPress: () => (navigation as any).navigate('WebView', {header: 'Term & Condition'}),
+    },
+    {
+      icon: 'cash-refund',
+      iconColor: '#EA580C',
+      iconBg: '#FFF7ED',
+      title: 'Refund Policy',
+      subtitle: 'Know how refunds work on our platform.',
+      onPress: () => (navigation as any).navigate('WebView', {header: 'Refund Policy'}),
+    },
+    {
+      icon: 'email-outline',
+      iconColor: '#7C3AED',
+      iconBg: '#F3EEFF',
+      title: 'Contact Us',
+      subtitle: 'Reach out for help or support anytime.',
+      onPress: () => (navigation as any).navigate('WebView', {header: 'Contact Us'}),
+    },
+    {
+      icon: 'help-circle-outline',
+      iconColor: '#0284C7',
+      iconBg: '#E0F2FE',
+      title: 'FAQ',
+      subtitle: 'Find quick answers to common questions.',
+      onPress: () => (navigation as any).navigate('WebView', {header: 'FAQ'}),
+    },
+  ];
+
+  const profileSource = selectedImage
+    ? {uri: selectedImage}
+    : vendorImage
+      ? {uri: vendorImage}
+      : Images.profileImage;
+
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="#FFFFFF"
+        translucent={Platform.OS === 'android'}
+      />
+
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+          activeOpacity={0.7}>
+          <Image source={Images.backArrow} style={styles.backIcon} />
+        </TouchableOpacity>
+        <View style={styles.headerTextWrap}>
+          <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={styles.headerSubtitle}>Manage your account</Text>
+        </View>
+        <View style={styles.headerSpacer} />
+      </View>
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}>
-        {/* Header with Back Arrow */}
-        <View style={styles.header}>
+        <View style={styles.heroCard}>
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}>
-            <Image source={Images.backArrow} style={styles.backArrowIcon} />
+            style={styles.editIconBtn}
+            onPress={() => (navigation as any).navigate('EditProfileScreen')}
+            disabled={uploading}
+            activeOpacity={0.8}>
+            <MaterialCommunityIcons name="pencil-outline" size={wp(4.6)} color={Colors.sooprsblue} />
           </TouchableOpacity>
-        </View>
 
-        {/* Profile Section */}
-        <View style={styles.profileSection}>
-          {/* Profile Picture with Camera Overlay */}
-          <View style={styles.profileImageContainer}>
-            {uploading ? (
-              <View style={[styles.profileImage, styles.loadingContainer]}>
-                <ActivityIndicator size="large" color={Colors.sooprsblue} />
+          <View style={styles.heroTopRow}>
+            <View style={styles.avatarWrap}>
+              {uploading ? (
+                <View style={[styles.avatar, styles.avatarLoading]}>
+                  <ActivityIndicator size="large" color={Colors.sooprsblue} />
+                </View>
+              ) : (
+                <Image source={profileSource} style={styles.avatar} />
+              )}
+              <TouchableOpacity
+                style={styles.cameraBtn}
+                onPress={pickProfileImage}
+                disabled={uploading}
+                activeOpacity={0.8}>
+                <MaterialCommunityIcons name="camera" size={wp(4.4)} color={Colors.white} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.heroInfo}>
+              <Text style={styles.userName} numberOfLines={2}>
+                {vendorName}
+              </Text>
+              <View style={styles.phoneRow}>
+                <MaterialCommunityIcons name="phone-outline" size={wp(4.2)} color="#64748B" />
+                <Text style={styles.phoneNumber}>{vendorMobile}</Text>
               </View>
-            ) : (
-              <Image
-                source={selectedImage ? {uri: selectedImage} : (vendorImage ? {uri: vendorImage} : Images.profileImage)}
-                style={styles.profileImage}
-              />
-            )}
-            {/* <TouchableOpacity 
-              style={styles.cameraIconContainer}
-              onPress={pickProfileImage}
-              disabled={uploading}>
-              <Image source={Images.imageIcon} style={styles.cameraIcon} />
-            </TouchableOpacity> */}
-            {/* Edit Profile Button */}
-            <TouchableOpacity 
-              style={styles.editIconContainer}
-              onPress={() => (navigation as any).navigate('EditProfileScreen')}
-              disabled={uploading}>
-              <Image source={Images.editButton} style={styles.editIcon} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Name */}
-          <Text style={styles.userName}>{vendorName}</Text>
-
-          {/* Phone Number */}
-          <Text style={styles.phoneNumber}>{vendorMobile}</Text>
-
-          {/* Verified Badge */}
-          <View style={styles.verifiedBadge}>
-            <View style={styles.checkIconContainer}>
-              <Image source={Images.tickIcon} style={styles.checkIcon} />
+              <View style={styles.verifiedBadge}>
+                <MaterialCommunityIcons name="check-decagram" size={wp(4.2)} color="#16A34A" />
+                <Text style={styles.verifiedText}>Verified Partner</Text>
+              </View>
             </View>
-            <Text style={styles.verifiedText}>Verified</Text>
           </View>
         </View>
-        
 
-        {/* Stats Cards Row */}
-        {/* <View style={styles.statsRow}>
-         
-          <View style={styles.statCard}>
-            <Image source={Images.starIcon} style={[styles.statIcon, {tintColor: '#FFD700'}]} />
-            <View style={styles.statTextContainer}>
-              <Text style={styles.statValue}>4.9</Text>
-              <Text style={styles.statLabel} numberOfLines={1}>Vendor Rating</Text>
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIcon}>
+              <MaterialCommunityIcons name="account-cog-outline" size={wp(5.2)} color="#2563EB" />
             </View>
+            <Text style={styles.sectionTitle}>Your Information</Text>
           </View>
-
-         
-          <View style={styles.statCard}>
-            <Image source={Images.CalenderIcon} style={[styles.statIcon, {tintColor: Colors.sooprsblue}]} />
-            <View style={styles.statTextContainer}>
-              <Text style={styles.statValue}>2.5 Yrs</Text>
-              <Text style={styles.statLabel} numberOfLines={1}>Experience</Text>
-            </View>
-          </View>
-
-         
-          <View style={styles.statCard}>
-            <Image source={Images.projectsIcon} style={[styles.statIcon, {tintColor: '#9C27B0'}]} />
-            <View style={styles.statTextContainer}>
-              <Text style={styles.statValue}>15</Text>
-              <Text style={styles.statLabel} numberOfLines={1}>Total Orders</Text>
-            </View>
-          </View>
-        </View> */}
-
-        {/* Your Information Section */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionHeader}>Your Information</Text>
-          {renderSectionItem(
-            Images.CalenderIcon,
-            'Available Slots',
-            'View and manage your consultation availability.',
-            () => (navigation as any).navigate('AvailableSlotsScreen'),
-            undefined,
-            false,
-          )}
-          {renderSectionItem(
-            Images.creditIcon,
-            'Credit',
-            'Check your available credits and usage details.',
-            () => navigation.navigate('AddCredits'),
-            styles.creditIconSmall,
-            false,
-          )}
-          {renderSectionItem(
-            Images.locationIcon,
-            'Subsciption',
-            'Manage your active plans and renewals.',
-            () => navigation.navigate('SubscriptionScreen'),
-            undefined,
-            false,
-          )}
-          {renderSectionItem(
-            Images.support1,
-            'Support',
-            'Get help from our support team anytime.',
-            () => (navigation as any).navigate('ChatSupportHome'),
+          {informationItems.map((item, index) =>
+            renderMenuItem(item, index === informationItems.length - 1),
           )}
         </View>
 
-        {/* Payment and coupons Section */}
-        {/* <TouchableOpacity 
-        onPress={() => navigation.navigate('AddCredits')}
-        style={styles.sectionContainer}>
-          <Text style={styles.sectionHeader}>Payment and coupons</Text>
-          {renderSectionItem(
-            Images.walletIcon,
-            'Wallet',
-            'Manage your Wallet here.',
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <View style={[styles.sectionIcon, {backgroundColor: '#ECFDF5'}]}>
+              <MaterialCommunityIcons name="information-outline" size={wp(5.2)} color="#0F766E" />
+            </View>
+            <Text style={styles.sectionTitle}>About Sooprs</Text>
+          </View>
+          {aboutItems.map((item, index) =>
+            renderMenuItem(item, index === aboutItems.length - 1),
           )}
-        </TouchableOpacity> */}
-
-        {/* Other Information Section */}
-        <View style={[styles.sectionContainer, styles.sectionContainerNoTopMargin]}>
-          <Text style={styles.sectionHeader}>About Sooprs</Text>
-          {renderSectionItem(
-            Images.referIcon,
-            'Privacy Policy',
-            'Learn how we protect and use your data.',
-            () => navigation.navigate('WebView', {header: 'Privacy Policy'}),
-            undefined,
-            false,
-          )}
-          {renderSectionItem(
-            Images.favoriteIcon,
-            'Terms & Conditions',
-            'Understand the rules and guidelines of our platform.',
-            () => navigation.navigate('WebView', {header: 'Term & Condition'}),
-            undefined,
-            false,
-          )}
-          {renderSectionItem(
-            Images.shieldIcon,
-            'Refund Policy',
-            'Know your refund work on our platform.',
-            () => navigation.navigate('WebView', {header: 'Refund Policy'}),
-            undefined,
-            false,
-          )}
-          {renderSectionItem(
-            Images.contactus,
-            'Contact Us',
-            'Reach out for help or support anytime.',
-            () => navigation.navigate('WebView', {header: 'Contact Us'}),
-            undefined,
-            false,
-          )}
-          {renderSectionItem(
-            Images.faqIcone,
-            'FAQ',
-            'Find quick answers to common questions.',
-            () => navigation.navigate('WebView', {header: 'FAQ'}),
-            undefined,
-            false,
-          )}
-          <View style={styles.logoutDivider} />
-          {renderSectionItem(
-            Images.logoutIcon,
-            'Log out',
-            '',
-            handleLogout,
-          )}
-          <View style={styles.logoutDivider} />
         </View>
 
-        {/* Bottom Branding */}
+        <View style={styles.sectionCard}>
+          {renderMenuItem(
+            {
+              icon: 'logout',
+              iconColor: '#DC2626',
+              iconBg: '#FEF2F2',
+              title: 'Log out',
+              subtitle: 'Sign out from this device',
+              onPress: handleLogout,
+              danger: true,
+            },
+            true,
+          )}
+        </View>
+
         <View style={styles.brandingContainer}>
           <Text style={styles.brandingText}>Sooprs</Text>
           <Text style={styles.versionText}>v4.131.3</Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+
+      {loading && !vendorName ? (
+        <View style={styles.fullLoader}>
+          <ActivityIndicator size="large" color={Colors.sooprsblue} />
+        </View>
+      ) : null}
+    </View>
   );
 };
 
@@ -440,257 +443,243 @@ export default ProfileScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
-    paddingTop: hp(2),
+    backgroundColor: '#F8FAFC',
   },
-
-  scrollContent: {
-    paddingBottom: hp(3),
-  },
-
   header: {
-    paddingHorizontal: wp(5),
-    paddingTop: hp(2),
-    paddingBottom: hp(1),
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: wp(2.5),
+    paddingTop:
+      Platform.OS === 'ios'
+        ? hp(6.5)
+        : (StatusBar.currentHeight || hp(3)) + hp(1.2),
+    paddingBottom: hp(1.4),
+    backgroundColor: Colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
-
   backButton: {
+    padding: wp(2),
+  },
+  backIcon: {
+    width: wp(8),
+    height: wp(8),
+    tintColor: '#0F172A',
+  },
+  headerTextWrap: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: FSize.fs22,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  headerSubtitle: {
+    marginTop: hp(0.12),
+    fontSize: FSize.fs14,
+    color: '#94A3B8',
+    fontWeight: '600',
+  },
+  headerSpacer: {
     width: wp(10),
-    height: wp(10),
-    justifyContent: 'center',
   },
-
-  backArrowIcon: {
-    width: wp(9),
-    height: wp(9),
-    tintColor: Colors.black,
+  scrollContent: {
+    paddingHorizontal: wp(4),
+    paddingTop: hp(1.8),
+    paddingBottom: hp(4),
   },
-  
-  profileSection: {
-    alignItems: 'center',
-    paddingVertical: hp(2),
-  },
-  profileImageContainer: {
+  heroCard: {
+    backgroundColor: Colors.white,
+    borderRadius: wp(4.5),
+    padding: wp(4.4),
+    paddingRight: wp(14),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     position: 'relative',
-    marginBottom: hp(1.5),
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0F172A',
+        shadowOffset: {width: 0, height: 6},
+        shadowOpacity: 0.06,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
-  profileImage: {
-    width: wp(25),
-    height: wp(25),
-    borderRadius: wp(12.5),
+  heroTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  loadingContainer: {
+  avatarWrap: {
+    position: 'relative',
+    marginRight: wp(3.6),
+  },
+  avatar: {
+    width: wp(24),
+    height: wp(24),
+    borderRadius: wp(12),
+    backgroundColor: '#EEF4FF',
+    borderWidth: 3,
+    borderColor: '#DBEAFE',
+  },
+  avatarLoading: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.lightgrey1,
   },
-  cameraIconContainer: {
+  cameraBtn: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: wp(8),
-    height: wp(8),
-    borderRadius: wp(4),
+    right: -wp(0.6),
+    bottom: -wp(0.4),
+    width: wp(8.4),
+    height: wp(8.4),
+    borderRadius: wp(4.2),
     backgroundColor: Colors.sooprsblue,
-    justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
+    justifyContent: 'center',
+    borderWidth: 2.5,
     borderColor: Colors.white,
   },
-  cameraIcon: {
-    width: wp(8),
-    height: wp(8),
-    // tintColor: Colors.,
-    resizeMode: 'contain',
-  },
-  editIconContainer: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: wp(8),
-    height: wp(8),
-    borderRadius: wp(4),
-    backgroundColor: Colors.sooprsblue,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: Colors.white,
-  },
-  editIcon: {
-    width: wp(5),
-    height: wp(5),
-    // tintColor: Colors.white,
-    resizeMode: 'contain',
+  heroInfo: {
+    flex: 1,
   },
   userName: {
-    fontSize: FSize.fs20,
-    fontWeight: '700',
-    color: Colors.black,
-    marginTop: hp(1),
+    fontSize: FSize.fs22,
+    fontWeight: '800',
+    color: '#0F172A',
+    lineHeight: hp(3.2),
+  },
+  phoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: hp(0.55),
+    gap: wp(1.2),
   },
   phoneNumber: {
-    fontSize: FSize.fs14,
-    color: Colors.grey,
-    marginTop: hp(0.5),
+    fontSize: FSize.fs16,
+    fontWeight: '600',
+    color: '#475569',
   },
   verifiedBadge: {
+    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: wp(4),
-    paddingVertical: hp(0.6),
-    borderRadius: wp(10),
-    backgroundColor: Colors.lightgreen,
-    marginTop: hp(1),
-  },
-  checkIconContainer: {
-    width: wp(5),
-    height: wp(5),
-    borderRadius: wp(3),
-    backgroundColor: Colors.lightgreen,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: wp(1.5),
-  },
-  checkIcon: {
-    width: wp(3),
-    height: wp(3),
-    tintColor: '#4CAF50',
+    marginTop: hp(0.9),
+    backgroundColor: '#ECFDF5',
+    borderRadius: wp(5),
+    paddingHorizontal: wp(2.6),
+    paddingVertical: hp(0.45),
+    gap: wp(1),
   },
   verifiedText: {
-    fontSize: FSize.fs12,
-    fontWeight: '600',
-    color: '#4CAF50',
+    fontSize: FSize.fs14,
+    fontWeight: '700',
+    color: '#16A34A',
   },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: wp(5),
-    marginTop: hp(3),
-    marginBottom: hp(1),
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: Colors.white,
-    borderRadius: wp(3),
-    paddingVertical: hp(1.7),
-    paddingHorizontal: wp(3),
-    flexDirection: 'row',
+  editIconBtn: {
+    position: 'absolute',
+    top: wp(3.2),
+    right: wp(3.2),
+    width: wp(9.5),
+    height: wp(9.5),
+    borderRadius: wp(2.6),
+    backgroundColor: '#EEF4FF',
+    borderWidth: 1.5,
+    borderColor: '#BFDBFE',
     alignItems: 'center',
-    marginHorizontal: wp(0.5),
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  sectionCard: {
+    backgroundColor: Colors.white,
+    borderRadius: wp(4.5),
+    paddingHorizontal: wp(3.6),
+    paddingTop: hp(1.5),
+    paddingBottom: hp(0.6),
+    marginTop: hp(1.7),
     borderWidth: 1,
-    borderColor: "#f1f1f1",
-  },
-  statIcon: {
-    width: wp(6),
-    height: wp(6),
-    marginRight: wp(2),
-  },
-  statTextContainer: {
-    flex: 1,
-    flexShrink: 1,
-  },
-  statValue: {
-    fontSize: FSize.fs16,
-    fontWeight: '600',
-    color: Colors.black,
-    marginBottom: hp(0.3),
-  },
-  statLabel: {
-    fontSize: FSize.fs11,
-    color: Colors.grey,
-    fontWeight: '500',
-    flexWrap: 'nowrap',
-  },
-  sectionContainer: {
-    marginTop: hp(2),
-    paddingHorizontal: wp(5),
-  },
-  sectionContainerNoTopMargin: {
-    marginTop: 0,
-    paddingTop: 0,
+    borderColor: '#E2E8F0',
   },
   sectionHeader: {
-    fontSize: FSize.fs16,
-    fontWeight: '600',
-    color: Colors.black,
-    marginBottom: hp(1),
-    marginTop: hp(1),
-  },
-  sectionItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: hp(1.5),
-    paddingHorizontal: wp(0.5),
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.lightgrey2,
-    overflow: 'visible',
-  },
-  sectionItemNoDivider: {
-    borderBottomWidth: 0,
-  },
-  logoutDivider: {
-    height: 1,
-    backgroundColor: Colors.lightgrey2,
-  },
-  sectionItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-    overflow: 'visible',
-  },
-  iconContainer: {
-    width: wp(7),
-    height: wp(7),
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: wp(3),
-    overflow: 'visible',
+    marginBottom: hp(0.6),
+    paddingHorizontal: wp(0.6),
   },
   sectionIcon: {
-    width: wp(6),
-    height: wp(6),
-    tintColor: Colors.grey,
-    resizeMode: 'contain',
-  },
-  creditIconSmall: {
-    width: wp(4.5),
-    height: wp(4.5),
-    resizeMode: 'contain',
-  },
-  sectionTextContainer: {
-    flex: 1,
+    width: wp(9.5),
+    height: wp(9.5),
+    borderRadius: wp(2.6),
+    backgroundColor: '#EEF4FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: wp(2.4),
   },
   sectionTitle: {
+    fontSize: FSize.fs18,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: hp(1.55),
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  menuItemLast: {
+    borderBottomWidth: 0,
+  },
+  menuIconWrap: {
+    width: wp(11.5),
+    height: wp(11.5),
+    borderRadius: wp(3),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: wp(3),
+  },
+  menuTextWrap: {
+    flex: 1,
+    paddingRight: wp(2),
+  },
+  menuTitle: {
+    fontSize: FSize.fs16,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  menuTitleDanger: {
+    color: '#DC2626',
+  },
+  menuSubtitle: {
+    marginTop: hp(0.25),
     fontSize: FSize.fs14,
-    fontWeight: '600',
-    color: Colors.black,
-    marginBottom: hp(0.3),
-  },
-  sectionSubtitle: {
-    fontSize: FSize.fs12,
-    color: Colors.grey,
-  },
-  chevronIcon: {
-    width: wp(5),
-    height: wp(5),
-    tintColor: Colors.lightgrey2,
+    fontWeight: '500',
+    color: '#64748B',
+    lineHeight: hp(2.3),
   },
   brandingContainer: {
     alignItems: 'center',
-    marginTop: hp(4),
-    marginBottom: hp(2),
+    marginTop: hp(3.4),
+    marginBottom: hp(1),
   },
   brandingText: {
-    fontSize: FSize.fs30,
-    fontWeight: '400',
-    color: Colors.lightgrey2,
-    opacity: 0.5,
+    fontSize: FSize.fs28,
+    fontWeight: '700',
+    color: '#CBD5E1',
+    letterSpacing: 0.4,
   },
   versionText: {
-    fontSize: FSize.fs12,
-    color: Colors.grey,
-    marginTop: hp(0.5),
+    fontSize: FSize.fs14,
+    fontWeight: '600',
+    color: '#94A3B8',
+    marginTop: hp(0.3),
+  },
+  fullLoader: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(248,250,252,0.5)',
   },
 });
-
