@@ -392,10 +392,6 @@ const AddPackagesScreen = ({route}: any) => {
         Alert.alert('Error', 'Please enter base price');
         return;
       }
-      if (!location1.trim()) {
-        Alert.alert('Error', 'Please enter location 1');
-        return;
-      }
       if (!categoryId) {
         Alert.alert('Error', 'Category ID not found. Please try again.');
         setIsSubmitting(false);
@@ -480,7 +476,7 @@ const AddPackagesScreen = ({route}: any) => {
       formData.append('vendor_id', vendorId);
       formData.append('base_price', basePrice.trim());
       formData.append('discount_price', discountPrice.trim() || '0');
-      formData.append('location1', location1.trim());
+      formData.append('location1', location1.trim() || '');
       formData.append('location2', location2.trim() || '');
       formData.append('status', '1');
       formData.append(
@@ -779,7 +775,7 @@ const AddPackagesScreen = ({route}: any) => {
         {/* Location 1 & Location 2 */}
         <View style={styles.rowContainer}>
           <View style={styles.colContainer}>
-            <Text style={styles.label}>Location 1</Text>
+            <Text style={styles.label}>Location 1 (Optional)</Text>
             <TextInput
               style={styles.colInput}
               placeholder="e.g. Rishikesh"
@@ -789,7 +785,7 @@ const AddPackagesScreen = ({route}: any) => {
             />
           </View>
           <View style={styles.colContainer}>
-            <Text style={styles.label}>Location 2</Text>
+            <Text style={styles.label}>Location 2 (Optional)</Text>
             <TextInput
               style={styles.colInput}
               placeholder="e.g. Rishikesh"
@@ -1161,7 +1157,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   thumbnailContainer: {
-    width: '35%',
     alignItems: 'center',
     marginRight: wp(3),
   },
@@ -1178,13 +1173,13 @@ const styles = StyleSheet.create({
     paddingRight: wp(2),
   },
   defaultImageSlot: {
-    width: wp(20),
+    width: wp(22),
     marginRight: wp(2),
     alignItems: 'center',
     flexShrink: 0,
   },
   uploadSlot: {
-    width: '100%',
+    width: wp(22),
     alignItems: 'center',
   },
   uploadSlotActions: {

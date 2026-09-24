@@ -6,25 +6,31 @@ import {
   TouchableOpacity,
   Image,
   SafeAreaView,
-  Alert,
   StatusBar,
   Platform,
   ActivityIndicator,
 } from 'react-native';
 import React, {useCallback, useMemo, useState} from 'react';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
-// @ts-ignore
-import Clipboard from '@react-native-clipboard/clipboard';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Toast from 'react-native-toast-message';
 import {hp, wp} from '../../assets/commonCSS/GlobalCSS';
 import Colors from '../../assets/commonCSS/Colors';
 import Images from '../../assets/image';
 import FSize from '../../assets/commonCSS/FSize';
 import {getDataWithToken} from '../../services/mobile-api';
 import {mobile_siteConfig} from '../../services/mobile-siteConfig';
-// import {AGORA_CHANNEL_NAME} from '../VideoCall/agoraConfig';
+import {healthVideoApi, HealthVideoApiError} from '../../services/healthVideoApi';
+import {useVendorCall} from '../../context/VendorCallContext';
+import {HealthAppointment} from '../../types/vendorCall';
+import {
+  canShowJoinNowForBooking,
+  getAppointmentId,
+  resolveJoinAppointmentForOrder,
+} from '../../services/bookingJoinHelper';
 
-type TabKey = 'ONGOING' | 'COMPLETED' | 'PENDING' | 'CANCELLED';
+type TabKey = 'ONGOING' | 'COMPLETED' | 'UNPAID' | 'CANCELLED';
 
 interface ApiOrder {
   order_id: number;
@@ -42,6 +48,11 @@ interface ApiOrder {
   order_status: 'CONFIRMED' | 'COMPLETED' | 'PENDING' | 'CANCELLED';
   payment_status: string;
   order_created_at: string;
+  appointment_id?: number;
+  appointmentId?: number;
+  can_join?: boolean;
+  canJoin?: boolean;
+  window?: {canJoin?: boolean; [key: string]: any};
   user_details: {
     name: string;
     email: string;
@@ -63,11 +74,19 @@ interface ApiOrder {
     end_date: string | null;
     trip_type: string;
   };
+  [key: string]: any;
+}
+
+function sanitizeToken(value: string | null) {
+  if (!value) {
+    return null;
+  }
+  return value.replace(/^"+|"+$/g, '').trim();
 }
 
 const TABS: {key: TabKey; label: string}[] = [
   {key: 'ONGOING', label: 'Ongoing'},
-  {key: 'PENDING', label: 'Pending'},
+  {key: 'UNPAID', label: 'Unpaid'},
   {key: 'COMPLETED', label: 'Completed'},
   {key: 'CANCELLED', label: 'Cancelled'},
 ];
@@ -90,8 +109,8 @@ const getEmptyMeta = (tab: TabKey) => {
   switch (tab) {
     case 'ONGOING':
       return {icon: 'progress-clock', title: 'No ongoing orders', subtitle: 'Confirmed bookings will appear here'};
-    case 'PENDING':
-      return {icon: 'clock-outline', title: 'No pending orders', subtitle: 'Awaiting confirmation will show up here'};
+    case 'UNPAID':
+      return {icon: 'cash-remove', title: 'No unpaid orders', subtitle: 'Orders awaiting payment will show up here'};
     case 'COMPLETED':
       return {icon: 'check-decagram-outline', title: 'No completed orders', subtitle: 'Finished bookings will be listed here'};
     default:
@@ -101,20 +120,37 @@ const getEmptyMeta = (tab: TabKey) => {
 
 const Order = () => {
   const navigation = useNavigation();
+  const {joinCall} = useVendorCall();
   const [activeTab, setActiveTab] = useState<TabKey>('ONGOING');
   const [allOrders, setAllOrders] = useState<ApiOrder[]>([]);
+  const [appointments, setAppointments] = useState<HealthAppointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [joiningOrderId, setJoiningOrderId] = useState<number | null>(null);
 
   const getAllOrders = async () => {
     try {
       setLoading(true);
-      const res: any = await getDataWithToken({}, mobile_siteConfig.GET_ALL_ORDERS);
-      const data: any = await res.json();
+      const rawToken = await AsyncStorage.getItem(
+        mobile_siteConfig.MOB_ACCESS_TOKEN_KEY,
+      );
+      const token = sanitizeToken(rawToken);
+
+      const [ordersRes, appointmentsRes] = await Promise.all([
+        getDataWithToken({}, mobile_siteConfig.GET_ALL_ORDERS),
+        token
+          ? healthVideoApi.listAppointments(token).catch(() => null)
+          : Promise.resolve(null),
+      ]);
+
+      const data: any = await (ordersRes as any).json();
       if (data?.success && data?.data) {
         setAllOrders(data.data);
       } else {
         setAllOrders([]);
       }
+
+      const list = (appointmentsRes?.data || appointmentsRes || []) as HealthAppointment[];
+      setAppointments(Array.isArray(list) ? list : []);
     } catch (err) {
       console.log('error in all orders', err);
       setAllOrders([]);
@@ -133,7 +169,7 @@ const Order = () => {
     () => ({
       ONGOING: allOrders.filter(order => order.order_status === 'CONFIRMED').length,
       COMPLETED: allOrders.filter(order => order.order_status === 'COMPLETED').length,
-      PENDING: allOrders.filter(order => order.order_status === 'PENDING').length,
+      UNPAID: allOrders.filter(order => order.order_status === 'PENDING').length,
       CANCELLED: allOrders.filter(order => order.order_status === 'CANCELLED').length,
     }),
     [allOrders],
@@ -145,7 +181,7 @@ const Order = () => {
         return allOrders.filter(order => order.order_status === 'CONFIRMED');
       case 'COMPLETED':
         return allOrders.filter(order => order.order_status === 'COMPLETED');
-      case 'PENDING':
+      case 'UNPAID':
         return allOrders.filter(order => order.order_status === 'PENDING');
       case 'CANCELLED':
         return allOrders.filter(order => order.order_status === 'CANCELLED');
@@ -177,11 +213,6 @@ const Order = () => {
     })}`;
   };
 
-  const copyToClipboard = (text: string, label: string) => {
-    Clipboard.setString(text);
-    Alert.alert('Copied', `${label} copied to clipboard`);
-  };
-
   const calculateDiscount = (packagePrice: number, couponPrice: number, finalAmount: number) => {
     if (couponPrice > 0) {
       return packagePrice - finalAmount;
@@ -196,6 +227,66 @@ const Order = () => {
   //     uid: 2,
   //   });
   // };
+
+  const handleJoinNow = async (order: ApiOrder) => {
+    if (joiningOrderId) {
+      return;
+    }
+    const linked = resolveJoinAppointmentForOrder(order, appointments);
+    const appointmentId = getAppointmentId(linked);
+    if (!appointmentId) {
+      Toast.show({
+        type: 'info',
+        text1: 'Join not available',
+        text2: 'No open consultation linked to this booking',
+      });
+      return;
+    }
+
+    setJoiningOrderId(order.order_id);
+    try {
+      const rawToken = await AsyncStorage.getItem(
+        mobile_siteConfig.MOB_ACCESS_TOKEN_KEY,
+      );
+      const token = sanitizeToken(rawToken);
+      if (token) {
+        try {
+          const detail = await healthVideoApi.getAppointment(token, appointmentId);
+          const detailData = (detail?.data || detail) as HealthAppointment;
+          if (detailData?.window?.canJoin === false) {
+            Toast.show({
+              type: 'info',
+              text1: detailData.window?.after
+                ? 'Meeting time ended'
+                : 'Meeting not started',
+              text2: detailData.window?.after
+                ? 'Join is no longer available'
+                : 'Window is not open yet',
+            });
+            return;
+          }
+        } catch {
+          // Fall through — join-room enforces window.
+        }
+      }
+
+      await joinCall(appointmentId);
+    } catch (error: any) {
+      const code = error instanceof HealthVideoApiError ? error.code : undefined;
+      Toast.show({
+        type: 'error',
+        text1:
+          code === 'JOIN_NOT_OPEN'
+            ? 'Meeting not started'
+            : code === 'JOIN_CLOSED'
+              ? 'Meeting time ended'
+              : 'Join failed',
+        text2: error?.message || 'Could not join consultation',
+      });
+    } finally {
+      setJoiningOrderId(null);
+    }
+  };
 
   const renderOrderCard = (order: ApiOrder) => {
     const discountAmount = calculateDiscount(
@@ -213,35 +304,32 @@ const Order = () => {
       '';
     const pickup = order.trip_details?.pickup_location;
     const drop = order.trip_details?.drop_location;
+    const linkedAppointment = resolveJoinAppointmentForOrder(order, appointments);
+    const showJoinNow = canShowJoinNowForBooking(order, linkedAppointment);
+
+    const openOrderDetails = () =>
+      (navigation as any).navigate('PackageDetailsScreen', {order_id: order.order_id});
 
     return (
-      <View key={order.order_id.toString()} style={styles.orderCard}>
+      <TouchableOpacity
+        key={order.order_id.toString()}
+        style={styles.orderCard}
+        activeOpacity={0.9}
+        onPress={openOrderDetails}>
         <View style={styles.orderHeader}>
-          <TouchableOpacity
-            style={styles.orderIdChip}
-            activeOpacity={0.8}
-            onPress={() => copyToClipboard(order.order_id_generated, 'Order ID')}>
-            <MaterialCommunityIcons name="receipt-text-outline" size={wp(4.2)} color={Colors.sooprsblue} />
-            <Text style={styles.orderIdText} numberOfLines={1}>
-              {order.order_id_generated}
-            </Text>
-            <MaterialCommunityIcons name="content-copy" size={wp(3.8)} color="#94A3B8" />
-          </TouchableOpacity>
-
+          <Text style={styles.packageTitle} numberOfLines={2}>
+            {order.package_name}
+          </Text>
           <View style={[styles.paymentStatusBadge, {backgroundColor: payment.bg}]}>
             <View style={[styles.statusDot, {backgroundColor: payment.dot}]} />
             <Text style={[styles.paymentStatusText, {color: payment.text}]}>{payment.label}</Text>
           </View>
         </View>
 
-        <Text style={styles.packageTitle} numberOfLines={2}>
-          {order.package_name}
-        </Text>
-
         <View style={styles.metaRow}>
           {customerName ? (
             <View style={styles.metaItem}>
-              <MaterialCommunityIcons name="account-outline" size={wp(4.2)} color="#64748B" />
+              <MaterialCommunityIcons name="account-outline" size={wp(4.8)} color="#64748B" />
               <Text style={styles.metaText} numberOfLines={1}>
                 {customerName}
               </Text>
@@ -249,7 +337,7 @@ const Order = () => {
           ) : null}
           {order.order_created_at ? (
             <View style={styles.metaItem}>
-              <MaterialCommunityIcons name="calendar-clock" size={wp(4.2)} color="#64748B" />
+              <MaterialCommunityIcons name="calendar-clock" size={wp(4.8)} color="#64748B" />
               <Text style={styles.metaText} numberOfLines={1}>
                 {formatDateTime(order.order_created_at)}
               </Text>
@@ -259,7 +347,7 @@ const Order = () => {
 
         {pickup && drop ? (
           <View style={styles.routeChip}>
-            <MaterialCommunityIcons name="map-marker-path" size={wp(4.2)} color="#3B82F6" />
+            <MaterialCommunityIcons name="map-marker-path" size={wp(4.8)} color="#3B82F6" />
             <Text style={styles.routeText} numberOfLines={1}>
               {pickup} → {drop}
             </Text>
@@ -267,22 +355,18 @@ const Order = () => {
         ) : null}
 
         <View style={styles.pricingBox}>
-          <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Package price</Text>
-            <Text style={styles.priceValue}>{formatPrice(order.package_price)}</Text>
-          </View>
-
           {hasCoupon ? (
-            <View style={styles.couponRow}>
-              <View style={styles.couponCodeContainer}>
-                <MaterialCommunityIcons name="ticket-percent-outline" size={wp(4)} color={Colors.sooprsblue} />
-                <Text style={styles.couponCodeText}>{order.coupon_code}</Text>
+            <>
+              <View style={styles.couponRow}>
+                <View style={styles.couponCodeContainer}>
+                  <MaterialCommunityIcons name="ticket-percent-outline" size={wp(4.6)} color={Colors.sooprsblue} />
+                  <Text style={styles.couponCodeText}>{order.coupon_code}</Text>
+                </View>
+                <Text style={styles.discountAmount}>- {formatPrice(discountAmount)}</Text>
               </View>
-              <Text style={styles.discountAmount}>- {formatPrice(discountAmount)}</Text>
-            </View>
+              <View style={styles.pricingDivider} />
+            </>
           ) : null}
-
-          <View style={styles.pricingDivider} />
 
           <View style={styles.priceRow}>
             <Text style={styles.finalAmountLabel}>Final amount</Text>
@@ -297,38 +381,31 @@ const Order = () => {
           </View>
         </View>
 
-        {/* {order.order_status === 'CONFIRMED' && (
+        {showJoinNow ? (
           <TouchableOpacity
             style={styles.videoCallButton}
             activeOpacity={0.85}
-            onPress={handleJoinVideoCall}>
-            <Image source={Images.callIcon} style={styles.videoCallIcon} />
-            <Text style={styles.videoCallText}>Join Video Call</Text>
+            disabled={joiningOrderId === order.order_id}
+            onPress={e => {
+              e?.stopPropagation?.();
+              handleJoinNow(order);
+            }}>
+            {joiningOrderId === order.order_id ? (
+              <ActivityIndicator color={Colors.white} />
+            ) : (
+              <>
+                <MaterialCommunityIcons name="video" size={wp(5.2)} color={Colors.white} />
+                <Text style={styles.videoCallText}>Join Now</Text>
+              </>
+            )}
           </TouchableOpacity>
-        )} */}
+        ) : null}
 
-        <View style={styles.footer}>
-          <TouchableOpacity
-            style={styles.paymentOrderIdContainer}
-            activeOpacity={0.8}
-            onPress={() => copyToClipboard(order.payment_order_id, 'Payment Order ID')}>
-            <MaterialCommunityIcons name="credit-card-outline" size={wp(4.2)} color="#94A3B8" />
-            <Text style={styles.paymentOrderIdText} numberOfLines={1}>
-              {order.payment_order_id}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.viewDetailsButton}
-            activeOpacity={0.85}
-            onPress={() =>
-              (navigation as any).navigate('PackageDetailsScreen', {order_id: order.order_id})
-            }>
-            <Text style={styles.viewDetailsText}>View Details</Text>
-            <MaterialCommunityIcons name="chevron-right" size={wp(4.6)} color={Colors.sooprsblue} />
-          </TouchableOpacity>
+        <View style={styles.viewDetailsButton}>
+          <Text style={styles.viewDetailsText}>View Details</Text>
+          <MaterialCommunityIcons name="chevron-right" size={wp(5.2)} color={Colors.sooprsblue} />
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -483,20 +560,20 @@ const styles = StyleSheet.create({
   tab: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: wp(3.2),
-    paddingVertical: hp(0.85),
+    paddingHorizontal: wp(3.6),
+    paddingVertical: hp(1),
     borderRadius: wp(6),
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E8EEF5',
-    gap: wp(1.4),
+    gap: wp(1.6),
   },
   activeTab: {
     backgroundColor: '#EEF4FF',
     borderColor: '#93C5FD',
   },
   tabText: {
-    fontSize: FSize.fs12,
+    fontSize: FSize.fs14,
     fontWeight: '600',
     color: '#64748B',
   },
@@ -505,19 +582,19 @@ const styles = StyleSheet.create({
     color: Colors.sooprsblue,
   },
   tabCount: {
-    minWidth: wp(4.6),
-    height: wp(4.6),
-    borderRadius: wp(2.3),
+    minWidth: wp(5.2),
+    height: wp(5.2),
+    borderRadius: wp(2.6),
     backgroundColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: wp(1.2),
+    paddingHorizontal: wp(1.4),
   },
   tabCountActive: {
     backgroundColor: Colors.sooprsblue,
   },
   tabCountText: {
-    fontSize: FSize.fs9,
+    fontSize: FSize.fs11,
     fontWeight: '800',
     color: '#475569',
   },
@@ -549,27 +626,9 @@ const styles = StyleSheet.create({
   orderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: hp(1.2),
     gap: wp(2),
-  },
-  orderIdChip: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FBFF',
-    borderRadius: wp(2.2),
-    paddingHorizontal: wp(2.2),
-    paddingVertical: hp(0.55),
-    gap: wp(1.4),
-    borderWidth: 1,
-    borderColor: '#E8F1FB',
-  },
-  orderIdText: {
-    flex: 1,
-    fontSize: FSize.fs13,
-    fontWeight: '700',
-    color: '#0F172A',
   },
   paymentStatusBadge: {
     flexDirection: 'row',
@@ -578,6 +637,7 @@ const styles = StyleSheet.create({
     paddingVertical: hp(0.45),
     borderRadius: wp(4),
     gap: wp(1.2),
+    flexShrink: 0,
   },
   statusDot: {
     width: wp(1.7),
@@ -585,16 +645,16 @@ const styles = StyleSheet.create({
     borderRadius: wp(0.85),
   },
   paymentStatusText: {
-    fontSize: FSize.fs12,
+    fontSize: FSize.fs14,
     fontWeight: '800',
     textTransform: 'capitalize',
   },
   packageTitle: {
-    fontSize: FSize.fs17,
+    flex: 1,
+    fontSize: FSize.fs19,
     fontWeight: '800',
     color: '#0F172A',
-    lineHeight: hp(2.7),
-    marginBottom: hp(0.8),
+    lineHeight: hp(3),
   },
   metaRow: {
     flexDirection: 'row',
@@ -609,7 +669,7 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
   },
   metaText: {
-    fontSize: FSize.fs13,
+    fontSize: FSize.fs15,
     color: '#64748B',
     fontWeight: '500',
     flexShrink: 1,
@@ -627,7 +687,7 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
   },
   routeText: {
-    fontSize: FSize.fs13,
+    fontSize: FSize.fs15,
     color: '#3B82F6',
     fontWeight: '700',
     flexShrink: 1,
@@ -652,16 +712,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  priceLabel: {
-    fontSize: FSize.fs14,
-    fontWeight: '500',
-    color: '#64748B',
-  },
-  priceValue: {
-    fontSize: FSize.fs14,
-    fontWeight: '600',
-    color: '#0F172A',
-  },
   couponRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -681,12 +731,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
   },
   couponCodeText: {
-    fontSize: FSize.fs13,
+    fontSize: FSize.fs15,
     fontWeight: '700',
     color: Colors.sooprsblue,
   },
   discountAmount: {
-    fontSize: FSize.fs14,
+    fontSize: FSize.fs16,
     fontWeight: '700',
     color: '#16A34A',
   },
@@ -696,22 +746,22 @@ const styles = StyleSheet.create({
     marginVertical: hp(0.7),
   },
   finalAmountLabel: {
-    fontSize: FSize.fs15,
+    fontSize: FSize.fs17,
     fontWeight: '700',
     color: '#0F172A',
   },
   finalAmountValue: {
-    fontSize: FSize.fs16,
+    fontSize: FSize.fs18,
     fontWeight: '800',
     color: '#0F172A',
   },
   remainingLabel: {
-    fontSize: FSize.fs14,
+    fontSize: FSize.fs16,
     fontWeight: '500',
     color: '#64748B',
   },
   remainingValue: {
-    fontSize: FSize.fs14,
+    fontSize: FSize.fs16,
     fontWeight: '700',
   },
   remainingDue: {
@@ -720,58 +770,37 @@ const styles = StyleSheet.create({
   remainingClear: {
     color: '#16A34A',
   },
-  // videoCallButton: {
-  //   flexDirection: 'row',
-  //   alignItems: 'center',
-  //   justifyContent: 'center',
-  //   backgroundColor: '#059669',
-  //   borderRadius: wp(2.5),
-  //   paddingVertical: hp(1.2),
-  //   marginBottom: hp(1.5),
-  // },
-  // videoCallIcon: {
-  //   width: wp(4.5),
-  //   height: wp(4.5),
-  //   tintColor: Colors.white,
-  //   marginRight: wp(2),
-  // },
-  // videoCallText: {
-  //   fontSize: FSize.fs14,
-  //   fontWeight: '700',
-  //   color: Colors.white,
-  // },
-  footer: {
+  videoCallButton: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: wp(2),
-    paddingTop: hp(0.4),
+    backgroundColor: '#22C55E',
+    borderRadius: wp(2.5),
+    paddingVertical: hp(1.4),
+    marginBottom: hp(1.5),
+    minHeight: hp(5.2),
   },
-  paymentOrderIdContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    gap: wp(1.2),
-  },
-  paymentOrderIdText: {
-    flex: 1,
-    fontSize: FSize.fs13,
-    fontWeight: '500',
-    color: '#94A3B8',
+  videoCallText: {
+    fontSize: FSize.fs17,
+    fontWeight: '700',
+    color: Colors.white,
   },
   viewDetailsButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: Colors.white,
     paddingHorizontal: wp(2.6),
-    paddingVertical: hp(0.62),
+    paddingVertical: hp(1.1),
     borderRadius: wp(5),
     borderWidth: 1.3,
     borderColor: '#93C5FD',
     gap: wp(0.2),
+    width: '100%',
   },
   viewDetailsText: {
-    fontSize: FSize.fs13,
+    fontSize: FSize.fs15,
     fontWeight: '700',
     color: Colors.sooprsblue,
   },

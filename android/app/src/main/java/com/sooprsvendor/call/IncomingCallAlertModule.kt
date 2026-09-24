@@ -1,13 +1,10 @@
 package com.sooprsvendor.call
 
-import android.content.Context
 import android.content.Intent
-import android.os.Bundle
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
-import com.sooprsvendor.MainActivity
 
 class IncomingCallAlertModule(private val reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(reactContext) {
@@ -16,9 +13,7 @@ class IncomingCallAlertModule(private val reactContext: ReactApplicationContext)
 
   @ReactMethod
   fun launchMainApp() {
-    val intent = Intent(reactContext, MainActivity::class.java)
-    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-    reactContext.startActivity(intent)
+    IncomingCallLaunchHelper.launchMainApp(reactContext)
   }
 
   @ReactMethod

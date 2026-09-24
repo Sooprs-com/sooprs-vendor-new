@@ -242,6 +242,14 @@ const ProfileScreen = () => {
       onPress: () => (navigation as any).navigate('AvailableSlotsScreen'),
     },
     {
+      icon: 'video-outline',
+      iconColor: '#059669',
+      iconBg: '#ECFDF5',
+      title: 'Health Consultations',
+      subtitle: 'Join meetings and view consultation history.',
+      onPress: () => (navigation as any).navigate('HealthAppointmentsScreen'),
+    },
+    {
       icon: 'wallet-outline',
       iconColor: '#0EA5E9',
       iconBg: '#E0F2FE',

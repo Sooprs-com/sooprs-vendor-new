@@ -179,7 +179,7 @@ const Project = () => {
           </View>
 
           <View style={styles.categoryChip}>
-            <MaterialCommunityIcons name={category.icon} size={wp(3.4)} color="#3B82F6" />
+            <MaterialCommunityIcons name={category.icon} size={wp(3.8)} color="#3B82F6" />
             <Text style={styles.categoryChipText} numberOfLines={1}>
               {category.label}
             </Text>
@@ -207,7 +207,7 @@ const Project = () => {
               onPress={() => (navigation as any).navigate('CabRideReviewScreen', {data: pkg})}
               style={styles.viewCta}>
               <Text style={styles.viewCtaText}>View Details</Text>
-              <MaterialCommunityIcons name="chevron-right" size={wp(4)} color={Colors.sooprsblue} />
+              <MaterialCommunityIcons name="chevron-right" size={wp(4.5)} color={Colors.sooprsblue} />
             </TouchableOpacity>
           </View>
         </View>
@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
     borderRadius: wp(1.6),
   },
   discountBadgeText: {
-    fontSize: FSize.fs9,
+    fontSize: FSize.fs11,
     fontWeight: '800',
     color: Colors.white,
     letterSpacing: 0.2,
@@ -408,10 +408,10 @@ const styles = StyleSheet.create({
   },
   packageName: {
     flex: 1,
-    fontSize: FSize.fs14,
+    fontSize: FSize.fs16,
     fontWeight: '800',
     color: '#0F172A',
-    lineHeight: hp(2.3),
+    lineHeight: hp(2.6),
   },
   statusPill: {
     flexDirection: 'row',
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#94A3B8',
   },
   statusText: {
-    fontSize: FSize.fs9,
+    fontSize: FSize.fs11,
     fontWeight: '700',
   },
   statusTextActive: {
@@ -462,16 +462,16 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
   },
   categoryChipText: {
-    fontSize: FSize.fs10,
+    fontSize: FSize.fs12,
     color: '#3B82F6',
     fontWeight: '700',
     flexShrink: 1,
   },
   shortDesc: {
-    fontSize: FSize.fs11,
+    fontSize: FSize.fs13,
     color: '#64748B',
     marginTop: hp(0.7),
-    lineHeight: hp(1.9),
+    lineHeight: hp(2.2),
     fontWeight: '400',
   },
   priceRow: {
@@ -488,7 +488,7 @@ const styles = StyleSheet.create({
     marginRight: wp(1.6),
   },
   priceLabel: {
-    fontSize: FSize.fs9,
+    fontSize: FSize.fs11,
     color: '#94A3B8',
     fontWeight: '600',
     marginBottom: hp(0.12),
@@ -499,12 +499,12 @@ const styles = StyleSheet.create({
     gap: wp(1.5),
   },
   sellingPrice: {
-    fontSize: FSize.fs16,
+    fontSize: FSize.fs18,
     fontWeight: '800',
     color: '#0F172A',
   },
   originalPrice: {
-    fontSize: FSize.fs11,
+    fontSize: FSize.fs13,
     color: '#94A3B8',
     textDecorationLine: 'line-through',
     fontWeight: '500',
@@ -521,7 +521,7 @@ const styles = StyleSheet.create({
     gap: wp(0.2),
   },
   viewCtaText: {
-    fontSize: FSize.fs11,
+    fontSize: FSize.fs13,
     fontWeight: '700',
     color: Colors.sooprsblue,
   },

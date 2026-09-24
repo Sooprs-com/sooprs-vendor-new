@@ -7,11 +7,23 @@ import {
 } from './navigationRef';
 
 export function VendorCallBridge() {
-  const {activeCall} = useVendorCall();
+  const {activeCall, canRejoin, lastEndedCall} = useVendorCall();
   const wasInCall = useRef(false);
 
   useEffect(() => {
     if (activeCall) {
+      wasInCall.current = true;
+      return;
+    }
+
+    // Temporary Agora drop — stay on VideoCallScreen for Rejoin.
+    if (canRejoin) {
+      wasInCall.current = true;
+      return;
+    }
+
+    // AfterCall summary still showing — stay put.
+    if (lastEndedCall) {
       wasInCall.current = true;
       return;
     }
@@ -26,7 +38,7 @@ export function VendorCallBridge() {
     if (isOnVideoCallScreen()) {
       leaveVideoCallScreen();
     }
-  }, [activeCall]);
+  }, [activeCall, canRejoin, lastEndedCall]);
 
   return null;
 }

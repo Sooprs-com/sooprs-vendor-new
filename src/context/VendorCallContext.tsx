@@ -9,11 +9,11 @@ import React, {
 import {AppState, NativeModules, Platform} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import messaging from '@react-native-firebase/messaging';
-// Socket disabled — incoming calls now arrive via FCM push only.
-// import {
-//   connectVendorHealthSocket,
-//   disconnectVendorHealthSocket,
-// } from '../services/vendorHealthSocket';
+import {
+  connectVendorHealthSocket,
+  disconnectVendorHealthSocket,
+  emitLeaveRoom,
+} from '../services/vendorHealthSocket';
 import {healthVideoApi} from '../services/healthVideoApi';
 import {mobile_siteConfig} from '../services/mobile-siteConfig';
 import {
@@ -24,23 +24,27 @@ import {
   AgoraCallData,
   CallNotification,
   IncomingCallData,
+  toAgoraCallData,
 } from '../types/vendorCall';
 import {
   flushPendingVideoCallNavigation,
+  navigateToHealthAppointments,
   navigateToVideoCall,
   waitForNavigationReady,
 } from '../router/navigationRef';
 import {
   isIncomingCallPush,
+  isSoftMissNotification,
   parseIncomingCallPush,
 } from '../services/incomingCallTypes';
 import {
-  acceptIncomingCallFromPush,
+  joinIncomingCallFromPush,
   rejectIncomingCallFromPush,
 } from '../services/incomingCallActions';
 import {
   clearPendingCallAction,
   loadPendingCallAction,
+  savePendingCallAction,
 } from '../services/pendingCallAction';
 import {
   clearCallLaunchGuard,
@@ -54,16 +58,53 @@ import {
 import Toast from 'react-native-toast-message';
 import {requestNotificationPermission} from '../services/notificationPermission';
 
+type EndCallResult = {
+  showRating?: boolean;
+  canRate?: boolean;
+  uiAction?: string;
+  ratingStatus?: string;
+  clientRating?: any;
+  talkDurationSeconds?: number | null;
+  status?: string;
+  endReason?: string;
+  [key: string]: any;
+};
+
+export type ClientRatedEvent = {
+  appointmentId?: number;
+  orderId?: number;
+  clientRating?: any;
+  ratingStatus?: string;
+  at: number;
+};
+
+/** Vendor never rates — only patient can. Always close call → after-call summary. */
+function vendorShouldShowRating(_payload?: Record<string, any> | null): false {
+  return false;
+}
+
 type VendorCallContextValue = {
   socketConnected: boolean;
   incomingCall: IncomingCallData | null;
   activeCall: AgoraCallData | null;
   notifications: CallNotification[];
+  canRejoin: boolean;
+  lastEndedCall: EndCallResult | null;
+  /** Fires when patient submits a rating — screens refresh read-only display */
+  lastClientRated: ClientRatedEvent | null;
+  /** Primary CTA — POST /call/join-room */
+  joinCall: (appointmentId?: number) => Promise<AgoraCallData | null>;
+  /** Alias kept for older UI refs — same as joinCall */
   acceptCall: () => Promise<AgoraCallData | null>;
   rejectCall: (reason?: string) => Promise<void>;
-  endCall: () => Promise<void>;
+  /** Explicit hang-up only — POST /call/end */
+  endCall: () => Promise<EndCallResult | null>;
+  /** Temporary drop — POST /call/leave-room (do NOT end meeting) */
+  leaveRoom: (reason?: string) => Promise<{canRejoin: boolean} | null>;
+  rejoinCall: () => Promise<AgoraCallData | null>;
   startCall: (appointmentId: number) => Promise<AgoraCallData | null>;
   clearIncoming: () => void;
+  clearLastEndedCall: () => void;
 };
 
 const VendorCallContext = createContext<VendorCallContextValue | null>(null);
@@ -108,13 +149,19 @@ async function loadVendorTokenFromStorage(): Promise<string | null> {
 
 export function VendorCallProvider({children}: {children: React.ReactNode}) {
   const [vendorToken, setVendorToken] = useState<string | null>(null);
-  // Socket disabled — stays false/empty until the socket flow is re-enabled.
-  const socketConnected = false;
-  const notifications: CallNotification[] = [];
+  const [socketConnected, setSocketConnected] = useState(false);
+  const [notifications, setNotifications] = useState<CallNotification[]>([]);
   const [incomingCall, setIncomingCall] = useState<IncomingCallData | null>(
     null,
   );
   const [activeCall, setActiveCall] = useState<AgoraCallData | null>(null);
+  const [canRejoin, setCanRejoin] = useState(false);
+  const [lastEndedCall, setLastEndedCall] = useState<EndCallResult | null>(null);
+  const [lastClientRated, setLastClientRated] =
+    useState<ClientRatedEvent | null>(null);
+  const [rejoinAppointmentId, setRejoinAppointmentId] = useState<number | null>(
+    null,
+  );
 
   useEffect(() => {
     activeCallRef.current = activeCall;
@@ -155,21 +202,23 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
     }
   }, []);
 
-  const clearIncomingCallUi = useCallback((options?: {skipHideNotification?: boolean}) => {
-    setIncomingCall(null);
-    stopIncomingRingtone();
-    if (!options?.skipHideNotification) {
-      hideIncomingCallNotification();
-    }
-    // Killed-state pushes start a native foreground ringtone service — stop it too.
-    if (Platform.OS === 'android') {
-      try {
-        NativeModules.IncomingCallAlert?.stopRingtoneService?.();
-      } catch {
-        // Native module optional until rebuild
+  const clearIncomingCallUi = useCallback(
+    (options?: {skipHideNotification?: boolean}) => {
+      setIncomingCall(null);
+      stopIncomingRingtone();
+      if (!options?.skipHideNotification) {
+        hideIncomingCallNotification();
       }
-    }
-  }, []);
+      if (Platform.OS === 'android') {
+        try {
+          NativeModules.IncomingCallAlert?.stopRingtoneService?.();
+        } catch {
+          // Native module optional until rebuild
+        }
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -205,6 +254,8 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
   const navigateToActiveCall = useCallback((callData: AgoraCallData) => {
     const sessionKey = getCallSessionKey(callData);
     navigatedCallAppointmentRef.current = callData.appointmentId;
+    setCanRejoin(false);
+    setRejoinAppointmentId(callData.appointmentId);
     navigateToVideoCall({
       channelName: callData.channelName,
       token: callData.token,
@@ -212,33 +263,64 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
       uid: callData.uid,
       appointmentId: callData.appointmentId,
       callKey: sessionKey,
+      uiAction: callData.uiAction,
+      status: callData.status,
+      bothPresent: callData.bothPresent,
     });
     flushPendingVideoCallNavigation();
   }, []);
 
-  const acceptCall = useCallback(async () => {
-    if (!vendorToken || !incomingCall?.appointmentId) {
-      return null;
-    }
+  const openActiveCall = useCallback(
+    (payload: Record<string, any>) => {
+      const callData = toAgoraCallData(payload);
+      if (!callData) {
+        return null;
+      }
+      setActiveCall(callData);
+      clearIncomingCallUi();
+      navigateToActiveCall(callData);
+      return callData;
+    },
+    [clearIncomingCallUi, navigateToActiveCall],
+  );
 
-    markRecentlyHandled(incomingCall);
-    const callData = await acceptIncomingCallFromPush(
+  const joinCall = useCallback(
+    async (appointmentId?: number) => {
+      const targetId = appointmentId || incomingCall?.appointmentId;
+      if (!vendorToken || !targetId) {
+        return null;
+      }
+
+      if (incomingCall) {
+        markRecentlyHandled(incomingCall);
+      }
+
+      const res = await healthVideoApi.joinRoom(vendorToken, targetId);
+      const raw = (res.data || res) as Record<string, any>;
+      const callData = toAgoraCallData({appointmentId: targetId, ...raw});
+      if (!callData) {
+        throw new Error('Invalid call credentials received from server');
+      }
+
+      setActiveCall(callData);
+      clearIncomingCallUi();
+      await clearPendingCallAction();
+      await clearCallLaunchGuard();
+      navigateToActiveCall(callData);
+      return callData;
+    },
+    [
       vendorToken,
       incomingCall,
-    );
-    setActiveCall(callData);
-    clearIncomingCallUi();
-    await clearPendingCallAction();
-    await clearCallLaunchGuard();
-    navigateToActiveCall(callData);
-    return callData;
-  }, [
-    vendorToken,
-    incomingCall,
-    markRecentlyHandled,
-    clearIncomingCallUi,
-    navigateToActiveCall,
-  ]);
+      markRecentlyHandled,
+      clearIncomingCallUi,
+      navigateToActiveCall,
+    ],
+  );
+
+  const acceptCall = useCallback(async () => {
+    return joinCall();
+  }, [joinCall]);
 
   const rejectCall = useCallback(
     async (reason = 'declined_by_vendor') => {
@@ -257,17 +339,40 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
 
   const endCall = useCallback(async () => {
     if (!vendorToken || !activeCall?.appointmentId) {
-      return;
+      return null;
     }
 
     const appointmentId = activeCall.appointmentId;
-    await healthVideoApi.endCall(vendorToken, appointmentId);
+    const res = await healthVideoApi.endCall(vendorToken, appointmentId);
+    const raw = (res.data || res || {}) as Record<string, any>;
+    const meeting = raw.meeting || {};
+    // Ignore HTTP /call/end patient flags (show_rating / canRate / rateEndpoint).
+    // Vendor after-call UI is driven by socket/push (meeting_closed, canRate: false).
+    const result: EndCallResult = {
+      ...raw,
+      showRating: vendorShouldShowRating(raw),
+      canRate: false,
+      uiAction: 'meeting_closed',
+      talkDurationSeconds:
+        raw.talkDurationSeconds ?? meeting.talkDurationSeconds,
+      status: raw.status,
+      endReason: raw.endReason ?? meeting.endReason,
+      appointmentId,
+      userJoinedAt: meeting.userJoinedAt || raw.userJoinedAt,
+      vendorJoinedAt: meeting.vendorJoinedAt || raw.vendorJoinedAt,
+      meeting,
+    };
+
     clearCallSessionState(appointmentId);
     setActiveCall(null);
+    setCanRejoin(false);
+    setRejoinAppointmentId(null);
     navigatedCallAppointmentRef.current = null;
     clearIncomingCallUi();
+    setLastEndedCall(result);
     await clearPendingCallAction();
     await clearCallLaunchGuard();
+    return result;
   }, [
     vendorToken,
     activeCall,
@@ -275,38 +380,74 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
     clearIncomingCallUi,
   ]);
 
-  const startCall = useCallback(
-    async (appointmentId: number) => {
-      if (!vendorToken) {
+  const leaveRoom = useCallback(
+    async (reason = 'agora_disconnect') => {
+      const appointmentId =
+        activeCall?.appointmentId || rejoinAppointmentId || null;
+      if (!vendorToken || !appointmentId) {
         return null;
       }
-      const res = await healthVideoApi.startCall(vendorToken, appointmentId);
-      const callData = (res.data || res) as AgoraCallData;
-      setActiveCall(callData);
-      navigateToActiveCall(callData);
-      return callData;
+
+      try {
+        emitLeaveRoom(appointmentId, reason);
+        const res = await healthVideoApi.leaveRoom(
+          vendorToken,
+          appointmentId,
+          reason,
+        );
+        const raw = (res.data || res || {}) as Record<string, any>;
+        const stillOpen = raw.meetingStillOpen !== false;
+        const rejoinAllowed = raw.canRejoin !== false && stillOpen;
+        setCanRejoin(rejoinAllowed);
+        setRejoinAppointmentId(appointmentId);
+        // Keep activeCall null so UI can show Rejoin — do NOT complete meeting.
+        setActiveCall(null);
+        return {canRejoin: rejoinAllowed};
+      } catch (error) {
+        console.warn('[VendorCall] leaveRoom failed:', error);
+        setCanRejoin(true);
+        setRejoinAppointmentId(appointmentId);
+        setActiveCall(null);
+        return {canRejoin: true};
+      }
     },
-    [vendorToken, navigateToActiveCall],
+    [vendorToken, activeCall, rejoinAppointmentId],
   );
 
-  // Socket-only helper — disabled along with the socket connection below.
-  // const openActiveCall = useCallback(
-  //   (payload: Record<string, any>) => {
-  //     const callData = toAgoraCallData(payload);
-  //     if (!callData) {
-  //       return null;
-  //     }
-  //     setActiveCall(callData);
-  //     clearIncomingCallUi();
-  //     navigateToActiveCall(callData);
-  //     return callData;
-  //   },
-  //   [clearIncomingCallUi, navigateToActiveCall],
-  // );
+  const rejoinCall = useCallback(async () => {
+    const appointmentId =
+      rejoinAppointmentId || activeCall?.appointmentId || null;
+    if (!appointmentId) {
+      return null;
+    }
+    return joinCall(appointmentId);
+  }, [rejoinAppointmentId, activeCall, joinCall]);
+
+  const startCall = useCallback(
+    async (appointmentId: number) => {
+      // New flow: join-room is primary (window must be open).
+      return joinCall(appointmentId);
+    },
+    [joinCall],
+  );
+
+  const clearLastEndedCall = useCallback(() => {
+    setLastEndedCall(null);
+  }, []);
 
   const presentIncomingCall = useCallback(
     (callData: IncomingCallData) => {
-      // Each push ring is a fresh session — clear stale accept/navigation guards.
+      // Soft miss = reminder only. Do NOT show full-screen ring / close the meeting.
+      if (callData.softMiss) {
+        Toast.show({
+          type: 'info',
+          text1: 'Reminder',
+          text2: 'Meeting still open — you can still Join',
+        });
+        navigateToHealthAppointments(callData.appointmentId);
+        return;
+      }
+
       recentlyHandledSessionsRef.current.delete(getCallSessionKey(callData));
       navigatedCallAppointmentRef.current = null;
 
@@ -314,6 +455,9 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
         ...callData,
         appointmentId: Number(callData.appointmentId),
         playRingtone: callData.playRingtone !== false,
+        acceptButtonLabel:
+          callData.acceptButtonLabel ||
+          (callData.isPeerWaiting ? 'Join now' : 'Join'),
       };
 
       if (Platform.OS === 'android') {
@@ -331,6 +475,7 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
             // Native module optional until rebuild
           }
         }
+        // Android uses full-screen notification UI (IncomingCallModal is iOS-only).
         return;
       }
 
@@ -341,6 +486,24 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
 
   const handleIncomingCallPush = useCallback(
     (data: Record<string, any>) => {
+      // Soft-miss notification → reminder + Appointment detail (Join still ON).
+      if (isSoftMissNotification(data)) {
+        Toast.show({
+          type: 'info',
+          text1: 'Reminder',
+          text2: 'Meeting still open — you can still Join',
+        });
+        const appointmentId = Number(
+          data.appointmentId || data?.data?.appointmentId,
+        );
+        navigateToHealthAppointments(
+          Number.isFinite(appointmentId) && appointmentId > 0
+            ? appointmentId
+            : null,
+        );
+        return;
+      }
+
       if (!isIncomingCallPush(data)) {
         return;
       }
@@ -362,12 +525,29 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
 
     const pending = await loadPendingCallAction();
     if (!pending) {
+      // Nothing pending — report done so the retry loop stops.
+      return true;
+    }
+
+    // Wait for the app to be in the foreground before joining / navigating.
+    // On a locked launch this becomes true once MainActivity resumes over the keyguard.
+    if (AppState.currentState !== 'active') {
       return false;
     }
 
     const token = vendorToken || (await loadVendorTokenFromStorage());
     if (!token) {
+      // Auth not restored yet on cold start — retry shortly.
       return false;
+    }
+
+    // For accept/join we must land on the call screen. Wait for navigation
+    // before consuming the action, otherwise a slow cold-start drops the accept.
+    if (pending.action === 'accept' || pending.action === 'join') {
+      const navReady = await waitForNavigationReady();
+      if (!navReady) {
+        return false;
+      }
     }
 
     processingPendingCallRef.current = true;
@@ -379,13 +559,12 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
       markRecentlyHandled(pending.data);
       await markCallLaunchGuard(appointmentId);
 
-      if (pending.action === 'accept') {
-        const callData = await acceptIncomingCallFromPush(token, pending.data);
+      if (pending.action === 'accept' || pending.action === 'join') {
+        const callData = await joinIncomingCallFromPush(token, pending.data);
         setActiveCall(callData);
         clearIncomingCallUi({skipHideNotification: true});
         navigatedCallAppointmentRef.current = null;
 
-        await waitForNavigationReady();
         if (Platform.OS === 'android') {
           await delay(800);
         }
@@ -399,19 +578,14 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
         clearIncomingCallUi({skipHideNotification: true});
       }
 
+      // Only clear after successful join/reject + navigate so retries can recover.
       await clearPendingCallAction();
       await clearCallLaunchGuard();
       return true;
     } catch (error: any) {
-      clearIncomingCallUi({skipHideNotification: true});
-      await clearPendingCallAction();
-      await clearCallLaunchGuard();
-      setActiveCall(null);
-      Toast.show({
-        type: 'error',
-        text1: 'Call action failed',
-        text2: error?.message || 'Could not process incoming call',
-      });
+      console.warn('[VendorCall] pending call action failed:', error);
+      // Keep the pending action so the retry loop can try again (user-app behaviour).
+      // Do NOT clearPendingCallAction here — early token/nav failures were wiping Accept.
       return false;
     } finally {
       processingPendingCallRef.current = false;
@@ -440,167 +614,272 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
     [vendorToken],
   );
 
-  // ---------------------------------------------------------------------------
-  // Socket-based call flow DISABLED — incoming calls now use FCM push only.
-  // The handlers below were only consumed by the socket connection and are kept
-  // commented for future re-enablement.
-  // ---------------------------------------------------------------------------
+  // Ensure FCM register runs again after login (token was cleared on logout).
+  useEffect(() => {
+    if (!vendorToken) {
+      fcmTokenRef.current = null;
+      return;
+    }
+    messaging()
+      .getToken()
+      .then(token => {
+        if (token) {
+          registerFcmDevice(token);
+        }
+      })
+      .catch(() => {
+        // ignore
+      });
+  }, [vendorToken, registerFcmDevice]);
 
-  // const showSocketToast = useCallback((message: string) => {
-  //   if (Platform.OS === 'android') {
-  //     ToastAndroid.show(message, ToastAndroid.SHORT);
-  //   }
-  // }, []);
+  const pushNotification = useCallback((item: CallNotification) => {
+    setNotifications(prev => [item, ...prev].slice(0, 50));
+  }, []);
 
-  // const pushNotification = useCallback((item: CallNotification) => {
-  //   setNotifications(prev => [item, ...prev].slice(0, 50));
-  // }, []);
+  const handleNotification = useCallback(
+    (payload: CallNotification) => {
+      pushNotification(payload);
 
-  // const handleNotification = useCallback(
-  //   (payload: CallNotification & {patientWaiting?: boolean}) => {
-  //     pushNotification(payload);
-  //     if (payload.patientWaiting && payload.appointmentId) {
-  //       const appointmentId = Number(payload.appointmentId);
-  //       if (shouldShowIncomingCall(appointmentId)) {
-  //         setIncomingCall(
-  //           prev =>
-  //             prev || {
-  //               appointmentId,
-  //             },
-  //         );
-  //       }
-  //     }
-  //   },
-  //   [pushNotification, shouldShowIncomingCall],
-  // );
+      // Soft miss = reminder only; Join stays ON.
+      if (isSoftMissNotification(payload) || payload.softMiss) {
+        Toast.show({
+          type: 'info',
+          text1: 'Reminder',
+          text2:
+            payload.message ||
+            'Patient may be waiting — meeting is still open',
+        });
+        navigateToHealthAppointments(
+          payload.appointmentId ? Number(payload.appointmentId) : null,
+        );
+        return;
+      }
+    },
+    [pushNotification],
+  );
 
-  // const handleCallWaitingRoom = useCallback(
-  //   (payload: CallNotification & {patientWaiting?: boolean}) => {
-  //     pushNotification({...payload, patientWaiting: true});
-  //     const callData = toAgoraCallData(payload);
-  //     if (callData) {
-  //       openActiveCall(callData);
-  //       return;
-  //     }
-  //     if (payload.appointmentId && shouldShowIncomingCall(Number(payload.appointmentId))) {
-  //       setIncomingCall(
-  //         prev =>
-  //           prev || {
-  //             appointmentId: Number(payload.appointmentId),
-  //             patientName: payload.patientName,
-  //           },
-  //       );
-  //     }
-  //   },
-  //   [openActiveCall, pushNotification, shouldShowIncomingCall],
-  // );
+  const handleIncomingCall = useCallback(
+    (payload: IncomingCallData) => {
+      if (payload.participantRole && payload.participantRole !== 'receiver') {
+        return;
+      }
+      const callData = parseIncomingCallPush(payload as any) || {
+        ...payload,
+        appointmentId: Number(payload.appointmentId),
+        acceptButtonLabel: payload.acceptButtonLabel || 'Join',
+        playRingtone: payload.playRingtone !== false,
+      };
+      presentIncomingCall(callData);
+    },
+    [presentIncomingCall],
+  );
 
-  // const handleIncomingCall = useCallback(
-  //   (payload: IncomingCallData) => {
-  //     if (payload.participantRole && payload.participantRole !== 'receiver') {
-  //       return;
-  //     }
-  //     if (!shouldShowIncomingCall(Number(payload.appointmentId))) {
-  //       return;
-  //     }
-  //     setIncomingCall({
-  //       ...payload,
-  //       appointmentId: Number(payload.appointmentId),
-  //       playRingtone: payload.playRingtone !== false,
-  //     });
-  //   },
-  //   [shouldShowIncomingCall],
-  // );
+  const handlePeerWaiting = useCallback(
+    (payload: Record<string, any>) => {
+      const callData = parseIncomingCallPush({
+        ...payload,
+        event: 'peer-waiting',
+        uiAction: payload.uiAction || 'show_peer_waiting_join',
+        acceptButtonLabel: payload.acceptButtonLabel || 'Join now',
+        playRingtone: payload.playRingtone !== false,
+      });
+      if (!callData) {
+        return;
+      }
+      presentIncomingCall({
+        ...callData,
+        isPeerWaiting: true,
+        acceptButtonLabel: 'Join now',
+      });
+    },
+    [presentIncomingCall],
+  );
 
-  // const handleCallAccepted = useCallback(
-  //   (payload: AgoraCallData) => {
-  //     openActiveCall(payload);
-  //   },
-  //   [openActiveCall],
-  // );
+  const handleCallWaitingRoom = useCallback(
+    (payload: Record<string, any>) => {
+      pushNotification({...payload, type: 'waiting'});
+      const callData = toAgoraCallData(payload);
+      if (callData) {
+        openActiveCall({
+          ...callData,
+          uiAction: callData.uiAction || 'join_agora_and_wait',
+          status: callData.status || 'waiting',
+          bothPresent: false,
+        });
+      }
+    },
+    [openActiveCall, pushNotification],
+  );
 
-  // const handleCallRejected = useCallback(() => {
-  //   clearIncomingCallUi();
-  //   setActiveCall(null);
-  //   navigatedCallAppointmentRef.current = null;
-  //   Toast.show({
-  //     type: 'info',
-  //     text1: 'Call rejected',
-  //     text2: 'The consultation call was declined.',
-  //   });
-  // }, [clearIncomingCallUi]);
+  const handleCallAccepted = useCallback(
+    (payload: Record<string, any>) => {
+      openActiveCall({
+        ...payload,
+        uiAction: payload.uiAction || 'join_agora_in_call',
+        status: payload.status || 'in_progress',
+        bothPresent: true,
+      });
+    },
+    [openActiveCall],
+  );
 
-  // const handleCallEnded = useCallback(() => {
-  //   if (activeCall?.appointmentId) {
-  //     markCompletedCall(activeCall.appointmentId);
-  //   }
-  //   clearIncomingCallUi();
-  //   setActiveCall(null);
-  //   navigatedCallAppointmentRef.current = null;
-  //   Toast.show({
-  //     type: 'info',
-  //     text1: 'Call ended',
-  //     text2: 'The consultation has ended.',
-  //   });
-  // }, [activeCall, clearIncomingCallUi, markCompletedCall]);
+  const handlePeerJoined = useCallback(
+    (payload: Record<string, any>) => {
+      // Patient joined after doctor was waiting — refresh to in-call UI.
+      if (activeCallRef.current) {
+        setActiveCall(prev =>
+          prev
+            ? {
+                ...prev,
+                status: 'in_progress',
+                bothPresent: true,
+                uiAction: 'join_agora_in_call',
+                ...payload,
+              }
+            : prev,
+        );
+        return;
+      }
+      openActiveCall({
+        ...payload,
+        status: 'in_progress',
+        bothPresent: true,
+        uiAction: 'join_agora_in_call',
+      });
+    },
+    [openActiveCall],
+  );
 
-  // Socket auto-connect disabled — incoming calls use FCM push only.
-  // useEffect(() => {
-  //   if (!vendorToken) {
-  //     disconnectVendorHealthSocket();
-  //     setSocketConnected(false);
-  //     return;
-  //   }
-  //
-  //   const token = vendorToken;
-  //
-  //   async function setup() {
-  //     try {
-  //       connectVendorHealthSocket({
-  //         vendorToken: token,
-  //         fcmToken: fcmTokenRef.current,
-  //         platform: Platform.OS,
-  //         onConnected: () => {
-  //           setSocketConnected(true);
-  //           showSocketToast('Socket connected');
-  //         },
-  //         onDisconnected: reason => {
-  //           setSocketConnected(false);
-  //           showSocketToast(`Socket disconnected: ${reason}`);
-  //         },
-  //         onError: msg => {
-  //           setSocketConnected(false);
-  //           console.warn('[VendorSocket] Error:', msg);
-  //         },
-  //         onNotification: handleNotification,
-  //         onIncomingCall: handleIncomingCall,
-  //         onCallWaitingRoom: handleCallWaitingRoom,
-  //         onCallAccepted: handleCallAccepted,
-  //         onCallRejected: handleCallRejected,
-  //         onCallEnded: handleCallEnded,
-  //       });
-  //     } catch (error) {
-  //       console.warn('[VendorSocket] Setup failed:', error);
-  //     }
-  //   }
-  //
-  //   setup();
-  //
-  //   return () => {
-  //     disconnectVendorHealthSocket();
-  //     setSocketConnected(false);
-  //     stopIncomingRingtone();
-  //   };
-  // }, [
-  //   vendorToken,
-  //   handleNotification,
-  //   handleIncomingCall,
-  //   handleCallWaitingRoom,
-  //   handleCallAccepted,
-  //   handleCallRejected,
-  //   handleCallEnded,
-  //   showSocketToast,
-  // ]);
+  const handleParticipantDisconnected = useCallback(
+    (payload: Record<string, any>) => {
+      // Do NOT call /call/end — show reconnecting / rejoin.
+      Toast.show({
+        type: 'info',
+        text1: 'Reconnecting…',
+        text2: payload?.message || 'Peer disconnected — you can rejoin',
+      });
+      if (payload?.canRejoin !== false) {
+        setCanRejoin(true);
+        if (payload?.appointmentId) {
+          setRejoinAppointmentId(Number(payload.appointmentId));
+        }
+      }
+    },
+    [],
+  );
+
+  const handleCallRejected = useCallback(() => {
+    clearIncomingCallUi();
+    setActiveCall(null);
+    setCanRejoin(false);
+    navigatedCallAppointmentRef.current = null;
+    Toast.show({
+      type: 'info',
+      text1: 'Call rejected',
+      text2: 'The consultation call was declined.',
+    });
+  }, [clearIncomingCallUi]);
+
+  const handleCallEnded = useCallback(
+    (payload: Record<string, any>) => {
+      const appointmentId =
+        Number(payload?.appointmentId) || activeCallRef.current?.appointmentId;
+      if (appointmentId) {
+        clearCallSessionState(appointmentId);
+      }
+      clearIncomingCallUi();
+      setActiveCall(null);
+      setCanRejoin(false);
+      setRejoinAppointmentId(null);
+      navigatedCallAppointmentRef.current = null;
+      const meeting = payload?.meeting || {};
+      // Vendor socket/push: uiAction meeting_closed, canRate false → summary only.
+      setLastEndedCall({
+        ...payload,
+        showRating: vendorShouldShowRating(payload),
+        canRate: false,
+        uiAction: payload?.uiAction || 'meeting_closed',
+        talkDurationSeconds:
+          payload?.talkDurationSeconds ?? meeting.talkDurationSeconds,
+        status: payload?.status,
+        endReason: payload?.endReason ?? meeting.endReason,
+        appointmentId,
+        userJoinedAt: meeting.userJoinedAt || payload?.userJoinedAt,
+        vendorJoinedAt: meeting.vendorJoinedAt || payload?.vendorJoinedAt,
+        meeting,
+        clientRating: payload?.clientRating ?? null,
+        ratingStatus: payload?.ratingStatus,
+      });
+    },
+    [clearIncomingCallUi, clearCallSessionState],
+  );
+
+  const handleClientRated = useCallback((payload: Record<string, any>) => {
+    const appointmentId = payload?.appointmentId
+      ? Number(payload.appointmentId)
+      : undefined;
+    const orderId = payload?.orderId ? Number(payload.orderId) : undefined;
+    setLastClientRated({
+      appointmentId: appointmentId && !Number.isNaN(appointmentId)
+        ? appointmentId
+        : undefined,
+      orderId: orderId && !Number.isNaN(orderId) ? orderId : undefined,
+      clientRating: payload?.clientRating ?? null,
+      ratingStatus: payload?.ratingStatus,
+      at: Date.now(),
+    });
+  }, []);
+
+  // Socket + FCM: socket for live peer-waiting / disconnect; FCM for killed-state rings.
+  useEffect(() => {
+    if (!vendorToken) {
+      disconnectVendorHealthSocket();
+      setSocketConnected(false);
+      return;
+    }
+
+    const token = vendorToken;
+
+    connectVendorHealthSocket({
+      vendorToken: token,
+      fcmToken: fcmTokenRef.current,
+      platform: Platform.OS,
+      onConnected: () => setSocketConnected(true),
+      onDisconnected: () => setSocketConnected(false),
+      onError: msg => {
+        setSocketConnected(false);
+        console.warn('[VendorSocket] Error:', msg);
+      },
+      onNotification: handleNotification,
+      onIncomingCall: handleIncomingCall,
+      onPeerWaiting: handlePeerWaiting,
+      onCallWaitingRoom: handleCallWaitingRoom,
+      onCallAccepted: handleCallAccepted,
+      onPeerJoined: handlePeerJoined,
+      onParticipantDisconnected: handleParticipantDisconnected,
+      onCallRejected: handleCallRejected,
+      onCallEnded: handleCallEnded,
+      onClientRated: handleClientRated,
+    });
+
+    return () => {
+      disconnectVendorHealthSocket();
+      setSocketConnected(false);
+      stopIncomingRingtone();
+    };
+  }, [
+    vendorToken,
+    handleNotification,
+    handleIncomingCall,
+    handlePeerWaiting,
+    handleCallWaitingRoom,
+    handleCallAccepted,
+    handlePeerJoined,
+    handleParticipantDisconnected,
+    handleCallRejected,
+    handleCallEnded,
+    handleClientRated,
+  ]);
 
   useEffect(() => {
     let mounted = true;
@@ -646,13 +925,41 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
     const unsubscribeMessage = messaging().onMessage(async remoteMessage => {
       console.log('[FCM Push] Foreground message received:', {
         messageId: remoteMessage?.messageId,
-        from: remoteMessage?.from,
-        sentTime: remoteMessage?.sentTime,
         data: remoteMessage?.data,
-        notification: remoteMessage?.notification,
       });
       handleIncomingCallPush(remoteMessage.data || {});
     });
+
+    const openFromNotification = (remoteMessage: any) => {
+      const data = (remoteMessage?.data || {}) as Record<string, any>;
+      if (isSoftMissNotification(data)) {
+        handleIncomingCallPush(data);
+        return;
+      }
+      if (isIncomingCallPush(data)) {
+        handleIncomingCallPush(data);
+        return;
+      }
+      const appointmentId = Number(data.appointmentId);
+      if (Number.isFinite(appointmentId) && appointmentId > 0) {
+        navigateToHealthAppointments(appointmentId);
+      }
+    };
+
+    const unsubscribeOpened = messaging().onNotificationOpenedApp(
+      openFromNotification,
+    );
+
+    messaging()
+      .getInitialNotification()
+      .then(remoteMessage => {
+        if (remoteMessage) {
+          openFromNotification(remoteMessage);
+        }
+      })
+      .catch(() => {
+        // ignore cold-start notification errors
+      });
 
     const appStateSub = AppState.addEventListener('change', state => {
       if (state === 'active') {
@@ -668,6 +975,7 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
       }
       unsubscribeToken();
       unsubscribeMessage();
+      unsubscribeOpened();
       appStateSub.remove();
     };
   }, [
@@ -695,14 +1003,16 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
       }
     };
 
-    const onNotificationAnswer = async (data: {callUUID: string; payload?: string}) => {
-      if (processingPendingCallRef.current) {
-        return;
-      }
-
+    const onNotificationAnswer = async (data: {
+      callUUID: string;
+      payload?: string;
+    }) => {
+      // FullScreenIncomingCall already persisted accept + launched MainActivity.
+      // Prefer the pending-action retry loop (waits for AppState + nav ready)
+      // instead of joining immediately from this listener.
       const pending = await loadPendingCallAction();
-      if (pending?.action === 'accept') {
-        // Killed-state accept is handled via pending action after main app boots.
+      if (pending?.action === 'accept' || pending?.action === 'join') {
+        processPendingCallAction();
         return;
       }
 
@@ -711,35 +1021,22 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
         return;
       }
 
-      processingPendingCallRef.current = true;
-      markRecentlyHandled(callData);
-
       try {
-        const authToken = vendorToken || (await loadVendorTokenFromStorage());
-        if (!authToken) {
-          return;
-        }
-
-        await markCallLaunchGuard(callData.appointmentId);
-        const callResult = await acceptIncomingCallFromPush(authToken, callData);
-        setActiveCall(callResult);
-        clearIncomingCallUi({skipHideNotification: true});
-        navigatedCallAppointmentRef.current = null;
-        await clearPendingCallAction();
-        await clearCallLaunchGuard();
-
-        await waitForNavigationReady();
-        navigateToActiveCall(callResult);
-        flushPendingVideoCallNavigation();
-      } catch (error: any) {
-        Toast.show({
-          type: 'error',
-          text1: 'Call failed',
-          text2: error?.message || 'Could not accept call',
+        await savePendingCallAction({
+          action: 'accept',
+          savedAt: Date.now(),
+          data: callData,
         });
-      } finally {
-        processingPendingCallRef.current = false;
+        await markCallLaunchGuard(callData.appointmentId);
+      } catch (e) {
+        console.warn('[VendorCall] savePending on answer failed:', e);
       }
+
+      if (NativeModules.IncomingCallAlert?.launchMainApp) {
+        NativeModules.IncomingCallAlert.launchMainApp();
+      }
+
+      processPendingCallAction();
     };
 
     const onNotificationEndCall = async (data: {
@@ -753,7 +1050,6 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
 
       const pending = await loadPendingCallAction();
       if (pending?.action === 'reject') {
-        // Killed-state reject is handled via pending action after main app boots.
         clearIncomingCallUi({skipHideNotification: true});
         return;
       }
@@ -773,10 +1069,6 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
 
       if (data.endAction === 'ACTION_HIDE_CALL') {
         clearIncomingCallUi();
-        return;
-      }
-
-      if (processingPendingCallRef.current) {
         return;
       }
 
@@ -821,6 +1113,7 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
     markRecentlyHandled,
     clearIncomingCallUi,
     navigateToActiveCall,
+    processPendingCallAction,
   ]);
 
   useEffect(() => {
@@ -844,11 +1137,18 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
         incomingCall,
         activeCall,
         notifications,
+        canRejoin,
+        lastEndedCall,
+        lastClientRated,
+        joinCall,
         acceptCall,
         rejectCall,
         endCall,
+        leaveRoom,
+        rejoinCall,
         startCall,
         clearIncoming: clearIncomingCallUi,
+        clearLastEndedCall,
       }}>
       {children}
     </VendorCallContext.Provider>
@@ -875,9 +1175,6 @@ export async function handleBackgroundIncomingCallPush(
     return;
   }
 
-  // The native broadcast receiver (SooprsFirebaseMessagingReceiver) already
-  // shows the full-screen UI when the app is backgrounded/killed. Skip the JS
-  // path in that case to avoid a duplicate notification + double ringtone.
   if (
     Platform.OS === 'android' &&
     NativeModules.IncomingCallAlert?.wasHandledNatively

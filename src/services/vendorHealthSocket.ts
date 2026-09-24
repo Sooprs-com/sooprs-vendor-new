@@ -20,10 +20,14 @@ type ConnectOptions = {
   platform?: string;
   onNotification?: (payload: any) => void;
   onIncomingCall?: (payload: any) => void;
+  onPeerWaiting?: (payload: any) => void;
   onCallWaitingRoom?: (payload: any) => void;
   onCallAccepted?: (payload: any) => void;
+  onPeerJoined?: (payload: any) => void;
+  onParticipantDisconnected?: (payload: any) => void;
   onCallRejected?: (payload: any) => void;
   onCallEnded?: (payload: any) => void;
+  onClientRated?: (payload: any) => void;
   onConnected?: () => void;
   onDisconnected?: (reason: string) => void;
   onError?: (message: string) => void;
@@ -35,10 +39,14 @@ export function connectVendorHealthSocket({
   platform = 'android',
   onNotification,
   onIncomingCall,
+  onPeerWaiting,
   onCallWaitingRoom,
   onCallAccepted,
+  onPeerJoined,
+  onParticipantDisconnected,
   onCallRejected,
   onCallEnded,
+  onClientRated,
   onConnected,
   onDisconnected,
   onError,
@@ -62,8 +70,6 @@ export function connectVendorHealthSocket({
     HEALTH_VIDEO_CONFIG.SOCKET_PATH,
     '| token:',
     maskedToken,
-    '| Authorization:',
-    bearerToken ? `${bearerToken.slice(0, 13)}...` : 'MISSING',
     '| platform:',
     platform,
   );
@@ -117,14 +123,6 @@ export function connectVendorHealthSocket({
       err?.message,
       '| transport:',
       transportName,
-      '| description:',
-      (err as any)?.description ?? null,
-      '| context:',
-      JSON.stringify((err as any)?.context ?? null),
-      '| cause:',
-      (err as any)?.cause?.message ?? null,
-      '| data:',
-      JSON.stringify((err as any)?.data ?? null),
     );
     onError?.(err.message);
   });
@@ -135,21 +133,7 @@ export function connectVendorHealthSocket({
 
   socket.io.on('reconnect', attempt => {
     console.log('[VendorSocket] reconnected after', attempt, 'attempts');
-  });
-
-  socket.io.on('error', err => {
-    console.log('[VendorSocket] manager error |', (err as any)?.message ?? err);
-  });
-
-  socket.io.engine.on('upgrade', () => {
-    console.log(
-      '[VendorSocket] transport upgraded ->',
-      socket?.io?.engine?.transport?.name,
-    );
-  });
-
-  socket.io.engine.on('close', reason => {
-    console.log('[VendorSocket] engine close | reason:', reason);
+    socket?.emit('join-vendor-room');
   });
 
   socket.on('notification', payload => {
@@ -160,6 +144,10 @@ export function connectVendorHealthSocket({
     console.log('[VendorSocket] incoming-call event:', payload);
     onIncomingCall?.(payload);
   });
+  socket.on('peer-waiting', payload => {
+    console.log('[VendorSocket] peer-waiting event:', payload);
+    onPeerWaiting?.(payload);
+  });
   socket.on('call-waiting-room', payload => {
     console.log('[VendorSocket] call-waiting-room event:', payload);
     onCallWaitingRoom?.(payload);
@@ -167,6 +155,14 @@ export function connectVendorHealthSocket({
   socket.on('call-accepted', payload => {
     console.log('[VendorSocket] call-accepted event:', payload);
     onCallAccepted?.(payload);
+  });
+  socket.on('peer-joined', payload => {
+    console.log('[VendorSocket] peer-joined event:', payload);
+    onPeerJoined?.(payload);
+  });
+  socket.on('participant-disconnected', payload => {
+    console.log('[VendorSocket] participant-disconnected event:', payload);
+    onParticipantDisconnected?.(payload);
   });
   socket.on('call-rejected', payload => {
     console.log('[VendorSocket] call-rejected event:', payload);
@@ -176,8 +172,21 @@ export function connectVendorHealthSocket({
     console.log('[VendorSocket] call-ended event:', payload);
     onCallEnded?.(payload);
   });
+  socket.on('client-rated', payload => {
+    console.log('[VendorSocket] client-rated event:', payload);
+    onClientRated?.(payload);
+  });
 
   return socket;
+}
+
+export function emitLeaveRoom(appointmentId: number, reason = 'agora_disconnect') {
+  if (!socket?.connected) {
+    return false;
+  }
+  socket.emit('leave-room', {appointmentId, reason});
+  socket.emit('agora-disconnected', {appointmentId, reason});
+  return true;
 }
 
 export function disconnectVendorHealthSocket() {

@@ -17,25 +17,28 @@ import FSize from '../assets/commonCSS/FSize';
 import {hp, wp} from '../assets/commonCSS/GlobalCSS';
 
 export default function IncomingCallModal() {
-  const {incomingCall, acceptCall, rejectCall} = useVendorCall();
-  const [loading, setLoading] = useState<'accept' | 'reject' | null>(null);
+  const {incomingCall, joinCall, rejectCall} = useVendorCall();
+  const [loading, setLoading] = useState<'join' | 'reject' | null>(null);
 
   const visible = !!incomingCall;
+  const isPeerWaiting = !!incomingCall?.isPeerWaiting;
+  const joinLabel =
+    incomingCall?.acceptButtonLabel || (isPeerWaiting ? 'Join now' : 'Join');
 
-  const onAccept = async () => {
+  const onJoin = async () => {
     if (loading) {
       return;
     }
-    setLoading('accept');
+    setLoading('join');
     Vibration.cancel();
     stopIncomingRingtone();
     try {
-      await acceptCall();
+      await joinCall();
     } catch (error: any) {
       Toast.show({
         type: 'error',
-        text1: 'Call failed',
-        text2: error?.message || 'Could not accept call',
+        text1: 'Join failed',
+        text2: error?.message || 'Could not join call',
       });
     } finally {
       setLoading(null);
@@ -75,21 +78,33 @@ export default function IncomingCallModal() {
       onRequestClose={onReject}>
       <View style={styles.overlay}>
         <View style={styles.card}>
-          <View style={styles.iconCircle}>
+          <View
+            style={[
+              styles.iconCircle,
+              isPeerWaiting && styles.iconCircleWaiting,
+            ]}>
             <MaterialCommunityIcons
-              name="video"
+              name={isPeerWaiting ? 'account-clock' : 'video'}
               size={wp(10)}
               color={Colors.white}
             />
           </View>
 
-          <Text style={styles.title}>Incoming Consultation</Text>
+          <Text style={styles.title}>
+            {isPeerWaiting
+              ? 'Patient is waiting — Join now'
+              : 'Incoming Consultation'}
+          </Text>
           <Text style={styles.subtitle}>
             {incomingCall.patientName
               ? incomingCall.patientName
               : `Appointment #${incomingCall.appointmentId}`}
           </Text>
-          <Text style={styles.hint}>Patient is waiting for you</Text>
+          <Text style={styles.hint}>
+            {isPeerWaiting
+              ? 'Tap Join now to start the video consultation'
+              : 'Window is open — Join to enter the meeting'}
+          </Text>
 
           <View style={styles.actions}>
             <TouchableOpacity
@@ -112,22 +127,20 @@ export default function IncomingCallModal() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.actionBtn, styles.acceptBtn]}
+              style={[styles.actionBtn, styles.joinBtn]}
               activeOpacity={0.85}
               disabled={!!loading}
-              onPress={onAccept}>
-              {loading === 'accept' ? (
+              onPress={onJoin}>
+              {loading === 'join' ? (
                 <ActivityIndicator color={Colors.white} />
               ) : (
                 <>
                   <MaterialCommunityIcons
-                    name="phone"
+                    name="video"
                     size={wp(6)}
                     color={Colors.white}
                   />
-                  <Text style={styles.btnText}>
-                    {incomingCall.acceptButtonLabel || 'Accept'}
-                  </Text>
+                  <Text style={styles.btnText}>{joinLabel}</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -165,6 +178,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: hp(2),
   },
+  iconCircleWaiting: {
+    backgroundColor: '#D97706',
+  },
   title: {
     fontSize: FSize.fs22,
     fontWeight: '700',
@@ -196,7 +212,7 @@ const styles = StyleSheet.create({
     borderRadius: wp(4),
     gap: hp(0.8),
   },
-  acceptBtn: {
+  joinBtn: {
     backgroundColor: '#22C55E',
   },
   rejectBtn: {

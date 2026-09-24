@@ -9,6 +9,9 @@ type VideoCallParams = {
   uid: number;
   appointmentId?: number;
   callKey?: string;
+  uiAction?: string;
+  status?: string;
+  bothPresent?: boolean;
 };
 
 let pendingVideoCallParams: VideoCallParams | null = null;
@@ -108,4 +111,23 @@ export function leaveVideoCallScreen() {
   }
 
   navigateToHomeAfterCall();
+}
+
+/** Soft-miss / late-join path → appointments list or a specific detail. */
+export function navigateToHealthAppointments(appointmentId?: number | null) {
+  if (!navigationRef.isReady()) {
+    return;
+  }
+
+  if (appointmentId) {
+    navigationRef.navigate('Authentication', {
+      screen: 'HealthAppointmentDetailScreen',
+      params: {appointmentId: Number(appointmentId)},
+    });
+    return;
+  }
+
+  navigationRef.navigate('Authentication', {
+    screen: 'HealthAppointmentsScreen',
+  });
 }

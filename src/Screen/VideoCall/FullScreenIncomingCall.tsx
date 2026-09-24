@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {
-  hideIncomingCallNotification,
+  RNNotificationCall,
 } from '../../services/callKeepService';
 import {
   savePendingCallAction,
@@ -70,18 +70,49 @@ export default function FullScreenIncomingCall(props: Props) {
     stopIncomingRingtone();
     stopNativeRingtoneService();
 
-    await savePendingCallAction({
-      action: 'accept',
-      savedAt: Date.now(),
-      data: callData,
-    });
-    await markCallLaunchGuard(callData.appointmentId);
+    // Persist pending action before signalling native. Critical for killed-state:
+    // the RNNotificationCall 'answer' listener may not yet be registered when this
+    // Activity renders in a fresh JS context.
+    try {
+      await savePendingCallAction({
+        action: 'accept',
+        savedAt: Date.now(),
+        data: callData,
+      });
+      await markCallLaunchGuard(callData.appointmentId);
+    } catch (e) {
+      console.warn('[FullScreenIncomingCall] savePendingCallAction failed:', e);
+    }
 
-    hideIncomingCallNotification();
-
+    // Bring the main app to the foreground FIRST, while this full-screen call
+    // Activity (showWhenLocked / turnScreenOn) is still visible. Android blocks
+    // background activity launches the moment that Activity finishes, so if we
+    // hide the notification / tear down first the app fails to open over the
+    // lock screen and the vendor must manually open My Booking to join.
     if (Platform.OS === 'android' && NativeModules.IncomingCallAlert?.launchMainApp) {
       NativeModules.IncomingCallAlert.launchMainApp();
     }
+
+    const callUUID = String(
+      props.uuid ||
+        callData.pushUuid ||
+        callData.callSessionId ||
+        callData.appointmentId,
+    );
+
+    // Give MainActivity a brief moment to come to the foreground (and, on a
+    // locked device, dismiss the keyguard) BEFORE we finish this full-screen
+    // call Activity. answerCall hides the notification and finishes the Activity.
+    // Actual join + navigation is driven by the pending-action retry loop.
+    // 900ms gives the separate MainActivity task time to settle before
+    // IncomingCallActivity.finishAndRemoveTask() runs.
+    setTimeout(() => {
+      try {
+        RNNotificationCall.answerCall(callUUID, JSON.stringify(callData));
+      } catch (e) {
+        console.warn('[FullScreenIncomingCall] answerCall failed:', e);
+      }
+    }, 900);
   };
 
   const handleDecline = async () => {
@@ -92,18 +123,35 @@ export default function FullScreenIncomingCall(props: Props) {
     stopIncomingRingtone();
     stopNativeRingtoneService();
 
-    await savePendingCallAction({
-      action: 'reject',
-      savedAt: Date.now(),
-      data: callData,
-    });
-    await markCallLaunchGuard(callData.appointmentId);
-
-    hideIncomingCallNotification();
+    try {
+      await savePendingCallAction({
+        action: 'reject',
+        savedAt: Date.now(),
+        data: callData,
+      });
+      await markCallLaunchGuard(callData.appointmentId);
+    } catch (e) {
+      console.warn('[FullScreenIncomingCall] savePendingCallAction failed:', e);
+    }
 
     if (Platform.OS === 'android' && NativeModules.IncomingCallAlert?.launchMainApp) {
       NativeModules.IncomingCallAlert.launchMainApp();
     }
+
+    const callUUID = String(
+      props.uuid ||
+        callData.pushUuid ||
+        callData.callSessionId ||
+        callData.appointmentId,
+    );
+
+    setTimeout(() => {
+      try {
+        RNNotificationCall.declineCall(callUUID, JSON.stringify(callData));
+      } catch (e) {
+        console.warn('[FullScreenIncomingCall] declineCall failed:', e);
+      }
+    }, 400);
   };
 
   if (!callData) {
@@ -120,11 +168,19 @@ export default function FullScreenIncomingCall(props: Props) {
         <MaterialCommunityIcons name="video" size={wp(12)} color={Colors.white} />
       </View>
 
-      <Text style={styles.title}>Incoming Consultation</Text>
+      <Text style={styles.title}>
+        {callData.isPeerWaiting
+          ? 'Patient is waiting — Join now'
+          : 'Incoming Consultation'}
+      </Text>
       <Text style={styles.subtitle}>
         {callData.patientName || props.name || `Appointment #${callData.appointmentId}`}
       </Text>
-      <Text style={styles.hint}>Patient is waiting for you</Text>
+      <Text style={styles.hint}>
+        {callData.isPeerWaiting
+          ? 'Tap Join now to start the video consultation'
+          : 'Window is open — Join to enter the meeting'}
+      </Text>
 
       <View style={styles.actions}>
         <TouchableOpacity
@@ -155,9 +211,10 @@ export default function FullScreenIncomingCall(props: Props) {
             <ActivityIndicator color={Colors.white} />
           ) : (
             <>
-              <MaterialCommunityIcons name="phone" size={wp(6)} color={Colors.white} />
+              <MaterialCommunityIcons name="video" size={wp(6)} color={Colors.white} />
               <Text style={styles.btnText}>
-                {callData.acceptButtonLabel || 'Accept'}
+                {callData.acceptButtonLabel ||
+                  (callData.isPeerWaiting ? 'Join now' : 'Join')}
               </Text>
             </>
           )}

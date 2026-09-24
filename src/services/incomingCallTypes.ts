@@ -1,8 +1,11 @@
 import {IncomingCallData} from '../types/vendorCall';
 
 const INCOMING_EVENTS = new Set(['incoming-call', 'incoming_call']);
+const PEER_WAITING_EVENTS = new Set(['peer-waiting', 'peer_waiting']);
 const INCOMING_CATEGORY = 'HEALTH_INCOMING_CALL';
+const PEER_WAITING_CATEGORY = 'HEALTH_PEER_WAITING';
 const INCOMING_UI_ACTION = 'show_incoming_ring';
+const PEER_WAITING_UI_ACTION = 'show_peer_waiting_join';
 
 function parsePayloadJson(raw: unknown): Record<string, any> | null {
   if (!raw) {
@@ -32,9 +35,30 @@ export function isIncomingCallForRole(
   return participantRole === expectedRole;
 }
 
+function isPeerWaitingPayload(data: Record<string, any>): boolean {
+  const event = String(data.event || data.type || '').toLowerCase();
+  const category = String(data.notificationCategory || '').toUpperCase();
+  const uiAction = String(data.uiAction || '').toLowerCase();
+
+  if (PEER_WAITING_EVENTS.has(event)) {
+    return true;
+  }
+  if (category === PEER_WAITING_CATEGORY) {
+    return true;
+  }
+  if (uiAction === PEER_WAITING_UI_ACTION) {
+    return true;
+  }
+  return false;
+}
+
 export function isIncomingCallPush(data: Record<string, any> | null | undefined): boolean {
   if (!data) {
     return false;
+  }
+
+  if (isPeerWaitingPayload(data)) {
+    return true;
   }
 
   const event = String(data.event || data.type || '').toLowerCase();
@@ -54,12 +78,28 @@ export function isIncomingCallPush(data: Record<string, any> | null | undefined)
   return false;
 }
 
+export function isSoftMissNotification(
+  data: Record<string, any> | null | undefined,
+): boolean {
+  if (!data) {
+    return false;
+  }
+  return (
+    data.softMiss === true ||
+    data.softMiss === 'true' ||
+    data?.data?.softMiss === true
+  );
+}
+
 export function parseIncomingCallPush(
   data: Record<string, any>,
 ): IncomingCallData | null {
   const nested = parsePayloadJson(data.payloadJson);
-  const merged = {...(nested || {}), ...data};
-  const appointmentId = Number(merged.appointmentId);
+  const actionsJoin = data?.actions?.join?.body || nested?.actions?.join?.body;
+  const merged = {...(nested || {}), ...data, ...(actionsJoin || {})};
+  const appointmentId = Number(
+    merged.appointmentId || actionsJoin?.appointmentId,
+  );
 
   if (!appointmentId) {
     return null;
@@ -69,6 +109,8 @@ export function parseIncomingCallPush(
     return null;
   }
 
+  const peerWaiting = isPeerWaitingPayload(merged) || isPeerWaitingPayload(data);
+
   return {
     appointmentId,
     callSessionId: merged.callSessionId,
@@ -77,14 +119,23 @@ export function parseIncomingCallPush(
     appId: merged.appId,
     uid: merged.uid ? Number(merged.uid) : undefined,
     participantRole: merged.participantRole || 'receiver',
-    acceptButtonLabel: merged.acceptButtonLabel || 'Accept',
+    // New flow: primary CTA is Join (not Accept-only)
+    acceptButtonLabel:
+      merged.acceptButtonLabel || (peerWaiting ? 'Join now' : 'Join'),
     rejectButtonLabel: merged.rejectButtonLabel || 'Reject',
-    onAcceptAction: merged.onAcceptAction || 'accept',
+    onAcceptAction: merged.onAcceptAction || 'join_room',
     onRejectAction: merged.onRejectAction || 'call_reject_api',
     playRingtone: merged.playRingtone !== 'false' && merged.playRingtone !== false,
     patientName: merged.title || merged.patientName || merged.callerName,
-    ttlSeconds: merged.ttlSeconds ? Number(merged.ttlSeconds) : 30,
+    // Soft miss is a reminder only — do not permanently close the call UI.
+    ttlSeconds: merged.ttlSeconds ? Number(merged.ttlSeconds) : 60,
     fromPush: true,
+    uiAction: merged.uiAction,
+    isPeerWaiting: peerWaiting,
+    softMiss: isSoftMissNotification(merged),
+    meetingStillOpen:
+      merged.meetingStillOpen === true || merged.meetingStillOpen === 'true',
+    status: merged.status,
     pushUuid:
       merged.callSessionId ||
       merged.callUUID ||

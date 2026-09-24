@@ -51,7 +51,9 @@ const AppContent = () => {
 
         const callLaunchActive = await isCallLaunchGuardActive();
         const pendingCallAction = await loadPendingCallAction();
-        const isPendingAccept = pendingCallAction?.action === 'accept';
+        const isPendingAccept =
+          pendingCallAction?.action === 'accept' ||
+          pendingCallAction?.action === 'join';
         const isPendingReject = pendingCallAction?.action === 'reject';
         const resumeIncomingCall =
           callLaunchActive || isPendingAccept || isPendingReject;

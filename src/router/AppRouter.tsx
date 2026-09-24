@@ -13,6 +13,8 @@ import CabRideReviewScreen from '../Screen/CabDetails/CabRideDetailsScreen';
 import ProfileScreen from '../Screen/Profile/ProfileScreen';
 import EditProfileScreen from '../Screen/Profile/EditProfileScreen';
 import AvailableSlotsScreen from '../Screen/Profile/AvailableSlotsScreen';
+import HealthAppointmentsScreen from '../Screen/Health/HealthAppointmentsScreen';
+import HealthAppointmentDetailScreen from '../Screen/Health/HealthAppointmentDetailScreen';
 import RegistrationScreen from '../auth/RegistrationScreen';
 import CompleteProfileScreen from '../Screen/CompleteProfile/CompleteProfileScreen';
 import PackageDetailsScreen from '../Screen/Orders/PackageDetailsScreen';
@@ -108,6 +110,8 @@ const AuthenticationRouter = ({initialRoute}: {initialRoute?: string}) => {
            <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
            <Stack.Screen name="EditProfileScreen" component={EditProfileScreen} />
            <Stack.Screen name="AvailableSlotsScreen" component={AvailableSlotsScreen} />
+           <Stack.Screen name="HealthAppointmentsScreen" component={HealthAppointmentsScreen} />
+           <Stack.Screen name="HealthAppointmentDetailScreen" component={HealthAppointmentDetailScreen} />
            <Stack.Screen name="AddCredits" component={AddCredits} />
            <Stack.Screen name="SubscriptionScreen" component={SubscriptionScreen} />
            <Stack.Screen name="ChatSupportHome" component={ChatSupportHome} />

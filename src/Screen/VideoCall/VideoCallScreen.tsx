@@ -9,6 +9,7 @@ import {
   PermissionsAndroid,
   Platform,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useRoute} from '@react-navigation/native';
@@ -23,6 +24,7 @@ import {
   RenderModeType,
   VideoSourceType,
 } from 'react-native-agora';
+import Toast from 'react-native-toast-message';
 import {hp, wp} from '../../assets/commonCSS/GlobalCSS';
 import Colors from '../../assets/commonCSS/Colors';
 import Images from '../../assets/image';
@@ -34,6 +36,7 @@ import {
 } from './agoraConfig';
 import {useVendorCall} from '../../context/VendorCallContext';
 import {leaveVideoCallScreen} from '../../router/navigationRef';
+import {formatTalkDuration, getVendorMissReasonMessage, getVendorStatusLabel} from '../../types/vendorCall';
 
 type VideoCallRouteParams = {
   role?: 'user' | 'vendor';
@@ -43,6 +46,9 @@ type VideoCallRouteParams = {
   uid?: number;
   appointmentId?: number;
   callKey?: string;
+  uiAction?: string;
+  status?: string;
+  bothPresent?: boolean;
 };
 
 const getPermission = async () => {
@@ -57,7 +63,15 @@ const getPermission = async () => {
 const VideoCallScreen = () => {
   const route = useRoute();
   const params = (route.params || {}) as VideoCallRouteParams;
-  const {endCall} = useVendorCall();
+  const {
+    endCall,
+    leaveRoom,
+    rejoinCall,
+    canRejoin,
+    lastEndedCall,
+    clearLastEndedCall,
+    activeCall,
+  } = useVendorCall();
 
   const role = params.role ?? 'vendor';
   const channelName = params.channelName ?? AGORA_CHANNEL_NAME;
@@ -75,32 +89,93 @@ const VideoCallScreen = () => {
   const roleLabel = isVendor ? 'Vendor (Doctor)' : 'User (Patient)';
   const remoteLabel = isVendor ? 'Patient' : 'Doctor';
 
+  const initialWaiting =
+    params.uiAction === 'join_agora_and_wait' ||
+    params.status === 'waiting' ||
+    params.bothPresent === false;
+
   const agoraEngineRef = useRef<IRtcEngine>();
   const eventHandler = useRef<IRtcEngineEventHandler>();
+  const intentionalLeaveRef = useRef(false);
+  const leavingRef = useRef(false);
 
   const [isJoined, setIsJoined] = useState(false);
   const [remoteUid, setRemoteUid] = useState(0);
-  const [statusMessage, setStatusMessage] = useState('Connecting…');
+  const [statusMessage, setStatusMessage] = useState(
+    initialWaiting ? 'Waiting for patient…' : 'Connecting…',
+  );
   const [isMuted, setIsMuted] = useState(false);
   const [isCameraOff, setIsCameraOff] = useState(false);
   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [waitingForPatient, setWaitingForPatient] = useState(initialWaiting);
+  const [disconnected, setDisconnected] = useState(false);
+  const [rejoining, setRejoining] = useState(false);
+  const [showAfterCall, setShowAfterCall] = useState(false);
+  const [endedMeta, setEndedMeta] = useState<{
+    talkDurationSeconds?: number | null;
+    status?: string | null;
+    endReason?: string | null;
+    userJoinedAt?: string | null;
+    vendorJoinedAt?: string | null;
+  } | null>(null);
+
+  useEffect(() => {
+    if (activeCall?.status === 'in_progress' || activeCall?.bothPresent) {
+      setWaitingForPatient(false);
+      setStatusMessage('Connected');
+    } else if (
+      activeCall?.status === 'waiting' ||
+      activeCall?.uiAction === 'join_agora_and_wait'
+    ) {
+      setWaitingForPatient(true);
+      setStatusMessage('Waiting for patient…');
+    }
+  }, [activeCall?.status, activeCall?.bothPresent, activeCall?.uiAction]);
+
+  useEffect(() => {
+    if (!lastEndedCall) {
+      return;
+    }
+    const meeting = lastEndedCall.meeting || {};
+    setEndedMeta({
+      talkDurationSeconds:
+        lastEndedCall.talkDurationSeconds ?? meeting.talkDurationSeconds,
+      status: lastEndedCall.status,
+      endReason: lastEndedCall.endReason ?? meeting.endReason,
+      userJoinedAt: meeting.userJoinedAt || lastEndedCall.userJoinedAt,
+      vendorJoinedAt: meeting.vendorJoinedAt || lastEndedCall.vendorJoinedAt,
+    });
+    setShowAfterCall(true);
+  }, [lastEndedCall]);
+
+  const handleAgoraDisconnect = useCallback(async () => {
+    if (intentionalLeaveRef.current || leavingRef.current) {
+      return;
+    }
+    leavingRef.current = true;
+    setStatusMessage('Connection lost — meeting still open');
+    setDisconnected(true);
+    try {
+      // Temporary drop — do NOT call /call/end
+      await leaveRoom('agora_disconnect');
+    } catch (e) {
+      console.warn('leaveRoom failed:', e);
+    } finally {
+      leavingRef.current = false;
+    }
+  }, [leaveRoom]);
 
   const joinChannel = useCallback(async () => {
     try {
-      await agoraEngineRef.current?.joinChannel(
-        agoraToken,
-        channelName,
-        uid,
-        {
-          channelProfile: ChannelProfileType.ChannelProfileCommunication,
-          clientRoleType: ClientRoleType.ClientRoleBroadcaster,
-          publishMicrophoneTrack: true,
-          publishCameraTrack: true,
-          autoSubscribeAudio: true,
-          autoSubscribeVideo: true,
-        },
-      );
+      await agoraEngineRef.current?.joinChannel(agoraToken, channelName, uid, {
+        channelProfile: ChannelProfileType.ChannelProfileCommunication,
+        clientRoleType: ClientRoleType.ClientRoleBroadcaster,
+        publishMicrophoneTrack: true,
+        publishCameraTrack: true,
+        autoSubscribeAudio: true,
+        autoSubscribeVideo: true,
+      });
     } catch (e) {
       console.error('joinChannel error:', e);
       setStatusMessage('Failed to join channel');
@@ -110,26 +185,46 @@ const VideoCallScreen = () => {
   const setupEventHandler = useCallback(() => {
     eventHandler.current = {
       onJoinChannelSuccess: () => {
-        setStatusMessage('Connected');
+        setStatusMessage(
+          waitingForPatient ? 'Waiting for patient…' : 'Connected',
+        );
         setIsJoined(true);
         setIsInitializing(false);
+        setDisconnected(false);
       },
       onUserJoined: (_connection: RtcConnection, remoteUserUid: number) => {
         setStatusMessage(`${remoteLabel} joined`);
         setRemoteUid(remoteUserUid);
+        setWaitingForPatient(false);
       },
       onUserOffline: (_connection: RtcConnection, remoteUserUid: number) => {
-        setStatusMessage(`${remoteLabel} left`);
+        setStatusMessage(`${remoteLabel} left — reconnecting…`);
         setRemoteUid(prev => (prev === remoteUserUid ? 0 : prev));
+        // Peer left temporarily — do NOT end the meeting.
+      },
+      onConnectionStateChanged: (
+        _connection: RtcConnection,
+        state: number,
+        _reason: number,
+      ) => {
+        // Agora ConnectionStateFailed (5) only — temporary network blips reconnect.
+        // Do NOT treat reconnecting as meeting complete.
+        if (state === 5) {
+          handleAgoraDisconnect();
+        }
       },
       onError: (err: number) => {
         console.error('Agora error:', err);
         setStatusMessage(`Call error (${err})`);
         setIsInitializing(false);
+        // Token / connection hard failures → leave-room (rejoin), not end.
+        if (err === 110 || err === 123 || err === 17) {
+          handleAgoraDisconnect();
+        }
       },
     };
     agoraEngineRef.current?.registerEventHandler(eventHandler.current);
-  }, [remoteLabel]);
+  }, [remoteLabel, waitingForPatient, handleAgoraDisconnect]);
 
   const setupVideoSDKEngine = useCallback(async () => {
     try {
@@ -170,6 +265,7 @@ const VideoCallScreen = () => {
       return;
     }
 
+    intentionalLeaveRef.current = false;
     const init = async () => {
       await setupVideoSDKEngine();
       setupEventHandler();
@@ -179,9 +275,7 @@ const VideoCallScreen = () => {
     return () => {
       cleanupAgoraEngine();
     };
-  },
-  
-   [
+  }, [
     callKey,
     cleanupAgoraEngine,
     hasRemoteCallCredentials,
@@ -191,14 +285,56 @@ const VideoCallScreen = () => {
   ]);
 
   const handleEndCall = async () => {
+    intentionalLeaveRef.current = true;
     cleanupAgoraEngine();
     try {
-      await endCall();
+      const result = await endCall();
+      if (result) {
+        // AfterCall modal is driven by lastEndedCall in context.
+        return;
+      }
     } catch (e) {
       console.warn('endCall API failed:', e);
     }
     leaveVideoCallScreen();
   };
+
+  const handleRejoin = async () => {
+    if (rejoining) {
+      return;
+    }
+    setRejoining(true);
+    setStatusMessage('Rejoining…');
+    try {
+      await rejoinCall();
+      setDisconnected(false);
+    } catch (error: any) {
+      Toast.show({
+        type: 'error',
+        text1: 'Rejoin failed',
+        text2: error?.message || 'Could not rejoin meeting',
+      });
+    } finally {
+      setRejoining(false);
+    }
+  };
+
+  const handleCloseAfterCall = () => {
+    clearLastEndedCall();
+    setShowAfterCall(false);
+    leaveVideoCallScreen();
+  };
+
+  const missMessage = getVendorMissReasonMessage(
+    endedMeta?.endReason,
+    endedMeta?.status,
+  );
+  const talkLabel =
+    endedMeta?.talkDurationSeconds != null && endedMeta.talkDurationSeconds > 0
+      ? formatTalkDuration(endedMeta.talkDurationSeconds)
+      : '—';
+  const patientJoined = !!(endedMeta?.userJoinedAt);
+  const vendorJoined = !!(endedMeta?.vendorJoinedAt);
 
   const toggleMute = () => {
     const next = !isMuted;
@@ -222,12 +358,20 @@ const VideoCallScreen = () => {
     agoraEngineRef.current?.switchCamera();
   };
 
+  const waitingCopy = waitingForPatient
+    ? 'Waiting for patient…'
+    : isInitializing
+      ? 'Connecting to channel…'
+      : isJoined
+        ? `Waiting for ${remoteLabel.toLowerCase()}…`
+        : statusMessage;
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
 
       <View style={styles.remoteVideo}>
-        {isJoined && remoteUid !== 0 ? (
+        {isJoined && remoteUid !== 0 && !disconnected ? (
           <RtcSurfaceView
             style={styles.remoteRtcView}
             canvas={{
@@ -241,16 +385,23 @@ const VideoCallScreen = () => {
               <Text style={styles.avatarEmoji}>{isVendor ? '👤' : '🩺'}</Text>
             </View>
             <Text style={styles.remoteName}>{remoteLabel}</Text>
-            <Text style={styles.waitingText}>
-              {isInitializing
-                ? 'Connecting to channel…'
-                : isJoined
-                  ? `Waiting for ${remoteLabel.toLowerCase()}…`
-                  : statusMessage}
-            </Text>
+            <Text style={styles.waitingText}>{waitingCopy}</Text>
+            {(disconnected || canRejoin) && (
+              <TouchableOpacity
+                style={styles.rejoinBtn}
+                activeOpacity={0.85}
+                disabled={rejoining}
+                onPress={handleRejoin}>
+                {rejoining ? (
+                  <ActivityIndicator color={Colors.white} />
+                ) : (
+                  <Text style={styles.rejoinText}>Rejoin</Text>
+                )}
+              </TouchableOpacity>
+            )}
           </>
         )}
-        {isInitializing && (
+        {isInitializing && !disconnected && (
           <View style={styles.loadingOverlay}>
             <ActivityIndicator size="large" color={Colors.white} />
           </View>
@@ -262,11 +413,15 @@ const VideoCallScreen = () => {
         <Text style={styles.callMeta}>
           {roleLabel} · UID {uid}
         </Text>
-        <Text style={styles.channelText}>Channel: {channelName}</Text>
+        <Text style={styles.channelText}>
+          {waitingForPatient
+            ? 'Status: Waiting for patient'
+            : `Channel: ${channelName}`}
+        </Text>
       </View>
 
       <View style={styles.localVideo}>
-        {isJoined && !isCameraOff ? (
+        {isJoined && !isCameraOff && !disconnected ? (
           <RtcSurfaceView
             style={styles.localRtcView}
             zOrderMediaOverlay={Platform.OS === 'android'}
@@ -373,6 +528,43 @@ const VideoCallScreen = () => {
           </TouchableOpacity>
         </View>
       </View>
+
+      <Modal visible={showAfterCall} transparent animationType="fade">
+        <View style={styles.ratingOverlay}>
+          <View style={styles.ratingCard}>
+            <Text style={styles.ratingTitle}>Consultation summary</Text>
+            <Text style={styles.ratingMeta}>
+              {getVendorStatusLabel(endedMeta?.status) || 'Ended'}
+            </Text>
+            <View style={styles.afterCallBlock}>
+              <Text style={styles.afterCallLine}>
+                Patient joined: {patientJoined ? 'Yes' : 'No'}
+              </Text>
+              <Text style={styles.afterCallLine}>
+                You joined: {vendorJoined ? 'Yes' : 'No'}
+              </Text>
+              <Text style={styles.afterCallLine}>
+                Talk duration: {talkLabel}
+              </Text>
+              {missMessage ? (
+                <Text style={styles.afterCallMiss}>{missMessage}</Text>
+              ) : endedMeta?.status === 'completed' &&
+                endedMeta?.talkDurationSeconds &&
+                endedMeta.talkDurationSeconds > 0 ? (
+                <Text style={styles.afterCallDone}>
+                  Completed · {talkLabel}
+                </Text>
+              ) : null}
+            </View>
+
+            <TouchableOpacity
+              style={styles.ratingSubmit}
+              onPress={handleCloseAfterCall}>
+              <Text style={styles.ratingSubmitText}>Done</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -418,6 +610,20 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     textAlign: 'center',
     paddingHorizontal: wp(8),
+  },
+  rejoinBtn: {
+    marginTop: hp(2.5),
+    backgroundColor: '#22C55E',
+    paddingHorizontal: wp(8),
+    paddingVertical: hp(1.4),
+    borderRadius: wp(3),
+    minWidth: wp(32),
+    alignItems: 'center',
+  },
+  rejoinText: {
+    color: Colors.white,
+    fontWeight: '700',
+    fontSize: FSize.fs15,
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -535,5 +741,66 @@ const styles = StyleSheet.create({
   endCallLabel: {
     color: '#FCA5A5',
     fontWeight: '600',
+  },
+  ratingOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: wp(6),
+  },
+  ratingCard: {
+    width: '100%',
+    backgroundColor: '#1E293B',
+    borderRadius: wp(4),
+    padding: wp(5),
+    alignItems: 'center',
+  },
+  ratingTitle: {
+    fontSize: FSize.fs18,
+    fontWeight: '700',
+    color: Colors.white,
+  },
+  ratingMeta: {
+    marginTop: hp(0.8),
+    color: '#94A3B8',
+    fontSize: FSize.fs13,
+  },
+  afterCallBlock: {
+    width: '100%',
+    marginTop: hp(1.5),
+    backgroundColor: '#0F172A',
+    borderRadius: wp(2),
+    padding: wp(3.5),
+    gap: hp(0.4),
+  },
+  afterCallLine: {
+    color: '#E2E8F0',
+    fontSize: FSize.fs13,
+  },
+  afterCallMiss: {
+    marginTop: hp(0.5),
+    color: '#FCA5A5',
+    fontSize: FSize.fs13,
+    fontWeight: '600',
+  },
+  afterCallDone: {
+    marginTop: hp(0.5),
+    color: '#86EFAC',
+    fontSize: FSize.fs13,
+    fontWeight: '600',
+  },
+  ratingSubmit: {
+    marginTop: hp(2),
+    backgroundColor: Colors.sooprsblue,
+    width: '100%',
+    paddingVertical: hp(1.6),
+    borderRadius: wp(2.5),
+    alignItems: 'center',
+  },
+  ratingSubmitText: {
+    color: Colors.white,
+    fontWeight: '700',
+    fontSize: FSize.fs15,
   },
 });

@@ -32,17 +32,25 @@
         android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
         android:launchMode="singleTask"
         android:windowSoftInputMode="adjustResize"
-        android:exported="true">
+        android:exported="true"
+        android:showWhenLocked="true"
+        android:turnScreenOn="true">
         <intent-filter>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
       </activity>
 
+      <!--
+        Separate taskAffinity is REQUIRED. IncomingCallActivity.finishAndRemoveTask()
+        would otherwise destroy MainActivity too when Accept launches the app into the
+        same task (killed-state Accept → app never stays open / never joins).
+      -->
       <activity
         android:name="com.reactnativefullscreennotificationincomingcall.IncomingCallActivity"
         android:theme="@style/incomingCall"
         android:launchMode="singleTask"
+        android:taskAffinity="com.sooprsvendor.incomingcall"
         android:excludeFromRecents="true"
         android:exported="false"
         android:showWhenLocked="true"
@@ -52,6 +60,7 @@
         android:name="com.reactnativefullscreennotificationincomingcall.NotificationReceiverActivity"
         android:theme="@style/incomingCall"
         android:launchMode="singleTask"
+        android:taskAffinity="com.sooprsvendor.incomingcall"
         android:excludeFromRecents="true"
         android:exported="false"
         android:showWhenLocked="true"

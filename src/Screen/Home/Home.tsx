@@ -11,6 +11,7 @@ import {
   Alert,
   StatusBar,
   Platform,
+  RefreshControl,
 } from 'react-native';
 import React, {useState, useCallback} from 'react';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
@@ -25,6 +26,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import AnimatedButton from '../../Component/AnimatedButton';
 import LinearGradient from 'react-native-linear-gradient';
+import ScheduledConsultationStrip, {
+  type ScheduledConsultationData,
+} from '../../Component/ScheduledConsultationStrip';
+import {useVendorCall} from '../../context/VendorCallContext';
 
 const REQUEST_PREVIEW_COUNT = 5;
 
@@ -121,6 +126,7 @@ const getLeadBadge = (lead: any, index: number): 'new' | 'review' | null => {
 
 const Home = () => {
   const navigation = useNavigation();
+  const {joinCall} = useVendorCall();
   const [userName, setUserName] = useState('');
   const [userData,setUserData] = useState<any>(null);
   const [leads, setLeads] = useState<any[]>([]);
@@ -137,16 +143,24 @@ const Home = () => {
   const [loadingContact, setLoadingContact] = useState(false);
   const [loadingUserDetails, setLoadingUserDetails] = useState(true);
   const [showAllRequests, setShowAllRequests] = useState(false);
+  const [scheduledConsultation, setScheduledConsultation] =
+    useState<ScheduledConsultationData>(null);
+  const [joiningConsultation, setJoiningConsultation] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const getUserDetails = async () => {
+  const getUserDetails = async (options?: {silent?: boolean}) => {
+    const silent = options?.silent === true;
     try {
-      setLoadingUserDetails(true);
+      if (!silent) {
+        setLoadingUserDetails(true);
+      }
       const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
       const data: any = await res.json();
       console.log('User details data:::::', data);
       console.log('User membership data:::::', data?.membership?.plan?.plan_name);
 
       setUserData(data);
+      setScheduledConsultation(data?.scheduledConsultation ?? null);
       if (data?.success && data?.vendorDetail) {
         const isProfileCompleted = data.vendorDetail.is_profile_completed;
         
@@ -171,10 +185,36 @@ const Home = () => {
     } catch (err: any) {
       console.log('Error fetching user details:::::', err);
       setUserName('User');
+      setScheduledConsultation(null);
     } finally {
-      setLoadingUserDetails(false);
+      if (!silent) {
+        setLoadingUserDetails(false);
+      }
     }
   };
+
+  const openScheduledConsultationBookings = useCallback(() => {
+    (navigation as any).navigate('BookingsScreen');
+  }, [navigation]);
+
+  const handleJoinScheduledConsultation = useCallback(async () => {
+    const appointmentId = scheduledConsultation?.appointment?.id;
+    if (!appointmentId || joiningConsultation) return;
+    setJoiningConsultation(true);
+    try {
+      await joinCall(Number(appointmentId));
+    } catch (e) {
+      console.log('Join scheduled consultation error:', e);
+      openScheduledConsultationBookings();
+    } finally {
+      setJoiningConsultation(false);
+    }
+  }, [
+    scheduledConsultation?.appointment?.id,
+    joiningConsultation,
+    joinCall,
+    openScheduledConsultationBookings,
+  ]);
 
   const getLeads = async (page: number = 1, append: boolean = false) => {
     try {
@@ -320,6 +360,23 @@ const Home = () => {
     }
   };
 
+  const refreshHome = useCallback(async () => {
+    setCurrentPage(1);
+    setHasMore(true);
+    setShowAllRequests(false);
+    await getUserDetails({silent: true});
+    await getLeads(1, false);
+  }, [categoryId]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refreshHome();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refreshHome]);
+
   useFocusEffect(
     useCallback(() => {
       const fetchData = async () => {
@@ -380,6 +437,14 @@ const Home = () => {
       onScroll={handleScroll}
       scrollEventThrottle={400}
       contentContainerStyle={styles.scrollContent}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={[Colors.sooprsblue]}
+          tintColor={Colors.sooprsblue}
+        />
+      }
     >
 
       {/* ================= HEADER ================= */}
@@ -567,6 +632,15 @@ const Home = () => {
           </View>
         </View>
       </TouchableOpacity> */}
+
+      {/* ================= UPCOMING / ONGOING CONSULTATION ================= */}
+      <ScheduledConsultationStrip
+        data={scheduledConsultation}
+        onPress={openScheduledConsultationBookings}
+        onJoinPress={
+          joiningConsultation ? undefined : handleJoinScheduledConsultation
+        }
+      />
 
       {/* ================= ADD PACKAGE LISTING ================= */}
       <TouchableOpacity

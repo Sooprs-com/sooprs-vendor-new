@@ -25,8 +25,12 @@ export function showBackgroundIncomingCall(callData: IncomingCallData) {
     channelName: 'Health Consultation Calls',
     notificationIcon: 'ic_launcher',
     notificationTitle: callData.patientName || 'Incoming Consultation',
-    notificationBody: 'Patient is waiting for you',
-    answerText: callData.acceptButtonLabel || 'Accept',
+    notificationBody: callData.isPeerWaiting
+      ? 'Patient is waiting — Join now'
+      : 'Window is open — Join the consultation',
+    answerText:
+      callData.acceptButtonLabel ||
+      (callData.isPeerWaiting ? 'Join now' : 'Join'),
     declineText: callData.rejectButtonLabel || 'Reject',
     notificationSound: 'incoming_ring',
     isVideo: true,

@@ -20,10 +20,13 @@ object IncomingCallPushHandler {
     if (event == "incoming-call" || event == "incoming_call") {
       return true
     }
-    if (category == "HEALTH_INCOMING_CALL") {
+    if (event == "peer-waiting" || event == "peer_waiting") {
       return true
     }
-    if (uiAction == "show_incoming_ring") {
+    if (category == "HEALTH_INCOMING_CALL" || category == "HEALTH_PEER_WAITING") {
+      return true
+    }
+    if (uiAction == "show_incoming_ring" || uiAction == "show_peer_waiting_join") {
       return true
     }
     return false
@@ -62,6 +65,14 @@ object IncomingCallPushHandler {
       return
     }
 
+    // App already open → let RN messaging().onMessage / socket drive the
+    // in-app incoming UI. Native full-screen alone can hide Accept when
+    // MainActivity is resumed.
+    if (IncomingCallLaunchHelper.isMainAppInForeground) {
+      Log.d(TAG, "App in foreground — skipping native incoming-call UI")
+      return
+    }
+
     val appointmentId = data["appointmentId"] ?: return
     val participantRole = data["participantRole"]
     if (!participantRole.isNullOrBlank() && participantRole != "receiver") {
@@ -73,10 +84,23 @@ object IncomingCallPushHandler {
 
     val uuid = data["callSessionId"] ?: "vendor-call-$appointmentId"
     val title = data["title"] ?: "Incoming Consultation"
-    val body = data["body"] ?: "Patient is waiting for you"
-    val acceptLabel = data["acceptButtonLabel"] ?: "Accept"
+    val event = data["event"]?.lowercase() ?: data["type"]?.lowercase()
+    val uiAction = data["uiAction"]?.lowercase()
+    val isPeerWaiting =
+      event == "peer-waiting" ||
+        event == "peer_waiting" ||
+        uiAction == "show_peer_waiting_join"
+    val body =
+      data["body"]
+        ?: if (isPeerWaiting) {
+          "Patient is waiting — Join now"
+        } else {
+          "Window is open — Join the consultation"
+        }
+    val acceptLabel =
+      data["acceptButtonLabel"] ?: if (isPeerWaiting) "Join now" else "Join"
     val rejectLabel = data["rejectButtonLabel"] ?: "Reject"
-    val ttlSeconds = data["ttlSeconds"]?.toIntOrNull() ?: 30
+    val ttlSeconds = data["ttlSeconds"]?.toIntOrNull() ?: 60
     val payloadJson = JSONObject(data as Map<*, *>).toString()
 
     val intent =

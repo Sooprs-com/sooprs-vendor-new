@@ -4,39 +4,33 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import com.reactnativefullscreennotificationincomingcall.FullScreenNotificationIncomingCallModule
-import com.sooprsvendor.MainActivity
 import org.json.JSONObject
 
 /**
  * Handles accept/decline from the full-screen notification library when the
  * React bridge may not be ready (app killed). Stops the native ringtone
  * service and persists the action for JS to process after cold start.
+ *
+ * Always persists + launches when main app is not in foreground — do NOT skip
+ * just because the headless IncomingCallActivity RN bridge is alive.
  */
 object IncomingCallNotificationBridge {
   private const val TAG = "IncomingCallBridge"
 
   fun onAnswered(context: Context, bundle: Bundle?) {
     stopRingtone(context)
-    if (isJsBridgeReady()) {
-      return
-    }
     savePendingAction(context, "accept", bundle?.getString("payload"))
-    launchMainApp(context)
+    if (!IncomingCallLaunchHelper.isMainAppInForeground) {
+      launchMainApp(context)
+    }
   }
 
   fun onDeclined(context: Context, bundle: Bundle?) {
     stopRingtone(context)
-    if (isJsBridgeReady()) {
-      return
-    }
     savePendingAction(context, "reject", bundle?.getString("payload"))
-    launchMainApp(context)
-  }
-
-  private fun isJsBridgeReady(): Boolean {
-    val reactContext = FullScreenNotificationIncomingCallModule.reactContext ?: return false
-    return reactContext.hasActiveReactInstance()
+    if (!IncomingCallLaunchHelper.isMainAppInForeground) {
+      launchMainApp(context)
+    }
   }
 
   fun stopRingtone(context: Context) {
@@ -79,9 +73,7 @@ object IncomingCallNotificationBridge {
 
   private fun launchMainApp(context: Context) {
     try {
-      val intent = Intent(context, MainActivity::class.java)
-      intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-      context.startActivity(intent)
+      IncomingCallLaunchHelper.launchMainApp(context)
     } catch (error: Exception) {
       Log.e(TAG, "Failed to launch main app", error)
     }

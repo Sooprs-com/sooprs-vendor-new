@@ -22,6 +22,10 @@ import InvoicePreviewScreen from '../Screen/Billing/InvoicePreviewScreen';
 import VideoCallScreen from '../Screen/VideoCall/VideoCallScreen';
 import PackageDetailsScreen from '../Screen/Orders/PackageDetailsScreen';
 import LeadDetailsScreen from '../Screen/Leads/LeadDetailsScreen';
+import HealthAppointmentsScreen from '../Screen/Health/HealthAppointmentsScreen';
+import HealthAppointmentDetailScreen from '../Screen/Health/HealthAppointmentDetailScreen';
+import AvailableSlotsScreen from '../Screen/Profile/AvailableSlotsScreen';
+import EditProfileScreen from '../Screen/Profile/EditProfileScreen';
 
 const MainDrawer = createDrawerNavigator();
 const {width} = Dimensions.get('window');
@@ -35,6 +39,10 @@ const VendorStackNavigator = () => {
       <VendorStack.Screen name="BottomTab" component={BottomTab} />
       <VendorStack.Screen name="BillingBottomTab" component={BillingBottomTab} />
       <VendorStack.Screen name="ProfileScreen" component={ProfileScreen} />
+      <VendorStack.Screen name="EditProfileScreen" component={EditProfileScreen} />
+      <VendorStack.Screen name="AvailableSlotsScreen" component={AvailableSlotsScreen} />
+      <VendorStack.Screen name="HealthAppointmentsScreen" component={HealthAppointmentsScreen} />
+      <VendorStack.Screen name="HealthAppointmentDetailScreen" component={HealthAppointmentDetailScreen} />
       <VendorStack.Screen name="PackagesScreen" component={Project} />
       <VendorStack.Screen name="BookingsScreen" component={Order} />
       <VendorStack.Screen name="AddCredits" component={AddCredits} />
