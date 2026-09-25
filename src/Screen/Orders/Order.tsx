@@ -27,6 +27,7 @@ import {HealthAppointment} from '../../types/vendorCall';
 import {
   canShowJoinNowForBooking,
   getAppointmentId,
+  getJoinCtaLabel,
   resolveJoinAppointmentForOrder,
 } from '../../services/bookingJoinHelper';
 
@@ -152,7 +153,6 @@ const Order = () => {
       const list = (appointmentsRes?.data || appointmentsRes || []) as HealthAppointment[];
       setAppointments(Array.isArray(list) ? list : []);
     } catch (err) {
-      console.log('error in all orders', err);
       setAllOrders([]);
     } finally {
       setLoading(false);
@@ -395,7 +395,9 @@ const Order = () => {
             ) : (
               <>
                 <MaterialCommunityIcons name="video" size={wp(5.2)} color={Colors.white} />
-                <Text style={styles.videoCallText}>Join Now</Text>
+                <Text style={styles.videoCallText}>
+                  {getJoinCtaLabel(linkedAppointment)}
+                </Text>
               </>
             )}
           </TouchableOpacity>

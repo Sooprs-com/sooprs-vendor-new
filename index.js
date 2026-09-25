@@ -14,13 +14,6 @@ import {handleBackgroundIncomingCallPush} from './src/context/VendorCallContext'
 import {MAIN_COMPONENT} from './src/services/callKeepService';
 
 messaging().setBackgroundMessageHandler(async remoteMessage => {
-  console.log('[FCM Push] Background message received:', {
-    messageId: remoteMessage?.messageId,
-    from: remoteMessage?.from,
-    sentTime: remoteMessage?.sentTime,
-    data: remoteMessage?.data,
-    notification: remoteMessage?.notification,
-  });
   await handleBackgroundIncomingCallPush(remoteMessage.data || {});
 });
 

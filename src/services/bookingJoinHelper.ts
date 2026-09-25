@@ -189,3 +189,20 @@ export function canShowJoinNowForBooking(
   }
   return isAppointmentJoinable(appointment);
 }
+
+/** Join vs Rejoin label when meeting is already open / in progress. */
+export function getJoinCtaLabel(
+  appointment?: HealthAppointment | Record<string, any> | null,
+): string {
+  if (!appointment) {
+    return 'Join Now';
+  }
+  const status = normalizeMeetingStatus(
+    appointment.status,
+    appointment.legacyStatus,
+  );
+  if (status === 'waiting' || status === 'in_progress') {
+    return 'Rejoin';
+  }
+  return 'Join Now';
+}

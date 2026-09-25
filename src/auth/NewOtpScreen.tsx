@@ -132,7 +132,6 @@ const NewOtpScreen = () => {
       };
 
       const result: any = await postData(payload, mobile_siteConfig.VERIFY_OTP_NEW);
-      console.log('result:::::', result);
 
       if (result?.status === 400 || result?.status === 'error') {
         showAlert('error', 'Error', result?.msg || result?.message || 'Invalid OTP. Please try again.');
@@ -190,7 +189,6 @@ const NewOtpScreen = () => {
     }
     } catch (error) {
       showAlert('error', 'Error', 'An error occurred while verifying OTP.');
-      console.error(error);
     } finally {
       setIsVerifying(false);
     }

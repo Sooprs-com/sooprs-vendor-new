@@ -11,8 +11,6 @@ export const mobile_siteConfig = {
   INDEX: 'api2/public/index.php/',
 
 
-
-
   REGISTER_USER_NEW: 'auth/vendor-register', // Update with your actual endpoint
   VERIFY_OTP_NEW: 'auth/verify-otp-user', // Update with your actual endpoint
   COMPLETE_PROFILE: 'user/vendor/complete-vendor-profile', // Update with your actual endpoint

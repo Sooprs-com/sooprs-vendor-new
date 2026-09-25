@@ -19,7 +19,6 @@ export const useSubscriptionApi = () => {
     try {
       // Use BASE_URL2 for this endpoint
       const url = mobile_siteConfig.BASE_URL2 + mobile_siteConfig.GET_MEMBERSHIP;
-      console.log('Fetching plans from URL:', url);
       
       const response = await fetch(url, {
         method: 'GET',
@@ -29,7 +28,6 @@ export const useSubscriptionApi = () => {
       });
       
       const data = await response.json();
-      console.log('Subscription Plans API Response:', data);
       
       // Handle different response structures
       if (data?.status === 200 && data?.msg) {
@@ -42,10 +40,8 @@ export const useSubscriptionApi = () => {
         return data.data;
       }
       
-      console.warn('Unexpected API response structure:', data);
       return [];
     } catch (error) {
-      console.error('Error fetching plans:', error);
       Toast.show({
         type: 'error',
         text1: 'Error while getting the plans',
@@ -136,7 +132,6 @@ export const useSubscriptionApi = () => {
         );
       }
     } catch (error) {
-      console.error('Razorpay Payment Error:', error);
       setLoading(false);
       Toast.show({
         type: 'error',
@@ -185,14 +180,12 @@ export const useSubscriptionApi = () => {
         text1: 'Success',
         text2: 'Your plan has been purchased successfully.',
       });
-      console.log('res', res, payload, amount);
       if (res?.status === 200) {
         return res;
       } else {
         throw new Error('Order verification failed');
       }
     } catch (error) {
-      console.error('Order Verification Error:', error);
       Toast.show({
         type: 'error',
         text1: 'Payment verification failed',

@@ -56,11 +56,9 @@ const DrawerMenuScreen = ({navigation}: {navigation: any}) => {
       try {
         const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
         const data: any = await res.json();
-        console.log('all-user-details res::::', data);
 
         if (data?.success && data?.vendorDetail) {
           const user = data.vendorDetail;
-          console.log("user:::: Data", user);
           setUserName(user?.name || '');
           setPhoneNumber(
             user?.mobile ||
@@ -71,7 +69,6 @@ const DrawerMenuScreen = ({navigation}: {navigation: any}) => {
           setProfileImage(user?.image || null);
         }
       } catch (e) {
-        console.log('Error fetching user details for drawer:', e);
       }
     };
 

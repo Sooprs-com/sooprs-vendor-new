@@ -94,7 +94,6 @@ const EditProfileScreen = () => {
       setLoading(true);
       const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
       const data: any = await res.json();
-      console.log('Vendor profile data in EditProfileScreen:::::', data);
 
       if (data?.success && data?.vendorDetail) {
         const vendor = data.vendorDetail;
@@ -129,7 +128,6 @@ const EditProfileScreen = () => {
         }
       }
     } catch (error) {
-      console.log('Error fetching vendor profile in EditProfileScreen:::::', error);
       showAlert('error', 'Error', 'Failed to load profile data');
     } finally {
       setLoading(false);
@@ -188,7 +186,6 @@ const EditProfileScreen = () => {
         }
       });
     } catch (error) {
-      console.log('ImagePicker Exception: ', error);
       Alert.alert('Error', 'Failed to open image picker');
     }
   };
@@ -226,10 +223,8 @@ const EditProfileScreen = () => {
         } as any);
       }
 
-      console.log('Update Profile Payload:', formData);
 
       const result: any = await putDataWithTokenFormData(formData, mobile_siteConfig.UPDATE_PROFILE);
-      console.log('Update Profile result:::::', result);
 
       if (result?.status === 400 || result?.status === 'error' || result?.success === false) {
         showAlert('error', 'Error', result?.msg || result?.message || 'Failed to update profile. Please try again.');
@@ -252,7 +247,6 @@ const EditProfileScreen = () => {
         showAlert('error', 'Error', result?.msg || result?.message || 'Failed to update profile. Please try again.');
       }
     } catch (error: any) {
-      console.log('Update Profile error:::::', error);
       showAlert('error', 'Error', error?.message || 'An error occurred while updating profile. Please try again.');
     } finally {
       setIsSubmitting(false);

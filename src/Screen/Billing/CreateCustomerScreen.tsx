@@ -79,7 +79,6 @@ const CreateCustomerScreen = () => {
         const raw = await AsyncStorage.getItem(BILLING_CUSTOMERS_KEY);
         if (raw) setCustomers(JSON.parse(raw));
       } catch (e) {
-        console.log('Error loading customers:', e);
       }
     };
     load();
@@ -134,7 +133,6 @@ const CreateCustomerScreen = () => {
     try {
       await AsyncStorage.setItem(BILLING_CUSTOMERS_KEY, JSON.stringify(updated));
     } catch (e) {
-      console.log('Error saving customers:', e);
     }
 
     setBusinessName('');

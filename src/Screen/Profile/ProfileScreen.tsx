@@ -71,7 +71,6 @@ const ProfileScreen = () => {
                 routes: [{name: 'EnterMobileNumber'}],
               });
             } catch (error) {
-              console.error('Error during logout:', error);
               Alert.alert('Error', 'Failed to logout. Please try again.');
             }
           },
@@ -86,7 +85,6 @@ const ProfileScreen = () => {
       setLoading(true);
       const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
       const data: any = await res.json();
-      console.log('Vendor profile data in ProfileScreen:::::', data);
 
       if (data?.success && data?.vendorDetail) {
         if (data.vendorDetail.name) {
@@ -100,7 +98,6 @@ const ProfileScreen = () => {
         }
       }
     } catch (error) {
-      console.log('Error fetching vendor profile in ProfileScreen:::::', error);
     } finally {
       setLoading(false);
     }
@@ -159,7 +156,6 @@ const ProfileScreen = () => {
         }
       });
     } catch (error) {
-      console.log('ImagePicker Exception: ', error);
       Alert.alert('Error', 'Failed to open image picker');
     }
   };
@@ -178,10 +174,8 @@ const ProfileScreen = () => {
         name: imageFileName,
       } as any);
 
-      console.log('Uploading profile image...');
 
       const result: any = await postDataWithToken(formData, mobile_siteConfig.COMPLETE_PROFILE);
-      console.log('Profile image upload result:::::', result);
 
       if (result?.success === true || result?.status === 200) {
         setVendorImage(imageUri);
@@ -193,7 +187,6 @@ const ProfileScreen = () => {
         setSelectedImage(null);
       }
     } catch (error: any) {
-      console.log('Error uploading profile image:', error);
       Alert.alert('Error', error?.message || 'Failed to upload profile image');
       setSelectedImage(null);
     } finally {

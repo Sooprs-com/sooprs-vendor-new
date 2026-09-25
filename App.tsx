@@ -109,7 +109,6 @@ const AppContent = () => {
                 });
               }
             } catch (error) {
-              console.log('Error fetching user details from API:', error);
               dispatch({
                 type: 'SET_USER_DETAILS',
                 payload: {
@@ -128,7 +127,6 @@ const AppContent = () => {
           setInitialRoute('EnterMobileNumber');
         }
       } catch (error) {
-        console.log('Error initializing app:', error);
         setInitialRoute('EnterMobileNumber');
       } finally {
         setIsReady(true);

@@ -357,7 +357,11 @@ const HealthAppointmentsScreen = () => {
                   size={wp(4.5)}
                   color={Colors.white}
                 />
-                <Text style={styles.joinText}>Join</Text>
+                <Text style={styles.joinText}>
+                  {status === 'waiting' || status === 'in_progress'
+                    ? 'Rejoin'
+                    : 'Join'}
+                </Text>
               </>
             )}
           </TouchableOpacity>

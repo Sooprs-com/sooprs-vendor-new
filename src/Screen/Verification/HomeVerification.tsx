@@ -41,7 +41,6 @@ const HomeVerificationScreen = () => {
       setLoadingUserDetails(true);
       const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
       const data: any = await res.json();
-      console.log('User details data in HomeVerification:::::', data);
       
       if (data?.success && data?.vendorDetail) {
         // Update user name from API response
@@ -62,7 +61,6 @@ const HomeVerificationScreen = () => {
         }
       }
     } catch (err: any) {
-      console.log('Error fetching user details in HomeVerification:::::', err);
       setUserName('User');
     } finally {
       setLoadingUserDetails(false);
@@ -84,10 +82,8 @@ const HomeVerificationScreen = () => {
         limit: 20,
         cur: "INR"
       };
-      console.log('Payload Filter lead (HomeVerification):::::', payload);
       
       const result: any = await postDataWithTokenBase2(payload, mobile_siteConfig.FILTER_LEADS_ALL);
-      console.log('Leads API response (HomeVerification, page', page, '):::::', result);
       
       let newLeads: any[] = [];
       
@@ -98,7 +94,6 @@ const HomeVerificationScreen = () => {
       } else if (Array.isArray(result)) {
         newLeads = result;
       } else {
-        console.log('Invalid leads response format:', result);
         newLeads = [];
       }
       
@@ -115,7 +110,6 @@ const HomeVerificationScreen = () => {
       }
       
     } catch (error: any) {
-      console.log('Error fetching leads (HomeVerification):::::', error);
       if (!append) {
         setLeads([]);
       }

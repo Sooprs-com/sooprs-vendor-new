@@ -124,7 +124,6 @@ const SlotSetupModal = ({
       const result = await fetchVendorAvailability();
       setWeekSchedule(mergeAvailabilityWithWeek(result.availability));
     } catch (error) {
-      console.log('loadSchedule error', error);
       Toast.show({
         type: 'error',
         text1: 'Error',
@@ -142,7 +141,6 @@ const SlotSetupModal = ({
       const result = await fetchBlockedDates(monthKey);
       setBlockedDates(result.blockedDates);
     } catch (error) {
-      console.log('loadBlockedDates error', error);
       Toast.show({
         type: 'error',
         text1: 'Error',
@@ -157,7 +155,6 @@ const SlotSetupModal = ({
   const initializeModal = useCallback(async () => {
     try {
       setCheckingAccess(true);
-      console.log('[Add Slot] initializeModal — starting API calls');
       const allowed = await checkAppointmentAllowed();
       setAccessAllowed(allowed);
       if (!allowed) {
@@ -165,7 +162,6 @@ const SlotSetupModal = ({
       }
       await Promise.all([loadSchedule(), loadBlockedDates()]);
     } catch (error) {
-      console.log('initializeModal error', error);
       Toast.show({
         type: 'error',
         text1: 'Error',
@@ -719,7 +715,6 @@ const AvailableSlotsScreen = () => {
       setAvailability(result.availability);
       setTimezoneLabel(result.timezoneLabel);
     } catch (error) {
-      console.log('loadAvailability error', error);
       Toast.show({
         type: 'error',
         text1: 'Error',
@@ -757,7 +752,6 @@ const AvailableSlotsScreen = () => {
         <TouchableOpacity
           style={styles.addButtonPill}
           onPress={() => {
-            console.log('[Add Slot] button clicked — opening slot setup modal');
             setModalVisible(true);
           }}
           activeOpacity={0.85}>

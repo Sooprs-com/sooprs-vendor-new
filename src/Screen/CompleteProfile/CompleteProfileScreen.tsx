@@ -112,10 +112,8 @@ import {
           account_holder_name: accountHolderName.trim(),
         };
 
-        console.log('Complete Profile Payload:', payload);
         
         const result: any = await postDataWithToken(payload, mobile_siteConfig.COMPLETE_PROFILE);
-        console.log('Complete Profile result:::::', result);
 
         if (result?.status === 400 || result?.status === 'error' || result?.success === false) {
           showAlert('error', 'Error', result?.msg || result?.message || 'Failed to complete profile. Please try again.');
@@ -138,7 +136,6 @@ import {
           showAlert('error', 'Error', result?.msg || result?.message || 'Failed to complete profile. Please try again.');
         }
       } catch (error: any) {
-        console.log('Complete Profile error:::::', error);
         showAlert('error', 'Error', error?.message || 'An error occurred while completing profile. Please try again.');
       } finally {
         setIsSubmitting(false);

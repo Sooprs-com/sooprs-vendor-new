@@ -144,21 +144,11 @@ const ScheduledConsultationStrip: React.FC<Props> = ({
     [apt?.appointmentTime],
   );
 
-  const personName =
-    apt?.patient?.name?.trim() || apt?.vendor?.name?.trim() || '';
-  const packageName = apt?.package?.name?.trim() || '';
   const personImage = apt?.patient?.image || apt?.vendor?.image;
 
   const headline = canJoin
     ? 'Consultation ready'
     : data?.label || 'Upcoming consultation';
-
-  const detailLine = [
-    personName,
-    packageName && packageName !== personName ? packageName : '',
-  ]
-    .filter(Boolean)
-    .join(' · ');
 
   if (!shouldShowScheduledConsultationStrip(data)) {
     return null;
@@ -207,18 +197,13 @@ const ScheduledConsultationStrip: React.FC<Props> = ({
               {headline}
             </Text>
           </View>
-          {!!detailLine && (
-            <Text style={styles.detail} numberOfLines={1}>
-              {detailLine}
-            </Text>
-          )}
           {(datePart || timePart) && (
             <View style={styles.metaRow}>
               {!!datePart && (
                 <View style={styles.metaChip}>
                   <MaterialCommunityIcons
                     name="calendar-month-outline"
-                    size={wp(3)}
+                    size={wp(3.8)}
                     color="#4B6FA8"
                   />
                   <Text style={styles.metaText}>{datePart}</Text>
@@ -228,7 +213,7 @@ const ScheduledConsultationStrip: React.FC<Props> = ({
                 <View style={styles.metaChip}>
                   <MaterialCommunityIcons
                     name="clock-outline"
-                    size={wp(3)}
+                    size={wp(3.8)}
                     color="#4B6FA8"
                   />
                   <Text style={styles.metaText}>{timePart}</Text>
@@ -338,33 +323,26 @@ const styles = StyleSheet.create({
   titleJoin: {
     color: '#0A5C40',
   },
-  detail: {
-    marginTop: 2,
-    fontSize: FSize.fs10,
-    fontFamily: fFamily.ibmSemiBold,
-    color: '#3D5A80',
-    lineHeight: FSize.fs10 + 2,
-  },
   metaRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
-    marginTop: hp(0.45),
-    gap: 6,
+    marginTop: hp(0.55),
+    gap: 8,
   },
   metaChip: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.75)',
-    paddingHorizontal: wp(1.8),
-    paddingVertical: hp(0.22),
+    paddingHorizontal: wp(2.2),
+    paddingVertical: hp(0.35),
     borderRadius: 999,
-    gap: 3,
+    gap: 5,
   },
   metaText: {
-    fontSize: FSize.fs9,
-    fontFamily: fFamily.ibmSemiBold,
-    color: '#3D5A80',
+    fontSize: FSize.fs13,
+    fontFamily: fFamily.ibmBold,
+    color: '#2A4A78',
   },
   joinBtn: {
     flexDirection: 'row',

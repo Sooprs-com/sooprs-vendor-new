@@ -64,7 +64,6 @@ const CabRideReviewScreen = ({route}: any) => {
     getDataWithToken({}, mobile_siteConfig.GET_PACKAGE_DETAILS + data.slug)
       .then((res: any) => res.json())
       .then((res: any) => {
-        console.log("Package details", res);
         if (res?.success && res?.package) {
           setPackageData(res);
           // Set initial status (1 = active, 0 = inactive)
@@ -76,7 +75,6 @@ const CabRideReviewScreen = ({route}: any) => {
         }
       })
       .catch((err: any) => {
-        console.log("error in package details", err);
       })
       .finally(() => {
         setLoading(false);
@@ -118,7 +116,6 @@ const CabRideReviewScreen = ({route}: any) => {
   const carouselImages = getCarouselImages();
 
 
-
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
@@ -148,8 +145,6 @@ const CabRideReviewScreen = ({route}: any) => {
             <TouchableOpacity 
               style={styles.editButton}
               onPress={() => {
-                console.log('Edit button clicked - Package data:', pkg);
-                console.log('Package ID:', pkg?.id || pkg?.package_id);
                 (navigation as any).navigate('AddPackagesScreen', { 
                   packageData: pkg,
                   isEditMode: true 
@@ -291,7 +286,6 @@ const CabRideReviewScreen = ({route}: any) => {
             <View style={styles.policySection}>
               {pkg.policy.map((policyItem: string, index: number) => {
                 // Parse policy item to extract label and value
-                console.log("policyItem",policyItem);
                   return (
                     <View key={index} style={styles.policyRow}>
                       <Text style={styles.grayBullet}>•</Text>

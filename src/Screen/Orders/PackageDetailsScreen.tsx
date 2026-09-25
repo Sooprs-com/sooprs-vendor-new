@@ -32,6 +32,7 @@ import {HealthAppointment} from '../../types/vendorCall';
 import {
   canShowJoinNowForBooking,
   getAppointmentId,
+  getJoinCtaLabel,
   getOrderAppointmentId,
   resolveJoinAppointmentForOrder,
 } from '../../services/bookingJoinHelper';
@@ -246,7 +247,6 @@ const PackageDetailsScreen = () => {
         mobile_siteConfig.GET_ORDER_DETAILS + routeParams.order_id,
       );
       const orderJson: any = await orderRes.json();
-      console.log('Order Details API Response:', JSON.stringify(orderJson, null, 2));
       const orderPayload = orderJson?.success ? orderJson.data : null;
       setOrderData(orderPayload);
 
@@ -671,7 +671,9 @@ const PackageDetailsScreen = () => {
               ) : (
                 <>
                   <MaterialCommunityIcons name="video" size={wp(5)} color={Colors.white} />
-                  <Text style={styles.joinNowText}>Join Now</Text>
+                  <Text style={styles.joinNowText}>
+                    {getJoinCtaLabel(joinAppointment)}
+                  </Text>
                 </>
               )}
             </TouchableOpacity>

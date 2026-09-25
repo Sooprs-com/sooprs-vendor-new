@@ -3,7 +3,6 @@ import { mobile_siteConfig } from "./mobile-siteConfig";
 
 
 export async function postData(data: any, urlPath: string) {
-  console.log("=== postData === ", mobile_siteConfig.BASE_URL + urlPath);
   const isFormData = data instanceof FormData;
   return new Promise((resolve, reject) => {
     fetch(mobile_siteConfig.BASE_URL + urlPath, {
@@ -26,7 +25,6 @@ export async function postData(data: any, urlPath: string) {
         }
       })
       .catch((error) => {
-        console.log(`=== ERROR === ${urlPath}`, error);
         reject(error);
       });
   });
@@ -37,8 +35,6 @@ export async function postDataWithToken(data: any, urlPath: string) {
     mobile_siteConfig.MOB_ACCESS_TOKEN_KEY
   );
 
-  console.log('token::::::::::', token);
-  console.log("=== postDataWithToken === ", mobile_siteConfig.BASE_URL + urlPath);
   const isFormData = data instanceof FormData;
   return new Promise((resolve, reject) => {
     fetch(mobile_siteConfig.BASE_URL + urlPath, {
@@ -58,7 +54,6 @@ export async function postDataWithToken(data: any, urlPath: string) {
         resolve(json);
       })
       .catch((error) => {
-        console.log(`=== ERROR === ${urlPath}`, error);
         reject(error);
       });
   });
@@ -69,8 +64,6 @@ export async function postDataWithTokenBase2(data: any, urlPath: string) {
     mobile_siteConfig.MOB_ACCESS_TOKEN_KEY
   );
 
-  console.log('token::::::::::', token);
-  console.log("=== postDataWithTokenBase2 === ", mobile_siteConfig.BASE_URL2 + urlPath);
   const isFormData = data instanceof FormData;
   return new Promise((resolve, reject) => {
     fetch(mobile_siteConfig.BASE_URL2 + urlPath, {
@@ -89,7 +82,6 @@ export async function postDataWithTokenBase2(data: any, urlPath: string) {
         resolve(json);
       })
       .catch((error) => {
-        console.log(`=== ERROR === ${urlPath}`, error);
         reject(error);
       });
   });
@@ -100,8 +92,6 @@ export async function postDataWithToken1(data: any, urlPath: string) {
     mobile_siteConfig.MOB_ACCESS_TOKEN_KEY
   );
 
-  console.log('token::::::::::', token);
-  console.log("=== postDataWithToken === ", mobile_siteConfig.BASE_URL2 + urlPath);
   const isFormData = data instanceof FormData;
   return new Promise((resolve, reject) => {
     fetch(mobile_siteConfig.BASE_URL + urlPath, {
@@ -121,14 +111,12 @@ export async function postDataWithToken1(data: any, urlPath: string) {
         resolve(json);
       })
       .catch((error) => {
-        console.log(`=== ERROR === ${urlPath}`, error);
         reject(error);
       });
   });
 }
 
 export async function getData(urlPath: string) {
-  console.log('=== getData URL ===', mobile_siteConfig.BASE_URL + urlPath);
   let accessTokenKey = await AsyncStorage.getItem(
     mobile_siteConfig.MOB_ACCESS_TOKEN_KEY
   );
@@ -147,14 +135,12 @@ export async function getData(urlPath: string) {
       .then((response) => response.json())
       .then((json) => resolve(json))
       .catch((error) => {
-        console.log(`=== ERROR === ${urlPath}`, error);
         reject(error);
       });
   });
 }
 
 export async function getDataWithToken(data: any, urlPath: string) {
-  console.log('=== getDataWithToken URL ===', mobile_siteConfig.BASE_URL + urlPath);
   let token = await AsyncStorage.getItem(
     mobile_siteConfig.MOB_ACCESS_TOKEN_KEY
   );
@@ -171,7 +157,6 @@ export async function getDataWithToken(data: any, urlPath: string) {
     });
     return await res;
   } catch (err) {
-    console.log("failed to fetch");
   }
 }
 
@@ -193,15 +178,11 @@ export async function patchData(data: any, urlPath: string) {
     });
     return await res;
   } catch (err) {
-    console.log("Error:: failed to fetch");
   }
 }
 
 export async function PutDataWithToken(data: any, urlPath: string) {
-  console.log('=== PutDataWithToken URL ===', mobile_siteConfig.BASE_URL + urlPath);
-  console.log('=== PutDataWithToken REQUEST ===', data);
   let token = await AsyncStorage.getItem(mobile_siteConfig.MOB_ACCESS_TOKEN_KEY);
-  console.log('token:::::::::7', token);
 
   return new Promise((resolve, reject) => {
     fetch(mobile_siteConfig.BASE_URL + urlPath, {
@@ -218,11 +199,10 @@ export async function PutDataWithToken(data: any, urlPath: string) {
     })
       .then(response => response.json())
       .then(json => {
-        // console.log('=== vv RESPONSE ===', json);
+        // 
         resolve(json);
       })
       .catch(error => {
-        console.log('=== ERROR ===', error);
         reject(error);
       });
   });
@@ -230,8 +210,6 @@ export async function PutDataWithToken(data: any, urlPath: string) {
 
 export async function putDataWithTokenFormData(data: any, urlPath: string) {
   let token = await AsyncStorage.getItem(mobile_siteConfig.MOB_ACCESS_TOKEN_KEY);
-  console.log('token::::::::::', token);
-  console.log("=== putDataWithTokenFormData === ", mobile_siteConfig.BASE_URL + urlPath);
   const isFormData = data instanceof FormData;
   return new Promise((resolve, reject) => {
     fetch(mobile_siteConfig.BASE_URL + urlPath, {
@@ -250,16 +228,13 @@ export async function putDataWithTokenFormData(data: any, urlPath: string) {
         resolve(json);
       })
       .catch((error) => {
-        console.log(`=== ERROR === ${urlPath}`, error);
         reject(error);
       });
   });
 }
 
 export async function deleteDataWithToken(data: any, urlPath: string) {
-  console.log('=== deleteDataWithToken URL ===', mobile_siteConfig.BASE_URL + urlPath);
   let token = await AsyncStorage.getItem(mobile_siteConfig.MOB_ACCESS_TOKEN_KEY);
-  console.log('token:::::::::7', token);
   return new Promise((resolve, reject) => {
     fetch(mobile_siteConfig.BASE_URL + urlPath, {
       method: 'DELETE',
@@ -277,7 +252,6 @@ export async function deleteDataWithToken(data: any, urlPath: string) {
         resolve(json);
       })
       .catch(error => {
-        console.log('=== ERROR ===', error);
         reject(error);
       });
   });

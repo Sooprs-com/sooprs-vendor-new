@@ -156,8 +156,6 @@ const Home = () => {
       }
       const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
       const data: any = await res.json();
-      console.log('User details data:::::', data);
-      console.log('User membership data:::::', data?.membership?.plan?.plan_name);
 
       setUserData(data);
       setScheduledConsultation(data?.scheduledConsultation ?? null);
@@ -183,7 +181,6 @@ const Home = () => {
         }
       }
     } catch (err: any) {
-      console.log('Error fetching user details:::::', err);
       setUserName('User');
       setScheduledConsultation(null);
     } finally {
@@ -204,7 +201,6 @@ const Home = () => {
     try {
       await joinCall(Number(appointmentId));
     } catch (e) {
-      console.log('Join scheduled consultation error:', e);
       openScheduledConsultationBookings();
     } finally {
       setJoiningConsultation(false);
@@ -230,10 +226,8 @@ const Home = () => {
         limit: 20,
         cur: "INR"
       };
-      console.log('Payload Filter lead:::::', payload);
       
       const result: any = await postDataWithTokenBase2(payload, mobile_siteConfig.FILTER_LEADS_ALL);
-      console.log('Leads API response (page', page, '):::::', result);
       
       let newLeads: any[] = [];
       
@@ -244,7 +238,6 @@ const Home = () => {
       } else if (Array.isArray(result)) {
         newLeads = result;
       } else {
-        console.log('Invalid leads response format:', result);
         newLeads = [];
       }
       
@@ -261,7 +254,6 @@ const Home = () => {
       }
       
     } catch (error: any) {
-      console.log('Error fetching leads:::::', error);
       if (!append) {
         setLeads([]);
       }
@@ -292,11 +284,9 @@ const Home = () => {
   };
 
   const openContactModal = (lead: any) => {
-    console.log('Opening contact modal for lead:', lead);
     setSelectedLead(lead);
     setContactDetails(null);
     setShowContactModal(true);
-    console.log('Modal state set to true');
   };
 
   const closeContactModal = () => {
@@ -326,7 +316,6 @@ const Home = () => {
       });
       
       const result = await response.json();
-      console.log('Contact details API response:', result);
       
       if (result.status === 402 && result.msg === 'Insufficient wallet balance!') {
         Toast.show({
@@ -353,7 +342,6 @@ const Home = () => {
       
       setContactDetails(result);
     } catch (error: any) {
-      console.log('Error fetching contact details:', error);
       Alert.alert('Error', error?.message || 'Failed to fetch contact details');
     } finally {
       setLoadingContact(false);
@@ -762,7 +750,6 @@ const Home = () => {
                   <TouchableOpacity
                     style={styles.getContactBtn}
                     onPress={() => {
-                      console.log('Button pressed for lead:', lead);
                       openContactModal(lead);
                     }}
                     activeOpacity={0.7}

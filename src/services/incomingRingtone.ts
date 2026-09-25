@@ -16,7 +16,6 @@ export function startIncomingRingtone() {
     if (!ringtone) {
       ringtone = new Sound('incoming_ring.mp3', Sound.MAIN_BUNDLE, error => {
         if (error) {
-          console.warn('Ringtone load failed:', error);
           Vibration.vibrate([0, 800, 400, 800], true);
           return;
         }

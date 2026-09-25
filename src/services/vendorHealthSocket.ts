@@ -55,7 +55,6 @@ export function connectVendorHealthSocket({
   const {rawToken, bearerToken} = normalizeAuthToken(vendorToken);
 
   if (!rawToken) {
-    console.warn('[VendorSocket] Cannot connect — vendor JWT is missing');
     onError?.('Missing vendor token');
     return null;
   }
@@ -63,16 +62,6 @@ export function connectVendorHealthSocket({
   const maskedToken = rawToken
     ? `${rawToken.slice(0, 6)}...${rawToken.slice(-4)} (len:${rawToken.length})`
     : 'MISSING';
-  console.log(
-    '[VendorSocket] Connecting to',
-    HEALTH_VIDEO_CONFIG.SOCKET_URL,
-    '| path:',
-    HEALTH_VIDEO_CONFIG.SOCKET_PATH,
-    '| token:',
-    maskedToken,
-    '| platform:',
-    platform,
-  );
 
   socket = io(HEALTH_VIDEO_CONFIG.SOCKET_URL, {
     path: HEALTH_VIDEO_CONFIG.SOCKET_PATH,
@@ -101,79 +90,54 @@ export function connectVendorHealthSocket({
   });
 
   socket.on('connect', () => {
-    console.log(
-      '[VendorSocket] connect | id:',
-      socket?.id,
-      '| transport:',
-      socket?.io?.engine?.transport?.name,
-    );
     socket?.emit('join-vendor-room');
     onConnected?.();
   });
 
   socket.on('disconnect', reason => {
-    console.log('[VendorSocket] disconnect | reason:', reason);
     onDisconnected?.(reason);
   });
 
   socket.on('connect_error', err => {
     const transportName = socket?.io?.engine?.transport?.name ?? 'unknown';
-    console.log(
-      '[VendorSocket] connect_error |',
-      err?.message,
-      '| transport:',
-      transportName,
-    );
     onError?.(err.message);
   });
 
   socket.io.on('reconnect_attempt', attempt => {
-    console.log('[VendorSocket] reconnect_attempt #', attempt);
   });
 
   socket.io.on('reconnect', attempt => {
-    console.log('[VendorSocket] reconnected after', attempt, 'attempts');
     socket?.emit('join-vendor-room');
   });
 
   socket.on('notification', payload => {
-    console.log('[VendorSocket] notification event:', payload);
     onNotification?.(payload);
   });
   socket.on('incoming-call', payload => {
-    console.log('[VendorSocket] incoming-call event:', payload);
     onIncomingCall?.(payload);
   });
   socket.on('peer-waiting', payload => {
-    console.log('[VendorSocket] peer-waiting event:', payload);
     onPeerWaiting?.(payload);
   });
   socket.on('call-waiting-room', payload => {
-    console.log('[VendorSocket] call-waiting-room event:', payload);
     onCallWaitingRoom?.(payload);
   });
   socket.on('call-accepted', payload => {
-    console.log('[VendorSocket] call-accepted event:', payload);
     onCallAccepted?.(payload);
   });
   socket.on('peer-joined', payload => {
-    console.log('[VendorSocket] peer-joined event:', payload);
     onPeerJoined?.(payload);
   });
   socket.on('participant-disconnected', payload => {
-    console.log('[VendorSocket] participant-disconnected event:', payload);
     onParticipantDisconnected?.(payload);
   });
   socket.on('call-rejected', payload => {
-    console.log('[VendorSocket] call-rejected event:', payload);
     onCallRejected?.(payload);
   });
   socket.on('call-ended', payload => {
-    console.log('[VendorSocket] call-ended event:', payload);
     onCallEnded?.(payload);
   });
   socket.on('client-rated', payload => {
-    console.log('[VendorSocket] client-rated event:', payload);
     onClientRated?.(payload);
   });
 

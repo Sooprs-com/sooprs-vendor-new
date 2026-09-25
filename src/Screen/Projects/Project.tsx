@@ -94,7 +94,6 @@ const Project = () => {
         setPackages([]);
       }
     } catch (error) {
-      console.log('Error fetching packages:::::', error);
       setPackages([]);
     } finally {
       setLoading(false);

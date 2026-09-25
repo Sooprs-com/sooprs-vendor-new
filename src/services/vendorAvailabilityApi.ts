@@ -101,22 +101,17 @@ export function canEnablePackageAppointment(data: any): boolean {
 
 export async function checkAppointmentAllowed(): Promise<boolean> {
   const endpoint = mobile_siteConfig.GET_USER_DETAILS;
-  console.log('[Add Slot API] checkAppointmentAllowed → GET', endpoint);
   const res: any = await getDataWithToken({}, endpoint);
   const data: any = await res.json();
-  console.log('[Add Slot API] checkAppointmentAllowed ← response', data);
   const allowed =
     getConsultationConfig(data)?.requires_appointment_allowed === true;
-  console.log('[Add Slot API] checkAppointmentAllowed ← allowed:', allowed);
   return allowed;
 }
 
 export async function fetchVendorAvailability() {
   const endpoint = mobile_siteConfig.VENDOR_AVAILABILITY;
-  console.log('[Add Slot API] fetchVendorAvailability → GET', endpoint);
   const res: any = await getDataWithToken({}, endpoint);
   const data: any = await parseJsonResponse(res);
-  console.log('[Add Slot API] fetchVendorAvailability ← response', data);
   const payload = data?.data ?? data;
   const availability = Array.isArray(payload?.availability)
     ? payload.availability.map(mapAvailabilityFromApi)
@@ -137,18 +132,14 @@ export async function saveVendorAvailability(slots: AvailabilitySlot[]) {
   const body = {
     availability: slots.map(mapAvailabilityToApi),
   };
-  console.log('[Add Slot API] saveVendorAvailability → PUT', endpoint, body);
   const result = await PutDataWithToken(body, endpoint);
-  console.log('[Add Slot API] saveVendorAvailability ← response', result);
   return result;
 }
 
 export async function fetchBlockedDates(month: string) {
   const endpoint = `${mobile_siteConfig.VENDOR_BLOCKED_DATES}?month=${month}`;
-  console.log('[Add Slot API] fetchBlockedDates → GET', endpoint);
   const res: any = await getDataWithToken({}, endpoint);
   const data: any = await parseJsonResponse(res);
-  console.log('[Add Slot API] fetchBlockedDates ← response', data);
   const payload = data?.data ?? data;
   const rawDates =
     payload?.blockedDates ??

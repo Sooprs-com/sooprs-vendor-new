@@ -28,7 +28,6 @@ const AllCustomersScreen = () => {
       const list: Customer[] = raw ? JSON.parse(raw) : [];
       setCustomers(list);
     } catch (e) {
-      console.log('Error loading customers:', e);
       setCustomers([]);
     } finally {
       setLoading(false);

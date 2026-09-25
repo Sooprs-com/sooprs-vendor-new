@@ -90,7 +90,6 @@ const AddPackagesScreen = ({route}: any) => {
     try {
       const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
       const data = await res.json();
-      console.log('Vendor profile data:::::', data);
       
       if (data?.success && data?.vendorDetail) {
         const appointmentEnabled = canEnablePackageAppointment(data);
@@ -102,20 +101,16 @@ const AddPackagesScreen = ({route}: any) => {
         // Set category_id from vendor profile
         if (data.vendorDetail.category_id) {
           setCategoryId(String(data.vendorDetail.category_id));
-          console.log('Category ID set from vendor profile:', data.vendorDetail.category_id);
         } else {
-          console.log('Category ID not found in vendor profile');
         }
         
         // Store vendor_id if not already stored
         const storedVendorId = await AsyncStorage.getItem(mobile_siteConfig.UID);
         if (!storedVendorId && data.vendorDetail.id) {
           await AsyncStorage.setItem(mobile_siteConfig.UID, String(data.vendorDetail.id));
-          console.log('Vendor ID stored from vendor profile:', data.vendorDetail.id);
         }
       }
     } catch (error) {
-      console.log('error fetching vendor profile:::::', error);
     }
   };
 
@@ -124,8 +119,6 @@ const AddPackagesScreen = ({route}: any) => {
     
     // Auto-fill form if in edit mode
     if (isEditMode && editPackageData) {
-      console.log('Edit Package Data for auto-fill:', JSON.stringify(editPackageData, null, 2));
-      console.log('Package ID in editPackageData:', editPackageData.id || editPackageData.package_id || editPackageData.packageId);
       
       setPackageName(editPackageData.name || '');
       setShortDescription(editPackageData.short_description || '');
@@ -136,17 +129,14 @@ const AddPackagesScreen = ({route}: any) => {
       // Convert base_price to string (might be number)
       const basePriceValue = editPackageData.base_price;
       setBasePrice(basePriceValue !== null && basePriceValue !== undefined ? String(basePriceValue) : '');
-      console.log('Base Price set to:', basePriceValue !== null && basePriceValue !== undefined ? String(basePriceValue) : '');
       
       // Convert discount_price to string (might be number)
       const discountPriceValue = editPackageData.discount_price;
       setDiscountPrice(discountPriceValue !== null && discountPriceValue !== undefined ? String(discountPriceValue) : '');
-      console.log('Discount Price set to:', discountPriceValue !== null && discountPriceValue !== undefined ? String(discountPriceValue) : '');
       
       // Set charges per day (check multiple possible field names)
       const chargesPerDayValue = editPackageData.charges_per_day || editPackageData.chargesPerDay || editPackageData.per_day_charges || editPackageData.charges || '';
       setChargesPerDay(chargesPerDayValue !== null && chargesPerDayValue !== undefined ? String(chargesPerDayValue) : '');
-      console.log('Charges Per Day set to:', chargesPerDayValue !== null && chargesPerDayValue !== undefined ? String(chargesPerDayValue) : '');
       
       // Set tags from arrays
       if (editPackageData.included && Array.isArray(editPackageData.included)) {
@@ -304,7 +294,6 @@ const AddPackagesScreen = ({route}: any) => {
         }
       });
     } catch (error) {
-      console.log('ImagePicker Exception: ', error);
       Alert.alert('Error', 'Failed to open image picker');
     }
   };
@@ -369,7 +358,6 @@ const AddPackagesScreen = ({route}: any) => {
         }
       });
     } catch (error) {
-      console.log('ImagePicker Exception: ', error);
       Alert.alert('Error', 'Failed to open image picker');
     }
   };
@@ -424,11 +412,9 @@ const AddPackagesScreen = ({route}: any) => {
             await AsyncStorage.setItem(mobile_siteConfig.UID, vendorId);
           }
         } catch (error) {
-          console.log('Error fetching vendor profile for vendor_id:', error);
         }
       }
       
-      console.log('vendorId:::::', vendorId);
       if (!vendorId) {
         Alert.alert('Error', 'Vendor ID not found. Please login again.');
         setIsSubmitting(false);
@@ -447,13 +433,6 @@ const AddPackagesScreen = ({route}: any) => {
                          editPackageData?.package?.id ||
                          editPackageData?.package?.package_id;
         
-        console.log('Edit mode - Package ID check:');
-        console.log('- editPackageData?.id:', editPackageData?.id);
-        console.log('- editPackageData?.package_id:', editPackageData?.package_id);
-        console.log('- editPackageData?.packageId:', editPackageData?.packageId);
-        console.log('- editPackageData?.package?.id:', editPackageData?.package?.id);
-        console.log('- Final packageId:', packageId);
-        console.log('- Full editPackageData:', JSON.stringify(editPackageData, null, 2));
         
         if (!packageId) {
           Alert.alert('Error', 'Package ID not found. Cannot update package. Please check console logs.');
@@ -463,9 +442,7 @@ const AddPackagesScreen = ({route}: any) => {
         
         // Append package_id as string (API expects string format based on curl example)
         formData.append('package_id', String(packageId));
-        console.log('✓ Package ID appended to FormData:', String(packageId));
       } else {
-        console.log('Create mode - No package_id needed');
       }
       
       // Add text fields
@@ -527,7 +504,6 @@ const AddPackagesScreen = ({route}: any) => {
                          editPackageData?.packageId ||
                          editPackageData?.package?.id ||
                          editPackageData?.package?.package_id;
-        console.log('Final verification - Package ID being sent:', packageId);
         if (!packageId) {
           Alert.alert('Error', 'Package ID is missing. Cannot proceed with update.');
           setIsSubmitting(false);
@@ -535,17 +511,13 @@ const AddPackagesScreen = ({route}: any) => {
         }
       }
       
-      console.log('Package FormData prepared. isEditMode:', isEditMode);
       
       // Call create or update package API
       const apiEndpoint = isEditMode ? mobile_siteConfig.UPDATE_PACKAGE : mobile_siteConfig.CREATE_PACKAGE;
       const apiFunction = isEditMode ? putDataWithTokenFormData : postDataWithToken;
       
-      console.log('API Endpoint:', apiEndpoint);
-      console.log('API Function:', isEditMode ? 'PUT' : 'POST');
       
       const result: any = await apiFunction(formData, apiEndpoint);
-      console.log(isEditMode ? 'Update package result:::::' : 'Create package result:::::', result);
 
       // Check for error responses
       if (result?.status === 400 || result?.status === 'error' || (result?.success === false)) {
@@ -574,7 +546,6 @@ const AddPackagesScreen = ({route}: any) => {
         Alert.alert('Error', errorMessage);
       }
     } catch (error: any) {
-      console.log('Create package error:::::', error);
       Alert.alert('Error', error?.message || 'An error occurred while creating package');
     } finally {
       setIsSubmitting(false);

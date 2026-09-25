@@ -88,7 +88,6 @@ import Hire_Professional from './FAQ/Hire_Professional';
   };
   const WebView = ({route, navigation}) => {
     const {header, webLink} = route?.params || {};
-    console.log('header', header);
     const [inputData, setInputData] = useState({
       Name: '',
       Email: '',
@@ -288,7 +287,6 @@ import Hire_Professional from './FAQ/Hire_Professional';
         message: inputData.Message,
       };
       postDataWithToken1(req, mobile_siteConfig.CONTACT_US).then(res => {
-        console.log('Response: ', res);
         Alert.alert('Success', 'Your message has been sent successfully!');
       });
     };
@@ -299,7 +297,6 @@ import Hire_Professional from './FAQ/Hire_Professional';
       try {
         Linking.openURL(url);
       } catch (error) {
-        console.log('error', error);
       }
     };
     const validateEmail = email => {

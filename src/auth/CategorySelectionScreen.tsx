@@ -58,7 +58,6 @@ const CategorySelectionScreen = () => {
     }
     try {
       const parsed = JSON.parse(colorCode);
-      console.log('parsed:::::', parsed);
       if (Array.isArray(parsed) && parsed[0]) {
         return parsed[0];
       }
@@ -93,14 +92,12 @@ const CategorySelectionScreen = () => {
       setIsLoading(true);
       const res: any = await getDataWithToken({}, mobile_siteConfig.GET_ALL_CATEGORIES);
       const data = await res.json();
-      console.log('data:::::', data);
       if (data?.success && Array.isArray(data?.data)) {
         setCategories(data.data);
       } else {
         showToast('error', 'Error', 'Unable to fetch categories right now.');
       }
     } catch (error) {
-      console.log('Error fetching categories::::', error);
       showToast('error', 'Error', 'Failed to load categories.');
     } finally {
       setIsLoading(false);
@@ -149,11 +146,9 @@ const CategorySelectionScreen = () => {
       formData.append('mobile', phone);
       formData.append('otp', otp);
 
-      console.log('Registration FormData:', formData);
       
       // Call registration API
       const result: any = await postData(formData, mobile_siteConfig.REGISTER_USER_NEW);
-      console.log('Registration result:::::', result);
 
       // Check for error responses
       if (result?.status === 400 || result?.status === 'error' || (result?.success === false)) {
@@ -198,7 +193,6 @@ const CategorySelectionScreen = () => {
         showToast('error', 'Error', result?.msg || result?.message || 'Registration failed. Please try again.');
       }
     } catch (error: any) {
-      console.log('Registration error:::::', error);
       showToast('error', 'Error', error?.message || 'An error occurred during registration. Please try again.');
     } finally {
       setIsRegistering(false);

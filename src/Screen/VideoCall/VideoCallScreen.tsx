@@ -10,9 +10,10 @@ import {
   Platform,
   ActivityIndicator,
   Modal,
+  BackHandler,
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import {useRoute} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {
   createAgoraRtcEngine,
   ChannelProfileType,
@@ -62,6 +63,7 @@ const getPermission = async () => {
 
 const VideoCallScreen = () => {
   const route = useRoute();
+  const navigation = useNavigation();
   const params = (route.params || {}) as VideoCallRouteParams;
   const {
     endCall,
@@ -98,6 +100,9 @@ const VideoCallScreen = () => {
   const eventHandler = useRef<IRtcEngineEventHandler>();
   const intentionalLeaveRef = useRef(false);
   const leavingRef = useRef(false);
+  /** Allows navigation after soft-leave / end / after-call Done. */
+  const allowNavigateAwayRef = useRef(false);
+  const softLeavingRef = useRef(false);
 
   const [isJoined, setIsJoined] = useState(false);
   const [remoteUid, setRemoteUid] = useState(0);
@@ -160,7 +165,6 @@ const VideoCallScreen = () => {
       // Temporary drop — do NOT call /call/end
       await leaveRoom('agora_disconnect');
     } catch (e) {
-      console.warn('leaveRoom failed:', e);
     } finally {
       leavingRef.current = false;
     }
@@ -177,7 +181,6 @@ const VideoCallScreen = () => {
         autoSubscribeVideo: true,
       });
     } catch (e) {
-      console.error('joinChannel error:', e);
       setStatusMessage('Failed to join channel');
     }
   }, [agoraToken, channelName, uid]);
@@ -214,7 +217,6 @@ const VideoCallScreen = () => {
         }
       },
       onError: (err: number) => {
-        console.error('Agora error:', err);
         setStatusMessage(`Call error (${err})`);
         setIsInitializing(false);
         // Token / connection hard failures → leave-room (rejoin), not end.
@@ -239,7 +241,6 @@ const VideoCallScreen = () => {
       agoraEngine.startPreview();
       agoraEngine.setEnableSpeakerphone(true);
     } catch (e) {
-      console.error('Agora init error:', e);
       setStatusMessage('Failed to initialize call');
       setIsInitializing(false);
     }
@@ -254,9 +255,72 @@ const VideoCallScreen = () => {
       agoraEngineRef.current?.release();
       agoraEngineRef.current = undefined;
     } catch (e) {
-      console.error('Agora cleanup error:', e);
     }
   }, []);
+
+  /**
+   * Leave call UI without ending the meeting.
+   * POST /call/leave-room → Orders / Appointments Join = rejoin same meeting.
+   */
+  const handleSoftLeave = useCallback(async () => {
+    if (softLeavingRef.current) {
+      return;
+    }
+    softLeavingRef.current = true;
+    intentionalLeaveRef.current = true;
+    allowNavigateAwayRef.current = true;
+    cleanupAgoraEngine();
+
+    if (showAfterCall || lastEndedCall) {
+      clearLastEndedCall();
+      leaveVideoCallScreen();
+      return;
+    }
+
+    try {
+      await leaveRoom('vendor_left_ui');
+    } catch (e) {
+    }
+    leaveVideoCallScreen();
+  }, [
+    cleanupAgoraEngine,
+    showAfterCall,
+    lastEndedCall,
+    clearLastEndedCall,
+    leaveRoom,
+  ]);
+
+  useEffect(() => {
+    const onBack = () => {
+      handleSoftLeave();
+      return true;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBack);
+    return () => sub.remove();
+  }, [handleSoftLeave]);
+
+  useEffect(() => {
+    const unsub = navigation.addListener('beforeRemove', e => {
+      if (allowNavigateAwayRef.current) {
+        return;
+      }
+      e.preventDefault();
+      handleSoftLeave();
+    });
+    return unsub;
+  }, [navigation, handleSoftLeave]);
+
+  // Safety net: unmount without End / soft-leave still keeps meeting open.
+  useEffect(() => {
+    return () => {
+      if (intentionalLeaveRef.current || softLeavingRef.current) {
+        return;
+      }
+      intentionalLeaveRef.current = true;
+      leaveRoom('vendor_left_ui').catch(err => {
+      });
+    };
+  }, [leaveRoom]);
 
   useEffect(() => {
     if (!hasRemoteCallCredentials) {
@@ -266,6 +330,8 @@ const VideoCallScreen = () => {
     }
 
     intentionalLeaveRef.current = false;
+    softLeavingRef.current = false;
+    allowNavigateAwayRef.current = false;
     const init = async () => {
       await setupVideoSDKEngine();
       setupEventHandler();
@@ -290,12 +356,12 @@ const VideoCallScreen = () => {
     try {
       const result = await endCall();
       if (result) {
-        // AfterCall modal is driven by lastEndedCall in context.
+        // AfterCall modal — stay on screen until Done.
         return;
       }
     } catch (e) {
-      console.warn('endCall API failed:', e);
     }
+    allowNavigateAwayRef.current = true;
     leaveVideoCallScreen();
   };
 
@@ -320,6 +386,7 @@ const VideoCallScreen = () => {
   };
 
   const handleCloseAfterCall = () => {
+    allowNavigateAwayRef.current = true;
     clearLastEndedCall();
     setShowAfterCall(false);
     leaveVideoCallScreen();
@@ -409,6 +476,18 @@ const VideoCallScreen = () => {
       </View>
 
       <View style={styles.topBar}>
+        <TouchableOpacity
+          style={styles.leaveBtn}
+          activeOpacity={0.85}
+          onPress={handleSoftLeave}
+          hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+          <MaterialCommunityIcons
+            name="chevron-left"
+            size={wp(7)}
+            color={Colors.white}
+          />
+          <Text style={styles.leaveBtnText}>Leave</Text>
+        </TouchableOpacity>
         <Text style={styles.callTitle}>Health Consultation</Text>
         <Text style={styles.callMeta}>
           {roleLabel} · UID {uid}
@@ -416,7 +495,9 @@ const VideoCallScreen = () => {
         <Text style={styles.channelText}>
           {waitingForPatient
             ? 'Status: Waiting for patient'
-            : `Channel: ${channelName}`}
+            : disconnected || canRejoin
+              ? 'Meeting still open — rejoin anytime'
+              : `Channel: ${channelName}`}
         </Text>
       </View>
 
@@ -639,6 +720,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: wp(5),
     zIndex: 2,
+  },
+  leaveBtn: {
+    position: 'absolute',
+    left: wp(3),
+    top: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    paddingVertical: hp(0.6),
+    paddingHorizontal: wp(2),
+    borderRadius: wp(2),
+    zIndex: 3,
+  },
+  leaveBtnText: {
+    color: Colors.white,
+    fontSize: FSize.fs13,
+    fontWeight: '600',
+    marginRight: wp(1),
   },
   callTitle: {
     fontSize: FSize.fs16,

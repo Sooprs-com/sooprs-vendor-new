@@ -69,7 +69,6 @@ const SplashScreen: React.FC<SplashScreenProps> = ({navigation}) => {
             });
           }
         } catch (error) {
-          console.log('Error fetching user details from API:', error);
           // Fallback to AsyncStorage values
           dispatch({
             type: 'SET_USER_DETAILS',
@@ -90,7 +89,6 @@ const SplashScreen: React.FC<SplashScreenProps> = ({navigation}) => {
         navigation.replace('Authentication', {screen: 'EnterMobileNumber'});
       }
     } catch (error) {
-      console.log('Error checking login status:', error);
       navigation.replace('Authentication', {screen: 'EnterMobileNumber'});
     }
   }, [dispatch, navigation]);

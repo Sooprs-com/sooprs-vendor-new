@@ -48,7 +48,6 @@ const PaymentMethodScreen = () => {
       setLoading(true);
       const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
       const data: any = await res.json();
-      console.log('Payment details data:::::', data);
       
       if (data?.success && data?.vendorDetail) {
         const vendor = data.vendorDetail;
@@ -79,7 +78,6 @@ const PaymentMethodScreen = () => {
         }
       }
     } catch (e) {
-      console.log('Error fetching payment details:', e);
       showAlert('error', 'Error', 'Failed to load payment details');
     } finally {
       setLoading(false);
@@ -134,11 +132,9 @@ const PaymentMethodScreen = () => {
         payload.upi_id = upiId.trim();
       }
 
-      console.log('Update payment method payload:', payload);
 
       const data: any = await PutDataWithToken(payload, mobile_siteConfig.UPDATE_PROFILE);
       
-      console.log('Update payment method response:', data);
       
       if (data?.success) {
         showAlert('success', 'Success', 'Payment method updated successfully');
@@ -149,7 +145,6 @@ const PaymentMethodScreen = () => {
         showAlert('error', 'Error', data?.message || data?.msg || 'Failed to update payment method');
       }
     } catch (e) {
-      console.log('Error updating payment method:', e);
       showAlert('error', 'Error', 'Failed to update payment method');
     } finally {
       setIsSubmitting(false);

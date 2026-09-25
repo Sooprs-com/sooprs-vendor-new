@@ -92,7 +92,6 @@ const RegistrationScreen = () => {
 
       launchImageLibrary(options, (response: ImagePickerResponse) => {
         if (response.didCancel) {
-          console.log('User cancelled image picker');
         } else if (response.errorMessage) {
           Alert.alert('Error', response.errorMessage);
         } else if (response.assets && response.assets.length > 0) {
@@ -103,7 +102,6 @@ const RegistrationScreen = () => {
         }
       });
     } catch (error) {
-      console.log('Error picking image:', error);
       Alert.alert('Error', 'Failed to open image picker');
     }
   };
@@ -182,11 +180,9 @@ const RegistrationScreen = () => {
         } as any);
       }
 
-      console.log('Registration FormData:', formData);
       
       // Call registration API
       const result: any = await postData(formData, mobile_siteConfig.REGISTER_USER_NEW);
-      console.log('Registration result:::::', result);
 
       // Check for error responses
       if (result?.status === 400 || result?.status === 'error' || (result?.success === false)) {
@@ -231,7 +227,6 @@ const RegistrationScreen = () => {
         showAlert('error', 'Error', result?.msg || result?.message || 'Registration failed. Please try again.');
       }
     } catch (error: any) {
-      console.log('Registration error:::::', error);
       showAlert('error', 'Error', error?.message || 'An error occurred during registration. Please try again.');
     } finally {
       setIsRegistering(false);

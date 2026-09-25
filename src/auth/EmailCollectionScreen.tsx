@@ -54,7 +54,6 @@ const EmailCollectionScreen = () => {
         // Open Google Sign-In modal - this will show the email selection modal
         setIsGoogleModalOpen(true);
         const userInfo = await GoogleSignin.signIn();
-        console.log('userInfo:::::', userInfo);
         
         // Extract email from user info
         // GoogleSignin.signIn() response structure: { data: { user: { email, name, photo }, idToken } }
@@ -75,10 +74,8 @@ const EmailCollectionScreen = () => {
         // Handle different error cases
         if (error.code === statusCodes.SIGN_IN_CANCELLED) {
           // User cancelled - this is fine, just close the modal
-          console.log('User cancelled Google Sign-In');
         } else if (error.code === statusCodes.IN_PROGRESS) {
           // Operation already in progress
-          console.log('Google Sign-In already in progress');
         } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
           Toast.show({
             type: 'error',
@@ -87,7 +84,6 @@ const EmailCollectionScreen = () => {
             position: 'top',
           });
         } else {
-          console.log('Google Sign-In Error:', error);
           // Don't show error for cancelled sign-in
           if (error.code !== statusCodes.SIGN_IN_CANCELLED) {
             Toast.show({
@@ -157,10 +153,10 @@ const EmailCollectionScreen = () => {
     //     name: name.trim() || '',
     //     mobile: phone,
     //   };
-    //   console.log('Registration payload:::::', payload);
+    //   
 
     //   const result: any = await postDataWithToken1(payload, mobile_siteConfig.REGISTER_USER_NEW);
-    //   console.log('response:::::', result);
+    //   
 
     //   if (result?.status === 400 || result?.message === 'User already registered with this email') {
     //     Toast.show({
@@ -215,7 +211,7 @@ const EmailCollectionScreen = () => {
     // } 
     
     // catch (error) {
-    //   console.log('error:::::', error);
+    //   
     //   Toast.show({
     //     type: 'error',
     //     text1: 'Error',
@@ -238,7 +234,6 @@ const EmailCollectionScreen = () => {
     ...params
   }
 });
-
 
 
   };

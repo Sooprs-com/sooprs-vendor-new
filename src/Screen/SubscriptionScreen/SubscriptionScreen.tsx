@@ -42,9 +42,7 @@ import { mobile_siteConfig } from '../../services/mobile-siteConfig';
       setLoadingUserDetails(true);
       const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
       const data: any = await res.json();
-      console.log('User details data:::::', data);
-      console.log('User membership data:::::', data?.membership?.plan?.plan_name);
-      // console.log('User membership data:::::123', data?.membership?.plan?.plan_name==="Standard" ? Images.standardPlanIcon :userData?.membership?.plan?.plan_name==="Elite" ? Images.ElitePlanIcon : Images.starIcon);
+      // 
 
       setUserData(data);
       // Check if profile is completed
@@ -76,13 +74,11 @@ import { mobile_siteConfig } from '../../services/mobile-siteConfig';
         // If profile is completed (1), stay on Home screen (already here)
       }
     } catch (err: any) {
-      console.log('Error fetching user details:::::', err);
       setUserName('User');
     } finally {
       setLoadingUserDetails(false);
     }
   };
-
 
 
     useEffect(() => {
@@ -94,18 +90,14 @@ import { mobile_siteConfig } from '../../services/mobile-siteConfig';
             getUserDetails()
           ]);
           
-          console.log('Fetched plans data:', plansData);
           if (plansData && Array.isArray(plansData) && plansData.length > 0) {
             setPlans(plansData);
             setActiveItem(plansData[0]);
-            console.log('Plans set successfully, count:', plansData.length);
           } else {
-            console.warn('No plans found or empty array');
             setPlans([]);
             setActiveItem(null);
           }
         } catch (error) {
-          console.error('Error in initialization:', error);
           setPlans([]);
           setActiveItem(null);
         } finally {
@@ -139,7 +131,6 @@ import { mobile_siteConfig } from '../../services/mobile-siteConfig';
           amountAfterDiscount(originalAmount, discountAmount).toFixed(2),
         );
       } catch (error) {
-        console.log('error', error);
         setLoading(false);
         setButtonLoader(false);
       } finally {
@@ -445,7 +436,6 @@ import { mobile_siteConfig } from '../../services/mobile-siteConfig';
                 <View style={styles.smallPlansGrid}>
                   {plans.slice(1,2).map((plan, index) => 
                   {
-                    console.log('plan data', plan);
                   return (
                     <SmallPlanCard
                     topColor={'rgba(0, 0, 0, 1)'}
@@ -464,7 +454,6 @@ import { mobile_siteConfig } from '../../services/mobile-siteConfig';
 
               {plans.slice(2,3).map((plan, index) => 
                   {
-                    console.log('plan data', plan);
                   return (
                     <SmallPlanCard
                     topColor={'rgba(255, 255, 255, 1)'}

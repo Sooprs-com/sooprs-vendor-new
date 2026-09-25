@@ -16,7 +16,8 @@ export function VendorCallBridge() {
       return;
     }
 
-    // Temporary Agora drop — stay on VideoCallScreen for Rejoin.
+    // Soft leave / Agora drop — meeting still open for Orders rejoin.
+    // Stay put only if still on VideoCallScreen; do not force-pop home.
     if (canRejoin) {
       wasInCall.current = true;
       return;

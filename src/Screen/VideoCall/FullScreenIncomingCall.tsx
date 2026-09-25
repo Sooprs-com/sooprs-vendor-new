@@ -81,7 +81,6 @@ export default function FullScreenIncomingCall(props: Props) {
       });
       await markCallLaunchGuard(callData.appointmentId);
     } catch (e) {
-      console.warn('[FullScreenIncomingCall] savePendingCallAction failed:', e);
     }
 
     // Bring the main app to the foreground FIRST, while this full-screen call
@@ -110,7 +109,6 @@ export default function FullScreenIncomingCall(props: Props) {
       try {
         RNNotificationCall.answerCall(callUUID, JSON.stringify(callData));
       } catch (e) {
-        console.warn('[FullScreenIncomingCall] answerCall failed:', e);
       }
     }, 900);
   };
@@ -131,7 +129,6 @@ export default function FullScreenIncomingCall(props: Props) {
       });
       await markCallLaunchGuard(callData.appointmentId);
     } catch (e) {
-      console.warn('[FullScreenIncomingCall] savePendingCallAction failed:', e);
     }
 
     if (Platform.OS === 'android' && NativeModules.IncomingCallAlert?.launchMainApp) {
@@ -149,7 +146,6 @@ export default function FullScreenIncomingCall(props: Props) {
       try {
         RNNotificationCall.declineCall(callUUID, JSON.stringify(callData));
       } catch (e) {
-        console.warn('[FullScreenIncomingCall] declineCall failed:', e);
       }
     }, 400);
   };

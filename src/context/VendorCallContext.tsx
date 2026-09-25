@@ -295,6 +295,8 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
         markRecentlyHandled(incomingCall);
       }
 
+      // Soft-leave / reconnect: always re-fetch Agora creds via join-room
+      // (same meeting — never POST /call/end or /call/start).
       const res = await healthVideoApi.joinRoom(vendorToken, targetId);
       const raw = (res.data || res) as Record<string, any>;
       const callData = toAgoraCallData({appointmentId: targetId, ...raw});
@@ -302,6 +304,8 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
         throw new Error('Invalid call credentials received from server');
       }
 
+      setCanRejoin(false);
+      setRejoinAppointmentId(targetId);
       setActiveCall(callData);
       clearIncomingCallUi();
       await clearPendingCallAction();
@@ -404,7 +408,6 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
         setActiveCall(null);
         return {canRejoin: rejoinAllowed};
       } catch (error) {
-        console.warn('[VendorCall] leaveRoom failed:', error);
         setCanRejoin(true);
         setRejoinAppointmentId(appointmentId);
         setActiveCall(null);
@@ -583,7 +586,6 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
       await clearCallLaunchGuard();
       return true;
     } catch (error: any) {
-      console.warn('[VendorCall] pending call action failed:', error);
       // Keep the pending action so the retry loop can try again (user-app behaviour).
       // Do NOT clearPendingCallAction here — early token/nav failures were wiping Accept.
       return false;
@@ -608,7 +610,6 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
         await healthVideoApi.registerDevice(authToken, token, Platform.OS);
         fcmTokenRef.current = token;
       } catch (error) {
-        console.warn('[VendorCall] registerDevice failed:', error);
       }
     },
     [vendorToken],
@@ -848,7 +849,6 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
       onDisconnected: () => setSocketConnected(false),
       onError: msg => {
         setSocketConnected(false);
-        console.warn('[VendorSocket] Error:', msg);
       },
       onNotification: handleNotification,
       onIncomingCall: handleIncomingCall,
@@ -893,7 +893,6 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
           await registerFcmDevice(token);
         }
       } catch (error) {
-        console.warn('[VendorCall] FCM setup failed:', error);
       }
     }
 
@@ -923,10 +922,6 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
     });
 
     const unsubscribeMessage = messaging().onMessage(async remoteMessage => {
-      console.log('[FCM Push] Foreground message received:', {
-        messageId: remoteMessage?.messageId,
-        data: remoteMessage?.data,
-      });
       handleIncomingCallPush(remoteMessage.data || {});
     });
 
@@ -1029,7 +1024,6 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
         });
         await markCallLaunchGuard(callData.appointmentId);
       } catch (e) {
-        console.warn('[VendorCall] savePending on answer failed:', e);
       }
 
       if (NativeModules.IncomingCallAlert?.launchMainApp) {

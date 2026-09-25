@@ -5,7 +5,6 @@ export const storeDataToAsyncStorage = async (key: string, value: string): Promi
   try {
     await AsyncStorage.setItem(key, value);
   } catch (error) {
-    console.error('Error storing data to AsyncStorage:', error);
     throw error;
   }
 };
@@ -16,7 +15,6 @@ export const getDataFromAsyncStorage = async (key: string): Promise<string | nul
     const value = await AsyncStorage.getItem(key);
     return value;
   } catch (error) {
-    console.error('Error retrieving data from AsyncStorage:', error);
     return null;
   }
 };
@@ -25,9 +23,7 @@ export const getDataFromAsyncStorage = async (key: string): Promise<string | nul
 export const clearAllAsyncStorage = async (): Promise<void> => {
   try {
     await AsyncStorage.clear();
-    console.log('All AsyncStorage data cleared');
   } catch (error) {
-    console.error('Error clearing AsyncStorage:', error);
     throw error;
   }
 };

@@ -72,7 +72,6 @@ import NewHeader from '../../Component/NewHeader';
         try {
           await Promise.all([fetchWallet(), fetchTransactions()]);
         } catch (error) {
-          console.error('Error during API calls:', error);
           setCardDataLoading(false);
         } finally {
           setCardDataLoading(false);
@@ -246,13 +245,11 @@ import NewHeader from '../../Component/NewHeader';
           // Remove quotes if present
           userId = userId.replace(/^"|"$/g, '').trim();
           if (userId && userId !== 'null' && userId !== 'undefined') {
-            console.log('User ID from AsyncStorage:', userId);
             return userId;
           }
         }
 
         // Fetch from API if not in AsyncStorage or invalid
-        console.log('Fetching user ID from API...');
         const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
         const data: any = await res.json();
         
@@ -260,14 +257,11 @@ import NewHeader from '../../Component/NewHeader';
           const id = String(data.vendorDetail.id);
           // Store in AsyncStorage for future use
           await AsyncStorage.setItem(mobile_siteConfig.UID, id);
-          console.log('User ID from API:', id);
           return id;
         }
         
-        console.error('User ID not found in API response');
         return null;
       } catch (error) {
-        console.error('Error getting user ID:', error);
         // Fallback to AsyncStorage if API call fails
         const cachedId = await AsyncStorage.getItem(mobile_siteConfig.UID);
         if (cachedId) {
@@ -332,7 +326,6 @@ import NewHeader from '../../Component/NewHeader';
           },
         });
   
-        console.log('error', error);
       } finally {
         setLoading(false);
       }
@@ -343,22 +336,18 @@ import NewHeader from '../../Component/NewHeader';
         try {
           const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
           const data: any = await res.json();
-          console.log('User details API response for wallet:', data);
           
           if (data?.success && data?.stats?.wallet_balance !== undefined) {
             const walletBalance = String(data.stats.wallet_balance || 0);
             setCredits(walletBalance);
-            console.log('Wallet balance from GET_USER_DETAILS:', walletBalance);
             return;
           }
         } catch (apiError) {
-          console.log('Error fetching wallet from GET_USER_DETAILS, trying wallet_balance API:', apiError);
         }
 
         // Fallback to wallet_balance API if GET_USER_DETAILS doesn't have it
         const slug = getUserDetails?.slug;
         if (!slug) {
-          console.error('User slug not found. Cannot fetch wallet balance.');
           // Try to get slug from API
           try {
             const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
@@ -376,21 +365,17 @@ import NewHeader from '../../Component/NewHeader';
               );
               
               const walletRes = await response.json();
-              console.log('Wallet balance API response:', walletRes);
               
               if (walletRes.status == 200) {
                 const walletBalance = String(walletRes.msg?.wallet || walletRes.msg || 0);
                 setCredits(walletBalance);
-                console.log('Wallet balance from wallet_balance API:', walletBalance);
               } else {
-                console.error('Error fetching wallet balance:', walletRes.msg);
                 setCredits('0');
               }
             } else {
               setCredits('0');
             }
           } catch (error) {
-            console.error('Error fetching wallet balance:', error);
             setCredits('0');
           }
           return;
@@ -408,19 +393,15 @@ import NewHeader from '../../Component/NewHeader';
         );
         
         const res = await response.json();
-        console.log('Wallet balance API response:', res);
         
         // Check if the response status is 200
         if (res.status == 200) {
           const walletBalance = String(res.msg?.wallet || res.msg || 0);
           setCredits(walletBalance);
-          console.log('Wallet balance set to:', walletBalance);
         } else {
-          console.error('Error fetching wallet balance:', res.msg);
           setCredits('0');
         }
       } catch (error) {
-        console.error('Error fetching wallet balance:', error);
         setCredits('0');
       } finally {
         setLoading(false);
@@ -429,11 +410,9 @@ import NewHeader from '../../Component/NewHeader';
 
     const fetchTransactions = async () => {
       const lead_id = await getUserId();
-      console.log('lead_id:::::', lead_id);
       const formData = new FormData();
 
       if (!lead_id) {
-        console.error('User ID is null. Cannot fetch transactions.');
         Toast.show({
           type: 'error',
           text1: 'Error',
@@ -458,16 +437,13 @@ import NewHeader from '../../Component/NewHeader';
   
         const res = await response.json();
 
-        console.log('transactions Response:::::', res);
   
         if (res.status === 200) {
           setTransactions(res.msg);
           calculateTransaction(res?.msg);
         } else {
-          console.error('Error fetching transactions:', res.msg);
         }
       } catch (error) {
-        console.error('Error fetching transactions:', error);
       }
     };
     const onRefresh = async () => {
@@ -558,12 +534,10 @@ import NewHeader from '../../Component/NewHeader';
                 }
               })
               .catch(error => {
-                console.error('Razorpay error:', error);
                 setLoading(false);
               });
           }
         } catch (error) {
-          console.error('Error creating order:', error);
           setLoading(false);
         } finally {
           setLoading(false);

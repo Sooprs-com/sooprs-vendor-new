@@ -38,7 +38,6 @@ const ChatSupportHome = ({navigation}: {navigation: any}) => {
   const handleCallSupport = () => {
     Linking.openURL(`tel:${supportPhoneNumber}`).catch(err => {
       Alert.alert('Error', 'Unable to make a call. Please try again.');
-      console.error('Error making call:', err);
     });
   };
 

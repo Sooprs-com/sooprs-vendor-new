@@ -127,7 +127,6 @@ const CreateInvoiceScreen = () => {
         const raw = await AsyncStorage.getItem(BILLING_CUSTOMERS_KEY);
         if (raw) setCustomers(JSON.parse(raw));
       } catch (e) {
-        console.log('Error loading customers:', e);
       }
     };
     load();
