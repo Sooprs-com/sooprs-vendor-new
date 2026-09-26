@@ -28,7 +28,9 @@ const SplashScreen: React.FC<SplashScreenProps> = ({navigation}) => {
     try {
       const callLaunchActive = await isCallLaunchGuardActive();
       if (callLaunchActive) {
-        // Accept-call flow navigates from VendorCallContext — skip drawer/splash delay.
+        // Accept-call flow joins from VendorCallContext — land on home so
+        // navigation is ready (never leave Splash stuck with a bare return).
+        navigation.replace('Authentication', {screen: 'VendorDrawer'});
         return;
       }
 

@@ -79,6 +79,11 @@ export async function loadPendingCallAction(): Promise<PendingCallAction | null>
   return normalizePending(raw);
 }
 
+/** Read pending action without side effects beyond loadPendingCallAction. */
+export async function peekPendingCallAction(): Promise<PendingCallAction | null> {
+  return loadPendingCallAction();
+}
+
 export async function clearPendingCallAction(): Promise<void> {
   await AsyncStorage.removeItem(STORAGE_KEY);
 

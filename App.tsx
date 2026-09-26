@@ -68,10 +68,12 @@ const AppContent = () => {
           await getDataFromAsyncStorage(mobile_siteConfig.MOB_ACCESS_TOKEN_KEY),
         );
         
-        // If user is logged in and has token, navigate to VendorDrawer
+        // If user is logged in and has token, navigate to VendorDrawer.
+        // Never cold-start onto empty VideoCallScreen — boot home first, then
+        // VendorCallContext pushes the call screen after join-room credentials
+        // arrive (avoids Reanimated/Agora crash on kill + lock accept).
         if (isLoggedInValue(isLogin) && token) {
-          // Cold-start accept should not mount VendorDrawer/Reanimated first.
-          setInitialRoute(isPendingAccept ? 'VideoCallScreen' : 'VendorDrawer');
+          setInitialRoute('VendorDrawer');
 
           if (!resumeIncomingCall) {
             // Initialize user details in Redux store

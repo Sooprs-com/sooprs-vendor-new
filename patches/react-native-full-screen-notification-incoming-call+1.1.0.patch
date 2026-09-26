@@ -51,9 +51,10 @@ index 7f6e7af..0849384 100644
 +    // it a moment later. Always requesting a NEW_TASK guarantees the main
 +    // Activity gets its own independent task regardless of the caller's task.
 +    boolean isOpened = activity != null && !activity.isFinishing() && !activity.isDestroyed();
++    // Must NOT use FLAG_ACTIVITY_CLEAR_TOP — that pops VideoCallScreen
++    // right after join (same rule as IncomingCallLaunchHelper).
 +    focusIntent.addFlags(
 +      Intent.FLAG_ACTIVITY_NEW_TASK |
-+      Intent.FLAG_ACTIVITY_CLEAR_TOP |
 +      Intent.FLAG_ACTIVITY_SINGLE_TOP |
 +      Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
 +    );

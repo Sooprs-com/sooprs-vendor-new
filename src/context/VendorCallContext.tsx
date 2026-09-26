@@ -28,6 +28,7 @@ import {
 } from '../types/vendorCall';
 import {
   flushPendingVideoCallNavigation,
+  isOnVideoCallScreen,
   navigateToHealthAppointments,
   navigateToVideoCall,
   waitForNavigationReady,
@@ -44,6 +45,7 @@ import {
 import {
   clearPendingCallAction,
   loadPendingCallAction,
+  peekPendingCallAction,
   savePendingCallAction,
 } from '../services/pendingCallAction';
 import {
@@ -57,6 +59,7 @@ import {
 } from '../services/callKeepService';
 import Toast from 'react-native-toast-message';
 import {requestNotificationPermission} from '../services/notificationPermission';
+import {waitForIncomingCallTransition} from '../services/safeCallNavigation';
 
 type EndCallResult = {
   showRating?: boolean;
@@ -132,12 +135,6 @@ function sanitizeToken(value: string | null) {
   return value.replace(/^"+|"+$/g, '').trim();
 }
 
-function delay(ms: number) {
-  return new Promise<void>(resolve => {
-    setTimeout(resolve, ms);
-  });
-}
-
 async function loadVendorTokenFromStorage(): Promise<string | null> {
   const isLogin = await AsyncStorage.getItem(mobile_siteConfig.IS_LOGIN);
   const rawToken = await AsyncStorage.getItem(
@@ -172,6 +169,11 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
   const processingPendingCallRef = useRef(false);
   const navigatedCallAppointmentRef = useRef<number | null>(null);
   const activeCallRef = useRef<AgoraCallData | null>(null);
+  const pendingRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const pendingRetryAttemptRef = useRef(0);
+  const joinedAppointmentRef = useRef<number | null>(null);
 
   const markRecentlyHandled = useCallback((callData: IncomingCallData) => {
     recentlyHandledSessionsRef.current.set(
@@ -251,24 +253,58 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
     };
   }, []);
 
-  const navigateToActiveCall = useCallback((callData: AgoraCallData) => {
-    const sessionKey = getCallSessionKey(callData);
-    navigatedCallAppointmentRef.current = callData.appointmentId;
-    setCanRejoin(false);
-    setRejoinAppointmentId(callData.appointmentId);
-    navigateToVideoCall({
-      channelName: callData.channelName,
-      token: callData.token,
-      appId: callData.appId,
-      uid: callData.uid,
-      appointmentId: callData.appointmentId,
-      callKey: sessionKey,
-      uiAction: callData.uiAction,
-      status: callData.status,
-      bothPresent: callData.bothPresent,
-    });
-    flushPendingVideoCallNavigation();
-  }, []);
+  const navigateToActiveCall = useCallback(
+    async (
+      callData: AgoraCallData,
+      options?: {afterIncomingPush?: boolean},
+    ) => {
+      if (options?.afterIncomingPush) {
+        await waitForIncomingCallTransition();
+      }
+
+      const navReady = await waitForNavigationReady();
+      const sessionKey = getCallSessionKey(callData);
+      const params = {
+        channelName: callData.channelName,
+        token: callData.token,
+        appId: callData.appId,
+        uid: callData.uid,
+        appointmentId: callData.appointmentId,
+        callKey: sessionKey,
+        uiAction: callData.uiAction,
+        status: callData.status,
+        bothPresent: callData.bothPresent,
+      };
+
+      setCanRejoin(false);
+      setRejoinAppointmentId(callData.appointmentId);
+
+      if (!navReady) {
+        await navigateToVideoCall(params, {settleHomeFirst: true});
+        navigatedCallAppointmentRef.current = callData.appointmentId;
+        return;
+      }
+
+      // Already on the call screen with same appointment — only refresh params
+      // via a light navigate (no full reset / remount that tears down Agora).
+      if (
+        isOnVideoCallScreen() &&
+        navigatedCallAppointmentRef.current === callData.appointmentId
+      ) {
+        await navigateToVideoCall(params);
+        return;
+      }
+
+      await navigateToVideoCall(params, {
+        afterIncomingPush: options?.afterIncomingPush,
+        settleHomeFirst: options?.afterIncomingPush,
+      });
+
+      navigatedCallAppointmentRef.current = callData.appointmentId;
+      flushPendingVideoCallNavigation();
+    },
+    [],
+  );
 
   const openActiveCall = useCallback(
     (payload: Record<string, any>) => {
@@ -278,7 +314,7 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
       }
       setActiveCall(callData);
       clearIncomingCallUi();
-      navigateToActiveCall(callData);
+      void navigateToActiveCall(callData);
       return callData;
     },
     [clearIncomingCallUi, navigateToActiveCall],
@@ -307,10 +343,13 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
       setCanRejoin(false);
       setRejoinAppointmentId(targetId);
       setActiveCall(callData);
+      joinedAppointmentRef.current = targetId;
+      // Allow re-navigation / callKey refresh after soft-leave rejoin.
+      navigatedCallAppointmentRef.current = null;
       clearIncomingCallUi();
       await clearPendingCallAction();
       await clearCallLaunchGuard();
-      navigateToActiveCall(callData);
+      await navigateToActiveCall(callData);
       return callData;
     },
     [
@@ -372,6 +411,7 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
     setCanRejoin(false);
     setRejoinAppointmentId(null);
     navigatedCallAppointmentRef.current = null;
+    joinedAppointmentRef.current = null;
     clearIncomingCallUi();
     setLastEndedCall(result);
     await clearPendingCallAction();
@@ -439,7 +479,7 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
   }, []);
 
   const presentIncomingCall = useCallback(
-    (callData: IncomingCallData) => {
+    async (callData: IncomingCallData) => {
       // Soft miss = reminder only. Do NOT show full-screen ring / close the meeting.
       if (callData.softMiss) {
         Toast.show({
@@ -448,6 +488,21 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
           text2: 'Meeting still open — you can still Join',
         });
         navigateToHealthAppointments(callData.appointmentId);
+        return;
+      }
+
+      // Already accepting / joined this call — do not re-open full-screen ring.
+      const pending = await peekPendingCallAction();
+      if (
+        (pending?.action === 'accept' || pending?.action === 'join') &&
+        Number(pending.data.appointmentId) === Number(callData.appointmentId)
+      ) {
+        return;
+      }
+      if (
+        joinedAppointmentRef.current === Number(callData.appointmentId) ||
+        activeCallRef.current?.appointmentId === Number(callData.appointmentId)
+      ) {
         return;
       }
 
@@ -526,7 +581,7 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
       return false;
     }
 
-    const pending = await loadPendingCallAction();
+    const pending = await peekPendingCallAction();
     if (!pending) {
       // Nothing pending — report done so the retry loop stops.
       return true;
@@ -563,27 +618,42 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
       await markCallLaunchGuard(appointmentId);
 
       if (pending.action === 'accept' || pending.action === 'join') {
-        const callData = await joinIncomingCallFromPush(token, pending.data);
-        setActiveCall(callData);
-        clearIncomingCallUi({skipHideNotification: true});
-        navigatedCallAppointmentRef.current = null;
-
-        if (Platform.OS === 'android') {
-          await delay(800);
+        // Idempotent: if we already joined this appointment in this process,
+        // just navigate (do not call join-room again).
+        if (
+          joinedAppointmentRef.current === appointmentId &&
+          activeCallRef.current?.appointmentId === appointmentId
+        ) {
+          await clearPendingCallAction();
+          await clearCallLaunchGuard();
+          if (!isOnVideoCallScreen()) {
+            navigatedCallAppointmentRef.current = null;
+            await navigateToActiveCall(activeCallRef.current, {
+              afterIncomingPush: true,
+            });
+          }
+          return true;
         }
 
-        navigateToActiveCall(callData);
-        flushPendingVideoCallNavigation();
-        await delay(500);
-        flushPendingVideoCallNavigation();
+        const callData = await joinIncomingCallFromPush(token, pending.data);
+        setActiveCall(callData);
+        joinedAppointmentRef.current = callData.appointmentId;
+        clearIncomingCallUi({skipHideNotification: true});
+
+        // Clear pending BEFORE navigate so a post-join throw / remount cannot
+        // double-call join-room and remount Agora (crash / ghost session).
+        await clearPendingCallAction();
+        await clearCallLaunchGuard();
+
+        navigatedCallAppointmentRef.current = null;
+        await navigateToActiveCall(callData, {afterIncomingPush: true});
       } else {
         await rejectIncomingCallFromPush(token, pending.data);
         clearIncomingCallUi({skipHideNotification: true});
+        await clearPendingCallAction();
+        await clearCallLaunchGuard();
       }
 
-      // Only clear after successful join/reject + navigate so retries can recover.
-      await clearPendingCallAction();
-      await clearCallLaunchGuard();
       return true;
     } catch (error: any) {
       // Keep the pending action so the retry loop can try again (user-app behaviour).
@@ -598,6 +668,42 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
     clearIncomingCallUi,
     navigateToActiveCall,
   ]);
+
+  const clearPendingCallRetry = useCallback(() => {
+    if (pendingRetryTimerRef.current) {
+      clearTimeout(pendingRetryTimerRef.current);
+      pendingRetryTimerRef.current = null;
+    }
+    pendingRetryAttemptRef.current = 0;
+  }, []);
+
+  /**
+   * Re-arms the cold-start retry loop. Safe to call from auth restore,
+   * AppState active, answer listener, and initial mount.
+   */
+  const schedulePendingCallAction = useCallback(() => {
+    clearPendingCallRetry();
+
+    const run = async () => {
+      const processed = await processPendingCallAction();
+      const stillPending = await peekPendingCallAction();
+      if (stillPending && !processed && pendingRetryAttemptRef.current < 40) {
+        pendingRetryAttemptRef.current += 1;
+        pendingRetryTimerRef.current = setTimeout(run, 500);
+        return;
+      }
+      if (stillPending && !processed) {
+        Toast.show({
+          type: 'error',
+          text1: 'Could not join call',
+          text2: 'Open Appointments and tap Join',
+        });
+      }
+      clearPendingCallRetry();
+    };
+
+    void run();
+  }, [clearPendingCallRetry, processPendingCallAction]);
 
   const registerFcmDevice = useCallback(
     async (token: string) => {
@@ -793,6 +899,7 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
       setCanRejoin(false);
       setRejoinAppointmentId(null);
       navigatedCallAppointmentRef.current = null;
+      joinedAppointmentRef.current = null;
       const meeting = payload?.meeting || {};
       // Vendor socket/push: uiAction meeting_closed, canRate false → summary only.
       setLastEndedCall({
@@ -883,7 +990,6 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
 
   useEffect(() => {
     let mounted = true;
-    let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
     async function setupFcm() {
       try {
@@ -896,26 +1002,8 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
       }
     }
 
-    async function attemptPendingCallAction(attempt = 0) {
-      if (!mounted) {
-        return;
-      }
-
-      const processed = await processPendingCallAction();
-      if (!mounted) {
-        return;
-      }
-
-      const stillPending = await loadPendingCallAction();
-      if (stillPending && !processed && attempt < 40) {
-        retryTimer = setTimeout(() => {
-          attemptPendingCallAction(attempt + 1);
-        }, 500);
-      }
-    }
-
     setupFcm();
-    attemptPendingCallAction();
+    schedulePendingCallAction();
 
     const unsubscribeToken = messaging().onTokenRefresh(async token => {
       await registerFcmDevice(token);
@@ -925,7 +1013,19 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
       handleIncomingCallPush(remoteMessage.data || {});
     });
 
-    const openFromNotification = (remoteMessage: any) => {
+    const openFromNotification = async (remoteMessage: any) => {
+      // Cold-start Accept already has a pending action — do NOT re-present
+      // the full-screen ring UI while join is in flight.
+      const pending = await peekPendingCallAction();
+      if (
+        pending?.action === 'accept' ||
+        pending?.action === 'join' ||
+        pending?.action === 'reject'
+      ) {
+        schedulePendingCallAction();
+        return;
+      }
+
       const data = (remoteMessage?.data || {}) as Record<string, any>;
       if (isSoftMissNotification(data)) {
         handleIncomingCallPush(data);
@@ -949,7 +1049,7 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
       .getInitialNotification()
       .then(remoteMessage => {
         if (remoteMessage) {
-          openFromNotification(remoteMessage);
+          void openFromNotification(remoteMessage);
         }
       })
       .catch(() => {
@@ -958,16 +1058,14 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
 
     const appStateSub = AppState.addEventListener('change', state => {
       if (state === 'active') {
-        attemptPendingCallAction();
+        schedulePendingCallAction();
         flushPendingVideoCallNavigation();
       }
     });
 
     return () => {
       mounted = false;
-      if (retryTimer) {
-        clearTimeout(retryTimer);
-      }
+      clearPendingCallRetry();
       unsubscribeToken();
       unsubscribeMessage();
       unsubscribeOpened();
@@ -975,9 +1073,17 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
     };
   }, [
     registerFcmDevice,
-    processPendingCallAction,
+    schedulePendingCallAction,
+    clearPendingCallRetry,
     handleIncomingCallPush,
   ]);
+
+  // Re-arm pending accept once auth token lands on cold start.
+  useEffect(() => {
+    if (vendorToken) {
+      schedulePendingCallAction();
+    }
+  }, [vendorToken, schedulePendingCallAction]);
 
   useEffect(() => {
     if (Platform.OS !== 'android') {
@@ -1007,7 +1113,7 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
       // instead of joining immediately from this listener.
       const pending = await loadPendingCallAction();
       if (pending?.action === 'accept' || pending?.action === 'join') {
-        processPendingCallAction();
+        schedulePendingCallAction();
         return;
       }
 
@@ -1030,7 +1136,7 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
         NativeModules.IncomingCallAlert.launchMainApp();
       }
 
-      processPendingCallAction();
+      schedulePendingCallAction();
     };
 
     const onNotificationEndCall = async (data: {
@@ -1108,6 +1214,7 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
     clearIncomingCallUi,
     navigateToActiveCall,
     processPendingCallAction,
+    schedulePendingCallAction,
   ]);
 
   useEffect(() => {
