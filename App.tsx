@@ -10,8 +10,6 @@ import {useDispatch} from 'react-redux';
 // import { requestUserPermissionPushNotification } from './src/PushNotification';
 // import { NotificationProvider, useNotification } from './src/contexts/NotificationContext';
 // import CustomNotificationAlert from './src/components/CustomNotificationAlert';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {Platform} from 'react-native';
 import AppRouter from './src/router/AppRouter';
 import {Provider} from 'react-redux';
 import store from './src/store/store';
@@ -24,7 +22,7 @@ import {navigationRef, flushPendingVideoCallNavigation} from './src/router/navig
 import {VendorCallBridge} from './src/router/VendorCallBridge';
 import {isCallLaunchGuardActive} from './src/services/callLaunchGuard';
 import {loadPendingCallAction} from './src/services/pendingCallAction';
-import {requestNotificationPermission} from './src/services/notificationPermission';
+import {ensureIncomingCallPermissions} from './src/services/notificationPermission';
 
 const isLoggedInValue = (value: string | null) =>
   value === 'TRUE' || value === 'true' || value === '1';
@@ -47,7 +45,9 @@ const AppContent = () => {
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        await requestNotificationPermission();
+        // Notifications + Android full-screen intent + battery unrestricted
+        // so lock-screen incoming calls work like WhatsApp.
+        await ensureIncomingCallPermissions();
 
         const callLaunchActive = await isCallLaunchGuardActive();
         const pendingCallAction = await loadPendingCallAction();
@@ -155,7 +155,7 @@ const AppContent = () => {
           <AppRouter initialRouteName={initialRoute} skipSplash={skipSplash} />
         </GestureHandlerRootView>
       </NavigationContainer>
-      {Platform.OS !== 'android' ? <IncomingCallModal /> : null}
+      <IncomingCallModal />
       <Toast />
     </VendorCallProvider>
   );

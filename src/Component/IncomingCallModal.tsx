@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Vibration,
+  Platform,
+  NativeModules,
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Toast from 'react-native-toast-message';
@@ -15,6 +17,17 @@ import {stopIncomingRingtone} from '../services/incomingRingtone';
 import Colors from '../assets/commonCSS/Colors';
 import FSize from '../assets/commonCSS/FSize';
 import {hp, wp} from '../assets/commonCSS/GlobalCSS';
+
+function stopNativeRingtone() {
+  if (Platform.OS !== 'android') {
+    return;
+  }
+  try {
+    NativeModules.IncomingCallAlert?.stopRingtoneService?.();
+  } catch {
+    // optional until rebuild
+  }
+}
 
 export default function IncomingCallModal() {
   const {incomingCall, joinCall, rejectCall} = useVendorCall();
@@ -32,6 +45,7 @@ export default function IncomingCallModal() {
     setLoading('join');
     Vibration.cancel();
     stopIncomingRingtone();
+    stopNativeRingtone();
     try {
       await joinCall();
     } catch (error: any) {
@@ -52,6 +66,7 @@ export default function IncomingCallModal() {
     setLoading('reject');
     Vibration.cancel();
     stopIncomingRingtone();
+    stopNativeRingtone();
     try {
       await rejectCall('busy');
     } catch (error: any) {
@@ -72,79 +87,78 @@ export default function IncomingCallModal() {
   return (
     <Modal
       visible={visible}
-      transparent
       animationType="fade"
       statusBarTranslucent
       onRequestClose={onReject}>
-      <View style={styles.overlay}>
-        <View style={styles.card}>
-          <View
-            style={[
-              styles.iconCircle,
-              isPeerWaiting && styles.iconCircleWaiting,
-            ]}>
-            <MaterialCommunityIcons
-              name={isPeerWaiting ? 'account-clock' : 'video'}
-              size={wp(10)}
-              color={Colors.white}
-            />
-          </View>
+      <View style={styles.container}>
+        <View
+          style={[
+            styles.iconCircle,
+            isPeerWaiting && styles.iconCircleWaiting,
+          ]}>
+          <MaterialCommunityIcons
+            name={isPeerWaiting ? 'account-clock' : 'video'}
+            size={wp(12)}
+            color={Colors.white}
+          />
+        </View>
 
-          <Text style={styles.title}>
-            {isPeerWaiting
-              ? 'Patient is waiting — Join now'
-              : 'Incoming Consultation'}
-          </Text>
-          <Text style={styles.subtitle}>
-            {incomingCall.patientName
-              ? incomingCall.patientName
-              : `Appointment #${incomingCall.appointmentId}`}
-          </Text>
-          <Text style={styles.hint}>
-            {isPeerWaiting
-              ? 'Tap Join now to start the video consultation'
-              : 'Window is open — Join to enter the meeting'}
-          </Text>
+        <Text style={styles.title}>
+          {isPeerWaiting
+            ? 'Patient is waiting — Join now'
+            : 'Incoming Consultation'}
+        </Text>
+        <Text style={styles.subtitle}>
+          {incomingCall.patientName
+            ? incomingCall.patientName
+            : `Appointment #${incomingCall.appointmentId}`}
+        </Text>
+        <Text style={styles.hint}>
+          {isPeerWaiting
+            ? 'Tap Join now to start the video consultation'
+            : 'Window is open — Join to enter the meeting'}
+        </Text>
 
-          <View style={styles.actions}>
-            <TouchableOpacity
-              style={[styles.actionBtn, styles.rejectBtn]}
-              activeOpacity={0.85}
-              disabled={!!loading}
-              onPress={onReject}>
-              {loading === 'reject' ? (
-                <ActivityIndicator color={Colors.white} />
-              ) : (
-                <>
-                  <MaterialCommunityIcons
-                    name="phone-hangup"
-                    size={wp(6)}
-                    color={Colors.white}
-                  />
-                  <Text style={styles.btnText}>Reject</Text>
-                </>
-              )}
-            </TouchableOpacity>
+        <View style={styles.actions}>
+          <TouchableOpacity
+            style={[styles.actionBtn, styles.rejectBtn]}
+            activeOpacity={0.85}
+            disabled={!!loading}
+            onPress={onReject}>
+            {loading === 'reject' ? (
+              <ActivityIndicator color={Colors.white} />
+            ) : (
+              <>
+                <MaterialCommunityIcons
+                  name="phone-hangup"
+                  size={wp(6)}
+                  color={Colors.white}
+                />
+                <Text style={styles.btnText}>
+                  {incomingCall.rejectButtonLabel || 'Reject'}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.actionBtn, styles.joinBtn]}
-              activeOpacity={0.85}
-              disabled={!!loading}
-              onPress={onJoin}>
-              {loading === 'join' ? (
-                <ActivityIndicator color={Colors.white} />
-              ) : (
-                <>
-                  <MaterialCommunityIcons
-                    name="video"
-                    size={wp(6)}
-                    color={Colors.white}
-                  />
-                  <Text style={styles.btnText}>{joinLabel}</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={[styles.actionBtn, styles.joinBtn]}
+            activeOpacity={0.85}
+            disabled={!!loading}
+            onPress={onJoin}>
+            {loading === 'join' ? (
+              <ActivityIndicator color={Colors.white} />
+            ) : (
+              <>
+                <MaterialCommunityIcons
+                  name="video"
+                  size={wp(6)}
+                  color={Colors.white}
+                />
+                <Text style={styles.btnText}>{joinLabel}</Text>
+              </>
+            )}
+          </TouchableOpacity>
         </View>
       </View>
     </Modal>
@@ -152,27 +166,17 @@ export default function IncomingCallModal() {
 }
 
 const styles = StyleSheet.create({
-  overlay: {
+  container: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.92)',
+    backgroundColor: '#0F172A',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: wp(6),
   },
-  card: {
-    width: '100%',
-    backgroundColor: '#1E293B',
-    borderRadius: wp(5),
-    paddingVertical: hp(4),
-    paddingHorizontal: wp(6),
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#334155',
-  },
   iconCircle: {
-    width: wp(22),
-    height: wp(22),
-    borderRadius: wp(11),
+    width: wp(24),
+    height: wp(24),
+    borderRadius: wp(12),
     backgroundColor: '#334155',
     alignItems: 'center',
     justifyContent: 'center',

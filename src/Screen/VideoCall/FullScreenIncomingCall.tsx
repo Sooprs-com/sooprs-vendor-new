@@ -152,69 +152,70 @@ export default function FullScreenIncomingCall(props: Props) {
 
   if (!callData) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, styles.content]}>
         <Text style={styles.title}>Incoming Consultation</Text>
       </View>
     );
   }
 
+  const acceptLabel =
+    callData.acceptButtonLabel || (callData.isPeerWaiting ? 'Join now' : 'Join');
+  const rejectLabel = callData.rejectButtonLabel || 'Reject';
+
   return (
     <View style={styles.container}>
-      <View style={styles.iconCircle}>
-        <MaterialCommunityIcons name="video" size={wp(12)} color={Colors.white} />
+      <View style={styles.content}>
+        <View style={styles.iconCircle}>
+          <MaterialCommunityIcons name="video" size={wp(12)} color={Colors.white} />
+        </View>
+
+        <Text style={styles.title}>
+          {callData.isPeerWaiting
+            ? 'Patient is waiting — Join now'
+            : 'Incoming Consultation'}
+        </Text>
+        <Text style={styles.subtitle}>
+          {callData.patientName || props.name || `Appointment #${callData.appointmentId}`}
+        </Text>
+        <Text style={styles.hint}>
+          {callData.isPeerWaiting
+            ? 'Tap Join now to start the video consultation'
+            : 'Window is open — Join to enter the meeting'}
+        </Text>
       </View>
 
-      <Text style={styles.title}>
-        {callData.isPeerWaiting
-          ? 'Patient is waiting — Join now'
-          : 'Incoming Consultation'}
-      </Text>
-      <Text style={styles.subtitle}>
-        {callData.patientName || props.name || `Appointment #${callData.appointmentId}`}
-      </Text>
-      <Text style={styles.hint}>
-        {callData.isPeerWaiting
-          ? 'Tap Join now to start the video consultation'
-          : 'Window is open — Join to enter the meeting'}
-      </Text>
-
       <View style={styles.actions}>
-        <TouchableOpacity
-          style={[styles.actionBtn, styles.rejectBtn]}
-          disabled={!!loading}
-          onPress={handleDecline}>
-          {loading === 'reject' ? (
-            <ActivityIndicator color={Colors.white} />
-          ) : (
-            <>
+        <View style={styles.actionCol}>
+          <TouchableOpacity
+            style={[styles.actionBtn, styles.rejectBtn]}
+            disabled={!!loading}
+            onPress={handleDecline}>
+            {loading === 'reject' ? (
+              <ActivityIndicator color={Colors.white} />
+            ) : (
               <MaterialCommunityIcons
                 name="phone-hangup"
-                size={wp(6)}
+                size={wp(8)}
                 color={Colors.white}
               />
-              <Text style={styles.btnText}>
-                {callData.rejectButtonLabel || 'Reject'}
-              </Text>
-            </>
-          )}
-        </TouchableOpacity>
+            )}
+          </TouchableOpacity>
+          <Text style={styles.btnText}>{rejectLabel}</Text>
+        </View>
 
-        <TouchableOpacity
-          style={[styles.actionBtn, styles.acceptBtn]}
-          disabled={!!loading}
-          onPress={handleAnswer}>
-          {loading === 'accept' ? (
-            <ActivityIndicator color={Colors.white} />
-          ) : (
-            <>
-              <MaterialCommunityIcons name="video" size={wp(6)} color={Colors.white} />
-              <Text style={styles.btnText}>
-                {callData.acceptButtonLabel ||
-                  (callData.isPeerWaiting ? 'Join now' : 'Join')}
-              </Text>
-            </>
-          )}
-        </TouchableOpacity>
+        <View style={styles.actionCol}>
+          <TouchableOpacity
+            style={[styles.actionBtn, styles.acceptBtn]}
+            disabled={!!loading}
+            onPress={handleAnswer}>
+            {loading === 'accept' ? (
+              <ActivityIndicator color={Colors.white} />
+            ) : (
+              <MaterialCommunityIcons name="video" size={wp(8)} color={Colors.white} />
+            )}
+          </TouchableOpacity>
+          <Text style={styles.btnText}>{acceptLabel}</Text>
+        </View>
       </View>
     </View>
   );
@@ -224,9 +225,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0F172A',
-    justifyContent: 'center',
-    alignItems: 'center',
     paddingHorizontal: wp(6),
+    paddingBottom: hp(6),
+  },
+  content: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   iconCircle: {
     width: wp(24),
@@ -257,16 +262,20 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    marginTop: hp(4),
-    gap: wp(6),
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingHorizontal: wp(8),
+  },
+  actionCol: {
+    alignItems: 'center',
+    width: wp(28),
   },
   actionBtn: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: wp(28),
-    paddingVertical: hp(2),
-    borderRadius: wp(4),
-    gap: hp(0.8),
+    width: wp(20),
+    height: wp(20),
+    borderRadius: wp(10),
   },
   acceptBtn: {
     backgroundColor: '#22C55E',
@@ -278,5 +287,7 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontWeight: '700',
     fontSize: FSize.fs14,
+    marginTop: hp(1.2),
+    textAlign: 'center',
   },
 });

@@ -58,7 +58,7 @@ import {
   showBackgroundIncomingCall,
 } from '../services/callKeepService';
 import Toast from 'react-native-toast-message';
-import {requestNotificationPermission} from '../services/notificationPermission';
+import {ensureIncomingCallPermissions} from '../services/notificationPermission';
 import {waitForIncomingCallTransition} from '../services/safeCallNavigation';
 
 type EndCallResult = {
@@ -533,7 +533,9 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
             // Native module optional until rebuild
           }
         }
-        // Android uses full-screen notification UI (IncomingCallModal is iOS-only).
+        // Keep in-app modal state too so Accept/Reject is visible when the app
+        // is already open (CallStyle heads-up alone is easy to miss).
+        setIncomingCall(normalized);
         return;
       }
 
@@ -993,7 +995,7 @@ export function VendorCallProvider({children}: {children: React.ReactNode}) {
 
     async function setupFcm() {
       try {
-        await requestNotificationPermission();
+        await ensureIncomingCallPermissions();
         const token = await messaging().getToken();
         if (mounted && token) {
           await registerFcmDevice(token);

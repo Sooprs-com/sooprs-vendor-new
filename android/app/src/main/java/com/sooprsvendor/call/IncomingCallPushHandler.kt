@@ -5,7 +5,6 @@ import android.content.Intent
 import android.util.Log
 import com.reactnativefullscreennotificationincomingcall.Constants
 import com.reactnativefullscreennotificationincomingcall.IncomingCallService
-import org.json.JSONObject
 
 object IncomingCallPushHandler {
   private const val TAG = "IncomingCallPushHandler"
@@ -101,7 +100,7 @@ object IncomingCallPushHandler {
       data["acceptButtonLabel"] ?: if (isPeerWaiting) "Join now" else "Join"
     val rejectLabel = data["rejectButtonLabel"] ?: "Reject"
     val ttlSeconds = data["ttlSeconds"]?.toIntOrNull() ?: 60
-    val payloadJson = JSONObject(data as Map<*, *>).toString()
+    val payloadJson = IncomingCallScreenLauncher.payloadJson(data)
 
     val intent =
       Intent(context, IncomingCallService::class.java).apply {
@@ -109,7 +108,8 @@ object IncomingCallPushHandler {
         putExtra("name", title)
         putExtra("avatar", null as String?)
         putExtra("info", body)
-        putExtra("channelId", "com.sooprsvendor.incomingcall")
+        // v2 channel forces HIGH importance if an older low-importance channel lingered.
+        putExtra("channelId", "com.sooprsvendor.incomingcall.v2")
         putExtra("channelName", "Health Consultation Calls")
         putExtra("timeout", ttlSeconds * 1000)
         putExtra("icon", "ic_launcher")
@@ -125,6 +125,18 @@ object IncomingCallPushHandler {
     try {
       context.startForegroundService(intent)
       context.startForegroundService(Intent(context, IncomingCallRingtoneService::class.java))
+      // When the screen is off / locked, also start the call Activity directly.
+      // Ringtone alone without UI is the main user complaint vs WhatsApp.
+      IncomingCallScreenLauncher.maybeLaunch(
+        context,
+        uuid,
+        title,
+        body,
+        acceptLabel,
+        rejectLabel,
+        ttlSeconds,
+        payloadJson,
+      )
       markNativeHandled(context, appointmentId)
     } catch (error: Exception) {
       Log.e(TAG, "Failed to show incoming call notification", error)

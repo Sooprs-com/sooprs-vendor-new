@@ -37,6 +37,30 @@ import {
   resolveJoinAppointmentForOrder,
 } from '../../services/bookingJoinHelper';
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** Same wall-clock format as the user app meeting section. Do not convert timezones. */
+const formatMeetingDateTime = (isoString: string | null | undefined) => {
+  if (!isoString) {
+    return '';
+  }
+  const match = String(isoString).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+  if (!match) {
+    return String(isoString);
+  }
+  const monthName = MONTHS[Number(match[2]) - 1];
+  if (!monthName) {
+    return String(isoString);
+  }
+  let hour = Number(match[4]);
+  if (Number.isNaN(hour)) {
+    return String(isoString);
+  }
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  hour = hour % 12 || 12;
+  return `${match[3]} ${monthName} ${match[1]}, ${hour}:${match[5]} ${ampm}`;
+};
+
 type OrderStatus = 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED';
 
 interface OrderDetailsResponse {
@@ -585,11 +609,11 @@ const PackageDetailsScreen = () => {
     ? [
         {
           label: 'Talk Started',
-          value: meeting?.talkStartedAt ? formatDate(meeting.talkStartedAt) : '—',
+          value: meeting?.talkStartedAt ? formatMeetingDateTime(meeting.talkStartedAt) : '—',
         },
         {
           label: 'Talk Ended',
-          value: meeting?.talkEndedAt ? formatDate(meeting.talkEndedAt) : '—',
+          value: meeting?.talkEndedAt ? formatMeetingDateTime(meeting.talkEndedAt) : '—',
         },
         {
           label: 'Talk Duration',
