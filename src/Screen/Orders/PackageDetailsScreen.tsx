@@ -624,24 +624,8 @@ const PackageDetailsScreen = () => {
           value: formatDurationSeconds(meeting?.waitingDurationSeconds),
         },
         {
-          label: 'Client Connected',
-          value: formatDurationSeconds(meeting?.clientConnectedDurationSeconds),
-        },
-        {
-          label: 'Vendor Connected',
-          value: formatDurationSeconds(meeting?.vendorConnectedDurationSeconds),
-        },
-        {
           label: 'User Joined',
           value: formatYesNo(meeting?.userJoined),
-        },
-        {
-          label: 'Vendor Joined',
-          value: formatYesNo(meeting?.vendorJoined),
-        },
-        {
-          label: 'Both Joined',
-          value: formatYesNo(meeting?.bothJoined),
         },
       ]
     : [];
@@ -671,16 +655,8 @@ const PackageDetailsScreen = () => {
               {orderData.package?.name || 'Package'}
             </Text>
             <View style={styles.coverMeta}>
-              <MaterialCommunityIcons name="calendar-clock" size={wp(3.8)} color="#737373" />
+              <MaterialCommunityIcons name="calendar-clock" size={wp(4.1)} color="#737373" />
               <Text style={styles.coverMetaText}>{formatDate(orderData.order_created_at)}</Text>
-            </View>
-            <View style={styles.badgeRow}>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{statusMeta.label}</Text>
-              </View>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{paymentMeta.label}</Text>
-              </View>
             </View>
           </View>
 
@@ -1033,13 +1009,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
-    fontSize: FSize.fs22,
+    fontSize: FSize.fs23,
     fontWeight: '800',
     color: '#0F172A',
     letterSpacing: -0.2,
   },
   headerSubtitle: {
-    fontSize: FSize.fs14,
+    fontSize: FSize.fs15,
     color: '#94A3B8',
     marginTop: hp(0.2),
     fontWeight: '500',
@@ -1079,11 +1055,11 @@ const styles = StyleSheet.create({
     marginTop: hp(0.9),
   },
   coverTitle: {
-    fontSize: FSize.fs20,
+    fontSize: FSize.fs21,
     fontWeight: '700',
     color: '#171717',
     letterSpacing: -0.2,
-    lineHeight: hp(2.9),
+    lineHeight: hp(3.1),
   },
   coverMeta: {
     flexDirection: 'row',
@@ -1092,26 +1068,9 @@ const styles = StyleSheet.create({
     marginTop: hp(0.35),
   },
   coverMetaText: {
-    fontSize: FSize.fs14,
+    fontSize: FSize.fs15,
     fontWeight: '500',
     color: '#737373',
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: wp(1.6),
-    marginTop: hp(0.7),
-  },
-  badge: {
-    backgroundColor: '#F0F0F0',
-    borderRadius: wp(1.5),
-    paddingHorizontal: wp(2.4),
-    paddingVertical: hp(0.35),
-  },
-  badgeText: {
-    fontSize: FSize.fs13,
-    fontWeight: '600',
-    color: '#525252',
   },
   joinNowButton: {
     marginTop: hp(1),
@@ -1127,7 +1086,7 @@ const styles = StyleSheet.create({
   joinNowText: {
     color: Colors.white,
     fontWeight: '700',
-    fontSize: FSize.fs17,
+    fontSize: FSize.fs18,
   },
   statsRow: {
     flexDirection: 'row',
@@ -1144,19 +1103,19 @@ const styles = StyleSheet.create({
     borderColor: '#EBEBEB',
   },
   statLabel: {
-    fontSize: FSize.fs13,
+    fontSize: FSize.fs14,
     color: '#737373',
     fontWeight: '600',
   },
   statValue: {
     marginTop: hp(0.25),
-    fontSize: FSize.fs17,
+    fontSize: FSize.fs18,
     fontWeight: '700',
     color: '#171717',
   },
   statHint: {
     marginTop: hp(0.2),
-    fontSize: FSize.fs12,
+    fontSize: FSize.fs13,
     color: '#A3A3A3',
     fontWeight: '500',
   },
@@ -1176,13 +1135,13 @@ const styles = StyleSheet.create({
     marginBottom: hp(1),
   },
   sectionTitle: {
-    fontSize: FSize.fs17,
+    fontSize: FSize.fs18,
     fontWeight: '700',
     color: '#171717',
     letterSpacing: -0.2,
   },
   sectionAction: {
-    fontSize: FSize.fs15,
+    fontSize: FSize.fs16,
     fontWeight: '600',
     color: Colors.sooprsblue,
   },
@@ -1233,7 +1192,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.sooprsblue,
   },
   timelineLabel: {
-    fontSize: FSize.fs14,
+    fontSize: FSize.fs15,
     fontWeight: '700',
     color: '#94A3B8',
     textAlign: 'center',
@@ -1246,7 +1205,7 @@ const styles = StyleSheet.create({
   },
   timelineHint: {
     marginTop: hp(0.15),
-    fontSize: FSize.fs12,
+    fontSize: FSize.fs13,
     fontWeight: '500',
     color: '#CBD5E1',
     textAlign: 'center',
@@ -1266,12 +1225,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   closedBannerTitle: {
-    fontSize: FSize.fs17,
+    fontSize: FSize.fs18,
     fontWeight: '700',
   },
   closedBannerHint: {
     marginTop: hp(0.12),
-    fontSize: FSize.fs14,
+    fontSize: FSize.fs15,
     color: '#737373',
     fontWeight: '500',
   },
@@ -1331,17 +1290,17 @@ const styles = StyleSheet.create({
     paddingBottom: hp(1),
   },
   routeLabel: {
-    fontSize: FSize.fs12,
+    fontSize: FSize.fs13,
     color: '#A3A3A3',
     fontWeight: '700',
     letterSpacing: 0.8,
   },
   routeValue: {
     marginTop: hp(0.2),
-    fontSize: FSize.fs16,
+    fontSize: FSize.fs17,
     fontWeight: '600',
     color: '#171717',
-    lineHeight: hp(2.4),
+    lineHeight: hp(2.55),
   },
   priceRow: {
     flexDirection: 'row',
@@ -1350,17 +1309,17 @@ const styles = StyleSheet.create({
     marginBottom: hp(0.7),
   },
   priceLabel: {
-    fontSize: FSize.fs15,
+    fontSize: FSize.fs16,
     color: '#737373',
     fontWeight: '500',
   },
   priceValue: {
-    fontSize: FSize.fs15,
+    fontSize: FSize.fs16,
     fontWeight: '600',
     color: '#171717',
   },
   priceMuted: {
-    fontSize: FSize.fs14,
+    fontSize: FSize.fs15,
     fontWeight: '500',
     color: '#A3A3A3',
   },
@@ -1380,12 +1339,12 @@ const styles = StyleSheet.create({
     paddingVertical: hp(0.35),
   },
   couponCode: {
-    fontSize: FSize.fs14,
+    fontSize: FSize.fs15,
     fontWeight: '600',
     color: '#404040',
   },
   discountValue: {
-    fontSize: FSize.fs15,
+    fontSize: FSize.fs16,
     fontWeight: '600',
     color: '#404040',
   },
@@ -1400,12 +1359,12 @@ const styles = StyleSheet.create({
     paddingVertical: hp(0.95),
   },
   totalBarLabel: {
-    fontSize: FSize.fs15,
+    fontSize: FSize.fs16,
     fontWeight: '600',
     color: '#525252',
   },
   totalBarValue: {
-    fontSize: FSize.fs19,
+    fontSize: FSize.fs20,
     fontWeight: '700',
     color: '#171717',
   },
@@ -1421,7 +1380,7 @@ const styles = StyleSheet.create({
   },
   paymentIdText: {
     flex: 1,
-    fontSize: FSize.fs14,
+    fontSize: FSize.fs15,
     fontWeight: '500',
     color: '#737373',
   },
@@ -1438,14 +1397,14 @@ const styles = StyleSheet.create({
     paddingBottom: 0,
   },
   meetingLabel: {
-    fontSize: FSize.fs14,
+    fontSize: FSize.fs15,
     color: '#737373',
     fontWeight: '500',
     flex: 1,
     marginRight: wp(3),
   },
   meetingValue: {
-    fontSize: FSize.fs14,
+    fontSize: FSize.fs15,
     fontWeight: '600',
     color: '#171717',
     flex: 1.2,
@@ -1460,7 +1419,7 @@ const styles = StyleSheet.create({
     borderColor: '#A7F3D0',
   },
   ratingStatusText: {
-    fontSize: FSize.fs12,
+    fontSize: FSize.fs13,
     fontWeight: '600',
     color: '#16A34A',
   },
@@ -1472,7 +1431,7 @@ const styles = StyleSheet.create({
   },
   ratingScoreText: {
     marginLeft: wp(2),
-    fontSize: FSize.fs15,
+    fontSize: FSize.fs16,
     fontWeight: '700',
     color: '#171717',
   },
@@ -1484,20 +1443,20 @@ const styles = StyleSheet.create({
     paddingVertical: hp(1),
   },
   ratingCommentLabel: {
-    fontSize: FSize.fs12,
+    fontSize: FSize.fs13,
     fontWeight: '600',
     color: '#737373',
     marginBottom: hp(0.35),
   },
   ratingCommentText: {
-    fontSize: FSize.fs14,
+    fontSize: FSize.fs15,
     fontWeight: '500',
     color: '#171717',
-    lineHeight: hp(2.2),
+    lineHeight: hp(2.35),
   },
   notRatedText: {
     marginTop: hp(0.8),
-    fontSize: FSize.fs13,
+    fontSize: FSize.fs14,
     color: '#737373',
   },
   customerCard: {
@@ -1510,7 +1469,7 @@ const styles = StyleSheet.create({
     borderColor: '#EBEBEB',
   },
   customerSectionTitle: {
-    fontSize: FSize.fs17,
+    fontSize: FSize.fs18,
     fontWeight: '700',
     color: '#171717',
     letterSpacing: -0.2,
@@ -1531,7 +1490,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEF4FF',
   },
   avatarText: {
-    fontSize: FSize.fs15,
+    fontSize: FSize.fs16,
     fontWeight: '700',
     color: Colors.sooprsblue,
   },
@@ -1539,14 +1498,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   customerName: {
-    fontSize: FSize.fs18,
+    fontSize: FSize.fs19,
     fontWeight: '700',
     color: '#171717',
     letterSpacing: -0.2,
   },
   customerBooking: {
     marginTop: hp(0.2),
-    fontSize: FSize.fs13,
+    fontSize: FSize.fs14,
     fontWeight: '500',
     color: '#737373',
   },
@@ -1576,13 +1535,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   customerContactLabel: {
-    fontSize: FSize.fs12,
+    fontSize: FSize.fs13,
     fontWeight: '600',
     color: '#94A3B8',
     marginBottom: hp(0.15),
   },
   customerContactValue: {
-    fontSize: FSize.fs15,
+    fontSize: FSize.fs16,
     fontWeight: '600',
     color: '#0F172A',
   },
@@ -1614,7 +1573,7 @@ const styles = StyleSheet.create({
     paddingVertical: hp(1.45),
   },
   whatsappText: {
-    fontSize: FSize.fs15,
+    fontSize: FSize.fs16,
     fontWeight: '700',
     color: '#16A34A',
   },
@@ -1629,7 +1588,7 @@ const styles = StyleSheet.create({
     paddingVertical: hp(1.45),
   },
   callText: {
-    fontSize: FSize.fs15,
+    fontSize: FSize.fs16,
     fontWeight: '700',
     color: Colors.white,
   },
@@ -1640,7 +1599,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: hp(1.4),
-    fontSize: FSize.fs15,
+    fontSize: FSize.fs16,
     color: '#737373',
     fontWeight: '500',
   },
@@ -1667,14 +1626,14 @@ const styles = StyleSheet.create({
     marginBottom: hp(1.6),
   },
   modalTitle: {
-    fontSize: FSize.fs18,
+    fontSize: FSize.fs19,
     fontWeight: '700',
     color: '#171717',
     textAlign: 'center',
   },
   modalSubtitle: {
     marginTop: hp(0.5),
-    fontSize: FSize.fs14,
+    fontSize: FSize.fs15,
     color: '#737373',
     textAlign: 'center',
     fontWeight: '500',
@@ -1708,7 +1667,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   statusOptionText: {
-    fontSize: FSize.fs15,
+    fontSize: FSize.fs16,
     color: '#171717',
     fontWeight: '600',
   },
@@ -1740,7 +1699,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelBtnText: {
-    fontSize: FSize.fs15,
+    fontSize: FSize.fs16,
     color: '#737373',
     fontWeight: '600',
   },
@@ -1757,7 +1716,7 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     color: Colors.white,
-    fontSize: FSize.fs15,
+    fontSize: FSize.fs16,
     fontWeight: '700',
   },
 });

@@ -24,12 +24,14 @@ export type ScheduledConsultationData = {
       open?: boolean;
       remainingSeconds?: number;
     };
+
     /** User-app shape */
     vendor?: {
       id?: number;
       name?: string;
       image?: string;
     };
+
     /** Vendor-app shape from get-vendor-profile */
     patient?: {
       id?: number;
@@ -86,7 +88,6 @@ function formatSlotDate(dateStr?: string): string {
     const [y, m, d] = dayPart.split('-').map(Number);
     if (!y || !m || !d) return dayPart;
     return new Date(y, m - 1, d).toLocaleDateString('en-IN', {
-      weekday: 'short',
       day: '2-digit',
       month: 'short',
     });
@@ -139,6 +140,7 @@ const ScheduledConsultationStrip: React.FC<Props> = ({
     () => formatSlotDate(apt?.appointmentDate || apt?.appointmentAt),
     [apt?.appointmentDate, apt?.appointmentAt],
   );
+  
   const timePart = useMemo(
     () => formatSlotTime(apt?.appointmentTime),
     [apt?.appointmentTime],
@@ -199,33 +201,23 @@ const ScheduledConsultationStrip: React.FC<Props> = ({
           </View>
           {(datePart || timePart) && (
             <View style={styles.metaRow}>
-              {!!datePart && (
-                <View style={styles.metaChip}>
-                  <MaterialCommunityIcons
-                    name="calendar-month-outline"
-                    size={wp(3.8)}
-                    color="#4B6FA8"
-                  />
-                  <Text style={styles.metaText}>{datePart}</Text>
-                </View>
-              )}
-              {!!timePart && (
-                <View style={styles.metaChip}>
-                  <MaterialCommunityIcons
-                    name="clock-outline"
-                    size={wp(3.8)}
-                    color="#4B6FA8"
-                  />
-                  <Text style={styles.metaText}>{timePart}</Text>
-                </View>
-              )}
+              <View style={styles.metaChip}>
+                <MaterialCommunityIcons
+                  name="calendar-clock-outline"
+                  size={wp(3.8)}
+                  color="#4B6FA8"
+                />
+                <Text style={styles.metaText} numberOfLines={1}>
+                  {[datePart, timePart].filter(Boolean).join('  ·  ')}
+                </Text>
+              </View>
             </View>
           )}
         </View>
 
         {canJoin ? (
           <View style={styles.joinBtn}>
-            <MaterialCommunityIcons name="video" size={wp(3.4)} color="#FFF" />
+            <MaterialCommunityIcons name="video" size={wp(5.2)} color="#FFF" />
             <Text style={styles.joinBtnText}>Join</Text>
           </View>
         ) : (
@@ -245,6 +237,7 @@ const ScheduledConsultationStrip: React.FC<Props> = ({
 const styles = StyleSheet.create({
   touchWrap: {
     marginHorizontal: wp(4),
+    marginTop: hp(1.4),
     marginBottom: hp(1.1),
     borderRadius: 14,
     shadowColor: '#0077FF',
@@ -347,14 +340,17 @@ const styles = StyleSheet.create({
   joinBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#0D9F6E',
-    paddingHorizontal: wp(3.2),
-    paddingVertical: hp(0.7),
+    paddingHorizontal: wp(5.6),
+    paddingVertical: hp(1.45),
+    minHeight: hp(5.4),
+    minWidth: wp(26),
     borderRadius: 999,
-    gap: 4,
+    gap: 6,
   },
   joinBtnText: {
-    fontSize: FSize.fs11,
+    fontSize: FSize.fs16,
     fontFamily: fFamily.ibmBold,
     color: '#FFF',
   },

@@ -1,9 +1,12 @@
 import {StyleSheet, Text, View} from 'react-native';
 import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import EnterMobileNumber from '../auth/EnterMobileNumber';
-import NewOtpScreen from '../auth/NewOtpScreen';
-import EmailCollectionScreen from '../auth/EmailCollectionScreen';
+import VendorEmailLoginScreen from '../auth/VendorEmailLoginScreen';
+import VendorSignupScreen from '../auth/VendorSignupScreen';
+// Mobile number + OTP login and the registration that follows it are paused.
+// import EnterMobileNumber from '../auth/EnterMobileNumber';
+// import NewOtpScreen from '../auth/NewOtpScreen';
+// import EmailCollectionScreen from '../auth/EmailCollectionScreen';
 import BottomTab from './BottomTab';
 import VendorDrawer from './VendorDrawer';
 import HomeVerificationScreen from '../Screen/Verification/HomeVerification';
@@ -15,7 +18,7 @@ import EditProfileScreen from '../Screen/Profile/EditProfileScreen';
 import AvailableSlotsScreen from '../Screen/Profile/AvailableSlotsScreen';
 import HealthAppointmentsScreen from '../Screen/Health/HealthAppointmentsScreen';
 import HealthAppointmentDetailScreen from '../Screen/Health/HealthAppointmentDetailScreen';
-import RegistrationScreen from '../auth/RegistrationScreen';
+// import RegistrationScreen from '../auth/RegistrationScreen';
 import CompleteProfileScreen from '../Screen/CompleteProfile/CompleteProfileScreen';
 import PackageDetailsScreen from '../Screen/Orders/PackageDetailsScreen';
 import VideoCallScreen from '../Screen/VideoCall/VideoCallScreen';
@@ -27,7 +30,7 @@ import NotificationScreen from '../Screen/Notifications/NotificationScreen';
 import LeadDetailsScreen from '../Screen/Leads/LeadDetailsScreen';
 import ChatSupportHome from '../Screen/Support/ChatSupportHome';
 import ChatbotSupport from '../Screen/Support/ChatbotSupport';
-import CategorySelectionScreen from '../auth/CategorySelectionScreen';
+// import CategorySelectionScreen from '../auth/CategorySelectionScreen';
 // import WelcomeScreen from './auth/WelcomeScreen';
 // import ProfileSelection from './auth/ProfileSelection';
 // import Signup from './auth/Signup';
@@ -95,14 +98,16 @@ const AuthenticationRouter = ({initialRoute}: {initialRoute?: string}) => {
   return (
     <Stack.Navigator 
       screenOptions={{headerShown: false}}
-      initialRouteName={initialRoute || 'EnterMobileNumber'}>
+      initialRouteName={initialRoute || 'VendorEmailLogin'}>
       {/* <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} /> */}
-      <Stack.Screen name="EnterMobileNumber" component={EnterMobileNumber} />
+      <Stack.Screen name="VendorEmailLogin" component={VendorEmailLoginScreen} />
+      <Stack.Screen name="VendorSignup" component={VendorSignupScreen} />
+      {/* <Stack.Screen name="EnterMobileNumber" component={EnterMobileNumber} />
       <Stack.Screen name="NewOtpScreen" component={NewOtpScreen} />
       <Stack.Screen name="EmailCollectionScreen" component={EmailCollectionScreen} />
-          <Stack.Screen name="HomeVerificationScreen" component={HomeVerificationScreen} />
       <Stack.Screen name="CategorySelectionScreen" component={CategorySelectionScreen} />
-          <Stack.Screen name="RegistrationScreen" component={RegistrationScreen} />
+      <Stack.Screen name="RegistrationScreen" component={RegistrationScreen} /> */}
+          <Stack.Screen name="HomeVerificationScreen" component={HomeVerificationScreen} />
           
            <Stack.Screen name="AddPackagesScreen" component={AddPackagesScreen} />
            <Stack.Screen name="CabRideReviewScreen" component={CabRideReviewScreen} />

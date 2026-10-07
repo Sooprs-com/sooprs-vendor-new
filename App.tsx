@@ -3,6 +3,7 @@ import {NavigationContainer} from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 // import AppRouter from './src/AppRouter';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
 // import HomeDrawer from './src/ProfessionalScreens/Home/HomeDrawer';
 import {useDispatch} from 'react-redux';
 // import {checkForUpdate} from './src/services/AutoUpdate';
@@ -17,6 +18,8 @@ import {getDataFromAsyncStorage} from './src/services/CommonFunction';
 import {mobile_siteConfig} from './src/services/mobile-siteConfig';
 import {getDataWithToken} from './src/services/mobile-api';
 import {VendorCallProvider} from './src/context/VendorCallContext';
+import {CallMediaProvider} from './src/Screen/VideoCall/CallMediaContext';
+import MinimizedCallBubble from './src/Screen/VideoCall/MinimizedCallBubble';
 import IncomingCallModal from './src/Component/IncomingCallModal';
 import {navigationRef, flushPendingVideoCallNavigation} from './src/router/navigationRef';
 import {VendorCallBridge} from './src/router/VendorCallBridge';
@@ -126,10 +129,10 @@ const AppContent = () => {
         } else if (callLaunchActive) {
           setInitialRoute('VendorDrawer');
         } else {
-          setInitialRoute('EnterMobileNumber');
+          setInitialRoute('VendorEmailLogin');
         }
       } catch (error) {
-        setInitialRoute('EnterMobileNumber');
+        setInitialRoute('VendorEmailLogin');
       } finally {
         setIsReady(true);
       }
@@ -144,20 +147,25 @@ const AppContent = () => {
   }
 
   return (
+    <SafeAreaProvider>
     <VendorCallProvider>
-      <NavigationContainer
-        ref={navigationRef}
-        onReady={() => {
-          flushPendingVideoCallNavigation();
-        }}>
-        <GestureHandlerRootView style={{flex: 1}}>
-          <VendorCallBridge />
-          <AppRouter initialRouteName={initialRoute} skipSplash={skipSplash} />
-        </GestureHandlerRootView>
-      </NavigationContainer>
-      <IncomingCallModal />
-      <Toast />
+      <CallMediaProvider>
+        <NavigationContainer
+          ref={navigationRef}
+          onReady={() => {
+            flushPendingVideoCallNavigation();
+          }}>
+          <GestureHandlerRootView style={{flex: 1}}>
+            <VendorCallBridge />
+            <AppRouter initialRouteName={initialRoute} skipSplash={skipSplash} />
+            <MinimizedCallBubble />
+          </GestureHandlerRootView>
+        </NavigationContainer>
+        <IncomingCallModal />
+        <Toast />
+      </CallMediaProvider>
     </VendorCallProvider>
+    </SafeAreaProvider>
   );
 };
 

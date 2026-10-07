@@ -9,10 +9,11 @@ import {
     Image,
     ScrollView,
     Linking,
+    Platform,
+    StatusBar,
   } from 'react-native';
   import React, {useState} from 'react';
   import Colors from '../assets/commonCSS/Colors';
-  import NewHeader from './NewHeader';
 //   import {WebView as RNWebView} from 'react-native-webview';
   import {hp, wp} from '../assets/commonCSS/GlobalCSS';
   import FSize from '../assets/commonCSS/FSize';
@@ -34,7 +35,7 @@ import Hire_Professional from './FAQ/Hire_Professional';
       <Top.Navigator
         screenOptions={{
           tabBarScrollEnabled: true,
-          tabBarActiveTintColor: '#000066', // Active tab text color
+          tabBarActiveTintColor: Colors.sooprsblue,
           tabBarInactiveTintColor: 'rgba(132, 122, 122, 1)',
           tabBarLabelStyle: {
             fontSize: FSize.fs14, // Adjust the font size
@@ -49,7 +50,7 @@ import Hire_Professional from './FAQ/Hire_Professional';
             backgroundColor: 'white', // Set the height of the tab bar
           },
           tabBarIndicatorStyle: {
-            backgroundColor: '#000066',
+            backgroundColor: Colors.sooprsblue,
             // marginHorizontal: wp(3),
             // marginRight:hp(3),
             // width: "35%",
@@ -62,6 +63,7 @@ import Hire_Professional from './FAQ/Hire_Professional';
       </Top.Navigator>
     );
   };
+
   const TextComponent = ({placeholder, value, setValue}) => {
     return (
       <View
@@ -307,10 +309,44 @@ import Hire_Professional from './FAQ/Hire_Professional';
     const validateMobile = phone => {
       return 7 <= phone?.length && 15 >= phone?.length;
     };
+    const headerSubtitle =
+      header === 'Privacy Policy'
+        ? 'How we protect your data'
+        : header === 'Term & Condition'
+        ? 'Rules of the platform'
+        : header === 'Refund Policy'
+        ? 'How refunds work'
+        : header === 'Contact Us'
+        ? 'Reach our support team'
+        : header === 'FAQ'
+        ? 'Quick answers'
+        : '';
     return (
       <View style={styles.container1}>
-        {/* Display custom header */}
-        <NewHeader navigation={navigation} header={header} />
+        <StatusBar
+          barStyle="dark-content"
+          backgroundColor={Colors.white}
+          translucent={Platform.OS === 'android'}
+        />
+        <View style={styles.screenHeader}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+            activeOpacity={0.7}>
+            <Image source={Images.backArrow} style={styles.backIcon} />
+          </TouchableOpacity>
+          <View style={styles.headerTextWrap}>
+            <Text style={styles.screenHeaderTitle} numberOfLines={1}>
+              {header}
+            </Text>
+            {!!headerSubtitle && (
+              <Text style={styles.screenHeaderSubtitle} numberOfLines={1}>
+                {headerSubtitle}
+              </Text>
+            )}
+          </View>
+          <View style={styles.headerSpacer} />
+        </View>
   
         <View style={styles.container}>
           {header !== 'Contact Us' && header !== 'FAQ' && (
@@ -460,6 +496,47 @@ import Hire_Professional from './FAQ/Hire_Professional';
       flex: 1,
       backgroundColor: Colors.white,
     },
+    screenHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: wp(2.5),
+      paddingTop:
+        Platform.OS === 'ios'
+          ? hp(6.5)
+          : (StatusBar.currentHeight || hp(3)) + hp(1.2),
+      paddingBottom: hp(1.4),
+      backgroundColor: Colors.white,
+      borderBottomWidth: 1,
+      borderBottomColor: '#F1F5F9',
+    },
+    backButton: {
+      padding: wp(2),
+    },
+    backIcon: {
+      width: wp(8),
+      height: wp(8),
+      tintColor: '#0F172A',
+    },
+    headerTextWrap: {
+      flex: 1,
+      alignItems: 'center',
+    },
+    screenHeaderTitle: {
+      fontSize: FSize.fs22,
+      fontWeight: '800',
+      color: '#0F172A',
+    },
+    screenHeaderSubtitle: {
+      marginTop: hp(0.12),
+      fontSize: FSize.fs14,
+      color: '#94A3B8',
+      fontWeight: '600',
+    },
+    
+    headerSpacer: {
+      width: wp(10),
+    },
+
     webView: {
       flex: 1,
     },

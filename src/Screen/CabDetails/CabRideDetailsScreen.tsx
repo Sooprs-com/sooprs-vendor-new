@@ -21,8 +21,10 @@ import FSize from '../../assets/commonCSS/FSize';
 import Images from '../../assets/image';
 import { getDataWithToken } from '../../services/mobile-api';
 import { mobile_siteConfig } from '../../services/mobile-siteConfig';
+import FormattedDescription from '../../Component/FormattedDescription';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const DESCRIPTION_PREVIEW_LINES = 5;
 
 const CabRideReviewScreen = ({route}: any) => {
   const { data } = route.params;
@@ -32,6 +34,8 @@ const CabRideReviewScreen = ({route}: any) => {
   const [packageData, setPackageData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isActive, setIsActive] = useState(true);
+  const [showFullDescription, setShowFullDescription] = useState(false);
+  const [descriptionOverflows, setDescriptionOverflows] = useState(false);
   const toggleAnim = useRef(new Animated.Value(1)).current;
 
   // Get image URI helper function
@@ -87,6 +91,10 @@ const CabRideReviewScreen = ({route}: any) => {
   }, []);
 
 
+  useEffect(() => {
+    setShowFullDescription(false);
+  }, [packageData?.package?.long_description, packageData?.package?.short_description]);
+
   const onCarouselScroll = (event: any) => {
     const slideIndex = Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH);
     setCurrentImageIndex(slideIndex);
@@ -141,20 +149,6 @@ const CabRideReviewScreen = ({route}: any) => {
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
               <Image source={Images.backArrow} style={styles.backIcon} />
             </TouchableOpacity>
-            <View style={{ flex: 1 }} />
-            <TouchableOpacity 
-              style={styles.editButton}
-              onPress={() => {
-                (navigation as any).navigate('AddPackagesScreen', { 
-                  packageData: pkg,
-                  isEditMode: true 
-                });
-              }}>
-              <Image source={Images.editButton} style={styles.editIcon} />
-            </TouchableOpacity>
-            {/* <TouchableOpacity style={styles.shareButton}>
-              <Image source={Images.referIcon} style={styles.shareIcon} />
-            </TouchableOpacity> */}
           </View>
 
           {/* CAROUSEL DOTS */}
@@ -181,6 +175,18 @@ const CabRideReviewScreen = ({route}: any) => {
         <View style={styles.contentCard}>
           <View style={styles.titleRow}>
             <Text style={styles.serviceTitle}>{pkg.name || 'Package Name'}</Text>
+            <TouchableOpacity
+              style={styles.editButton}
+              activeOpacity={0.8}
+              hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+              onPress={() => {
+                (navigation as any).navigate('AddPackagesScreen', {
+                  packageData: pkg,
+                  isEditMode: true,
+                });
+              }}>
+              <Image source={Images.editButton} style={styles.editIcon} />
+            </TouchableOpacity>
             {/* STATUS TOGGLE */}
             {/* <TouchableOpacity
               activeOpacity={0.8}
@@ -221,14 +227,33 @@ const CabRideReviewScreen = ({route}: any) => {
             </TouchableOpacity> */}
           </View>
 
-          <View style={styles.locationRow}>
-            <Image source={Images.locationIcon} style={styles.locationIcon} />
-            <Text style={styles.locationText}>{pkg.location1 || 'Location'}</Text>
-          </View>
+          {[pkg.location1, pkg.location2].filter(Boolean).length > 0 ? (
+            <View style={styles.locationRow}>
+              <Image source={Images.locationIcon} style={styles.locationIcon} />
+              <Text style={styles.locationText}>
+                {[pkg.location1, pkg.location2].filter(Boolean).join(', ')}
+              </Text>
+            </View>
+          ) : null}
 
-          <Text style={styles.description}>
-            {pkg.long_description || pkg.short_description || 'No description available'}
-          </Text>
+          <FormattedDescription
+            value={pkg.long_description || pkg.short_description || ''}
+            baseStyle={styles.description}
+            fallback="No description available"
+            collapsed={!showFullDescription}
+            collapsedLines={DESCRIPTION_PREVIEW_LINES}
+            onOverflowChange={setDescriptionOverflows}
+          />
+          {descriptionOverflows ? (
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => setShowFullDescription(prev => !prev)}
+              style={styles.seeMoreButton}>
+              <Text style={styles.seeMoreText}>
+                {showFullDescription ? 'See less' : 'See more'}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
 
         {/* AMENITIES */}
@@ -481,19 +506,23 @@ const styles = StyleSheet.create({
   },
 
   editButton: {
-    width: wp(10),
-    height: wp(10),
+    width: wp(11),
+    height: wp(11),
     justifyContent: 'center',
     alignItems: 'center',
-    // backgroundColor:Colors.sooprsblue,
-    borderRadius: wp(5),
-    marginRight: wp(2),
+    backgroundColor: Colors.white,
+    borderRadius: wp(5.5),
+    marginLeft: wp(2),
+    elevation: 4,
+    shadowColor: Colors.black,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.22,
+    shadowRadius: 4,
   },
 
   editIcon: {
     width: wp(8),
     height: wp(8),
-    // tintColor: Colors.white,
   },
 
   carouselDots: {
@@ -660,9 +689,20 @@ const styles = StyleSheet.create({
   },
 
   description: {
-    fontSize: FSize.fs14,
+    fontSize: FSize.fs17,
     color: Colors.black,
-    lineHeight: hp(2.5),
+    lineHeight: hp(3.1),
+  },
+
+  seeMoreButton: {
+    alignSelf: 'flex-end',
+    marginTop: hp(0.4),
+  },
+
+  seeMoreText: {
+    fontSize: FSize.fs15,
+    color: Colors.sooprsblue,
+    fontWeight: '700',
   },
 
   /* AMENITIES */

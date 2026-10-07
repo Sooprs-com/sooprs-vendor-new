@@ -6,16 +6,19 @@ import {
   TextInput,
   ScrollView,
   Image,
-  SafeAreaView,
   Alert,
   Platform,
   PermissionsAndroid,
   Switch,
+  StatusBar,
+  KeyboardAvoidingView,
+  ActivityIndicator,
 } from 'react-native';
 import React, {useState, useEffect} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {launchImageLibrary, ImagePickerResponse, MediaType} from 'react-native-image-picker';
 import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {hp, wp} from '../../assets/commonCSS/GlobalCSS';
 import Colors from '../../assets/commonCSS/Colors';
 import FSize from '../../assets/commonCSS/FSize';
@@ -80,6 +83,7 @@ const AddPackagesScreen = ({route}: any) => {
   const [requiresAppointment, setRequiresAppointment] = useState(false);
   const [showAppointmentField, setShowAppointmentField] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   // Images - Thumbnail (1 image) and Default (max 4 images)
   const [thumbnailImage, setThumbnailImage] = useState<string>('');
@@ -361,6 +365,7 @@ const AddPackagesScreen = ({route}: any) => {
       Alert.alert('Error', 'Failed to open image picker');
     }
   };
+  
   const createPackage = async () => {
     try {
       // Validation
@@ -560,6 +565,13 @@ const AddPackagesScreen = ({route}: any) => {
     setDefaultImages(newImages);
   };
 
+  const tagPlaceholder = (label: string) => {
+    if (label === 'Inclusions') return 'e.g. Healing workshops';
+    if (label === 'Exclusions') return 'e.g. Airfare';
+    if (label === 'Policy') return 'e.g. Refund policy';
+    return 'e.g. Spa & Sauna';
+  };
+
   const renderTagSection = (
     label: string,
     input: string,
@@ -567,700 +579,828 @@ const AddPackagesScreen = ({route}: any) => {
     tags: string[],
     setTags: (tags: string[]) => void,
     options: string[] | null,
-    tagColor: string = Colors.sooprslight,
-    tagTextColor: string = Colors.black,
-    removeIconColor: string = Colors.sooprsblue,
   ) => (
-    <View style={styles.section}>
+    <View style={styles.tagSection}>
       <Text style={styles.label}>{label}</Text>
-      <View style={styles.inputContainer}>
-        <View style={styles.inputWithTagsContainer}>
-          <TextInput
-            style={styles.inputWithTags}
-            placeholder={`e.g ${label === 'INCLUSIONS' ? 'Healing workshops' : label === 'EXCLUSIONS' ? 'Airfare' : label === 'POLICY' ? 'Refund policy' : 'Spa & Sauna'}`}
-            value={input}
-            onChangeText={setInput}
-            onSubmitEditing={() => addTag(tags, setTags, input, setInput)}
-            multiline={false}
-          />
-          {/* Tags inside input box */}
-          {tags.length > 0 && (
-            <View style={styles.tagsInsideInput}>
-              {tags.map((tag: string, index: number) => (
-                <View
-                  key={index}
-                  style={[styles.tagInsideInput, {backgroundColor: tagColor}]}>
-                  <Text style={[styles.tagTextInsideInput, {color: tagTextColor}]}>
-                    {tag}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => removeTag(tags, setTags, index)}
-                    style={[
-                      styles.tagRemoveInsideInput,
-                      {backgroundColor: removeIconColor},
-                    ]}>
-                    <Text
-                      style={[
-                        styles.tagRemoveTextInsideInput,
-                        {
-                          color:
-                            tagColor === Colors.sooprslight
-                              ? Colors.white
-                              : Colors.grey,
-                        },
-                      ]}>
-                      ×
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
+      <View
+        style={[
+          styles.tagInputRow,
+          focusedField === label && styles.inputFocused,
+        ]}>
+        <TextInput
+          style={styles.tagInput}
+          placeholder={tagPlaceholder(label)}
+          placeholderTextColor="#94A3B8"
+          value={input}
+          onChangeText={setInput}
+          onFocus={() => setFocusedField(label)}
+          onBlur={() => setFocusedField(null)}
+          onSubmitEditing={() => addTag(tags, setTags, input, setInput)}
+          returnKeyType="done"
+        />
+        <TouchableOpacity
+          style={styles.tagAddBtn}
+          activeOpacity={0.85}
+          onPress={() => addTag(tags, setTags, input, setInput)}>
+          <Text style={styles.tagAddBtnText}>Add</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Add Options */}
+      {tags.length > 0 && (
+        <View style={styles.tagsWrap}>
+          {tags.map((tag: string, index: number) => (
+            <View key={`${tag}-${index}`} style={styles.tagChip}>
+              <Text style={styles.tagChipText}>{tag}</Text>
+              <TouchableOpacity
+                onPress={() => removeTag(tags, setTags, index)}
+                hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+                style={styles.tagRemove}>
+                <Text style={styles.tagRemoveText}>×</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
+      )}
+
       {options && options.length > 0 && (
         <View style={styles.optionsContainer}>
-          {options.map((option: string, index: number) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.addOptionButton,
-                {backgroundColor: tagColor === Colors.sooprslight ? Colors.sooprslight : Colors.lightgrey1},
-              ]}
-              onPress={() => addOption(tags, setTags, option)}>
-              <Text
-                style={[
-                  styles.addOptionText,
-                  {color: tagTextColor},
-                ]}>
-                + {option}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          <Text style={styles.suggestLabel}>Suggestions</Text>
+          <View style={styles.optionsWrap}>
+            {options.map((option: string, index: number) => {
+              const added = tags.includes(option);
+              return (
+                <TouchableOpacity
+                  key={index}
+                  style={[styles.addOptionButton, added && styles.addOptionButtonAdded]}
+                  activeOpacity={0.8}
+                  onPress={() => addOption(tags, setTags, option)}>
+                  <Text style={[styles.addOptionText, added && styles.addOptionTextAdded]}>
+                    {added ? 'Added' : `+ ${option}`}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
       )}
     </View>
   );
 
+  const renderField = (
+    fieldKey: string,
+    label: string,
+    value: string,
+    onChangeText: (text: string) => void,
+    placeholder: string,
+    extra?: {
+      multiline?: boolean;
+      keyboardType?: 'default' | 'numeric';
+      required?: boolean;
+    },
+  ) => (
+    <View style={styles.fieldWrap}>
+      <Text style={styles.label}>
+        {label}
+        {extra?.required ? <Text style={styles.required}> *</Text> : null}
+      </Text>
+      <TextInput
+        style={[
+          styles.input,
+          extra?.multiline && styles.textArea,
+          focusedField === fieldKey && styles.inputFocused,
+        ]}
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor="#94A3B8"
+        multiline={extra?.multiline}
+        numberOfLines={extra?.multiline ? 4 : 1}
+        keyboardType={extra?.keyboardType || 'default'}
+        onFocus={() => setFocusedField(fieldKey)}
+        onBlur={() => setFocusedField(null)}
+        textAlignVertical={extra?.multiline ? 'top' : 'center'}
+      />
+    </View>
+  );
+
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* HEADER */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Image source={Images.backArrow} style={styles.backIcon} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{isEditMode ? 'Edit Package' : 'Add Packages'}</Text>
-        </View>
+    <View style={styles.container}>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="#FFFFFF"
+        translucent={Platform.OS === 'android'}
+      />
 
-        <View style={styles.divider} />
-
-        {/* PACKAGE NAME */}
-        <Text style={styles.label}>PACKAGE NAME</Text>
-        <TextInput
-          style={styles.input}
-          value={packageName}
-          onChangeText={setPackageName}
-          placeholder="Enter package name"
-          placeholderTextColor={Colors.grey}
-        />
-
-        {/* SHORT DESCRIPTION */}
-        <Text style={styles.label}>SHORT DESCRIPTION</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          value={shortDescription}
-          onChangeText={setShortDescription}
-          placeholder="Enter short description"
-          placeholderTextColor={Colors.grey}
-          multiline
-          numberOfLines={4}
-        />
-
-        {/* LONG DESCRIPTION */}
-        <Text style={styles.label}>LONG DESCRIPTION</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          value={longDescription}
-          onChangeText={setLongDescription}
-          placeholder="Enter long description"
-          placeholderTextColor={Colors.grey}
-          multiline
-          numberOfLines={6}
-        />
-
-        {/* POLICY */}
-        {renderTagSection(
-          'POLICY',
-          policyInput,
-          setPolicyInput,
-          policyTags,
-          setPolicyTags,
-          policyOptions,
-          Colors.sooprslight,
-          Colors.black,
-          Colors.sooprsblue,
-        )}
-
-        {/* INCLUSIONS */}
-        {renderTagSection(
-          'INCLUSIONS',
-          inclusionsInput,
-          setInclusionsInput,
-          inclusionsTags,
-          setInclusionsTags,
-          inclusionsOptions,
-          Colors.sooprslight,
-          Colors.black,
-          Colors.sooprsblue,
-        )}
-
-        {/* EXCLUSIONS */}
-        {renderTagSection(
-          'EXCLUSIONS',
-          exclusionsInput,
-          setExclusionsInput,
-          exclusionsTags,
-          setExclusionsTags,
-          exclusionsOptions,
-          Colors.sooprslight,
-          Colors.black,
-          Colors.sooprsblue,
-        )}
-
-        {/* AMENITIES */}
-        {renderTagSection(
-          'AMENITIES',
-          amenitiesInput,
-          setAmenitiesInput,
-          amenitiesTags,
-          setAmenitiesTags,
-          amenitiesOptions,
-          Colors.sooprslight,
-          Colors.black,
-          Colors.sooprsblue,
-        )}
-
-        {/* Location 1 & Location 2 */}
-        <View style={styles.rowContainer}>
-          <View style={styles.colContainer}>
-            <Text style={styles.label}>Location 1 (Optional)</Text>
-            <TextInput
-              style={styles.colInput}
-              placeholder="e.g. Rishikesh"
-              placeholderTextColor={Colors.grey}
-              value={location1}
-              onChangeText={setLocation1}
-            />
-          </View>
-          <View style={styles.colContainer}>
-            <Text style={styles.label}>Location 2 (Optional)</Text>
-            <TextInput
-              style={styles.colInput}
-              placeholder="e.g. Rishikesh"
-              placeholderTextColor={Colors.grey}
-              value={location2}
-              onChangeText={setLocation2}
-            />
-          </View>
-        </View>
-
-        {/* Base Price & Discount Price */}
-        <View style={styles.rowContainer}>
-          <View style={styles.colContainer}>
-            <Text style={styles.label}>Base Price</Text>
-            <TextInput
-              style={styles.colInput}
-              placeholder="Enter your base price"
-              placeholderTextColor={Colors.grey}
-              value={basePrice}
-              onChangeText={setBasePrice}
-              keyboardType="numeric"
-            />
-          </View>
-          <View style={styles.colContainer}>
-            <Text style={styles.label}>Discount Price</Text>
-            <TextInput
-              style={styles.colInput}
-              placeholder="e.g. 5"
-              placeholderTextColor={Colors.grey}
-              value={discountPrice}
-              onChangeText={setDiscountPrice}
-              keyboardType="numeric"
-            />
-          </View>
-        </View>
-
-        {/* Charges/Day */}
-        {/* <Text style={styles.label}>Charges/Day</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. 4"
-          placeholderTextColor={Colors.grey}
-          value={chargesPerDay}
-          onChangeText={setChargesPerDay}
-          keyboardType="numeric"
-        /> */}
-
-        {/* Appointment Available — only when consultation_config allows package appointments */}
-        {showAppointmentField && (
-          <View style={styles.toggleRow}>
-            <View style={styles.toggleInfo}>
-              <Text style={styles.toggleLabel}>Appointment Available</Text>
-              <Text style={styles.toggleSubLabel}>
-                {requiresAppointment
-                  ? 'Customers can book appointments for this package'
-                  : 'Appointments are not required for this package'}
-              </Text>
-            </View>
-            <Switch
-              value={requiresAppointment}
-              onValueChange={setRequiresAppointment}
-              trackColor={{false: '#E2E8F0', true: '#B3D9FF'}}
-              thumbColor={requiresAppointment ? Colors.sooprsblue : '#F8FAFC'}
-            />
-          </View>
-        )}
-
-        {/* Upload Photos */}
-        <Text style={styles.label}>
-          Upload Photos<Text style={styles.required}>*</Text>
-        </Text>
-        
-        <View style={styles.imagesRowContainer}>
-          {/* Thumbnail Image (1 image) - Left Side */}
-          <View style={styles.thumbnailContainer}>
-            <Text style={styles.subLabel}>Thumbnail</Text>
-            <View style={styles.uploadSlot}>
-              {thumbnailImage ? (
-                <>
-                  <Image source={{uri: thumbnailImage}} style={styles.uploadedImage} />
-                  <TouchableOpacity
-                    style={styles.removeButton}
-                    onPress={removeThumbnailImage}>
-                    <Image source={Images.deleteIcon} style={styles.removeIcon} />
-                    <Text style={styles.removeText}>Remove</Text>
-                  </TouchableOpacity>
-                </>
-              ) : (
-                <TouchableOpacity
-                  style={styles.uploadArea}
-                  onPress={pickThumbnailImage}>
-                  <Image source={Images.imageIcon} style={styles.uploadIcon} />
-                  <Text style={styles.uploadText}>Upload Thumbnail</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          </View>
-
-          {/* Default Images (max 4 images) - Right Side */}
-          <View style={styles.defaultImagesContainer}>
-            <Text style={styles.subLabel}>Default (Max 4)</Text>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={true}
-              style={styles.horizontalScrollView}
-              contentContainerStyle={styles.defaultImagesRow}>
-              {defaultImages.map((imageUri, index) => (
-                <View key={index} style={styles.defaultImageSlot}>
-                  <Image source={{uri: imageUri}} style={styles.uploadedImage} />
-                  <TouchableOpacity
-                    style={styles.removeButton}
-                    onPress={() => removeDefaultImage(index)}>
-                    <Image source={Images.deleteIcon} style={styles.removeIcon} />
-                    <Text style={styles.removeText}>Remove</Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
-              {defaultImages.length < 4 && (
-                <View style={styles.defaultImageSlot}>
-                  <TouchableOpacity
-                    style={styles.uploadArea}
-                    onPress={pickDefaultImage}>
-                    <Image source={Images.imageIcon} style={styles.uploadIcon} />
-                    <Text style={styles.uploadText}>+ Add</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </ScrollView>
-          </View>
-        </View>
-
-        {/* Submit Button */}
-        <TouchableOpacity 
-          style={[styles.submitBtn, isSubmitting && styles.submitBtnDisabled]} 
-          onPress={createPackage}
-          disabled={isSubmitting}>
-          <Text style={styles.submitText}>
-            {isSubmitting 
-              ? (isEditMode ? 'Updating Package...' : 'Creating Package...') 
-              : (isEditMode ? 'Update Package' : 'Add Package')}
-          </Text>
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+          activeOpacity={0.7}>
+          <Image source={Images.backArrow} style={styles.backIcon} />
         </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+        <View style={styles.headerTextWrap}>
+          <Text style={styles.headerTitle}>
+            {isEditMode ? 'Edit Package' : 'Add Package'}
+          </Text>
+          <Text style={styles.headerSubtitle}>
+            {isEditMode
+              ? 'Update details customers will see'
+              : 'Create a package customers can book'}
+          </Text>
+        </View>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? hp(1) : 0}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.scrollContent}>
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <View style={[styles.sectionIcon, {backgroundColor: '#EEF4FF'}]}>
+                <MaterialCommunityIcons
+                  name="package-variant-closed"
+                  size={wp(5.4)}
+                  color={Colors.sooprsblue}
+                />
+              </View>
+              <View style={styles.sectionHeaderText}>
+                <Text style={styles.sectionTitle}>Package Details</Text>
+                <Text style={styles.sectionSubtitle}>
+                  Name and description shown on the listing
+                </Text>
+              </View>
+            </View>
+            {renderField(
+              'name',
+              'Package Name',
+              packageName,
+              setPackageName,
+              'Enter package name',
+              {required: true},
+            )}
+            {renderField(
+              'short',
+              'Short Description',
+              shortDescription,
+              setShortDescription,
+              'A short line customers see first',
+              {multiline: true, required: true},
+            )}
+            {renderField(
+              'long',
+              'Long Description',
+              longDescription,
+              setLongDescription,
+              'Describe what is included in this package',
+              {multiline: true, required: true},
+            )}
+          </View>
+
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <View style={[styles.sectionIcon, {backgroundColor: '#ECFDF5'}]}>
+                <MaterialCommunityIcons
+                  name="format-list-checks"
+                  size={wp(5.4)}
+                  color="#059669"
+                />
+              </View>
+              <View style={styles.sectionHeaderText}>
+                <Text style={styles.sectionTitle}>What’s Included</Text>
+                <Text style={styles.sectionSubtitle}>
+                  Policy, inclusions, exclusions and amenities
+                </Text>
+              </View>
+            </View>
+            {renderTagSection(
+              'Policy',
+              policyInput,
+              setPolicyInput,
+              policyTags,
+              setPolicyTags,
+              policyOptions,
+            )}
+            {renderTagSection(
+              'Inclusions',
+              inclusionsInput,
+              setInclusionsInput,
+              inclusionsTags,
+              setInclusionsTags,
+              inclusionsOptions,
+            )}
+            {renderTagSection(
+              'Exclusions',
+              exclusionsInput,
+              setExclusionsInput,
+              exclusionsTags,
+              setExclusionsTags,
+              exclusionsOptions,
+            )}
+            {renderTagSection(
+              'Amenities',
+              amenitiesInput,
+              setAmenitiesInput,
+              amenitiesTags,
+              setAmenitiesTags,
+              amenitiesOptions,
+            )}
+          </View>
+
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <View style={[styles.sectionIcon, {backgroundColor: '#FFF7ED'}]}>
+                <MaterialCommunityIcons
+                  name="cash-multiple"
+                  size={wp(5.4)}
+                  color="#EA580C"
+                />
+              </View>
+              <View style={styles.sectionHeaderText}>
+                <Text style={styles.sectionTitle}>Pricing & Location</Text>
+                <Text style={styles.sectionSubtitle}>
+                  Where the package is offered and what it costs
+                </Text>
+              </View>
+            </View>
+            {renderField(
+              'location1',
+              'Location 1',
+              location1,
+              setLocation1,
+              'e.g. Rishikesh',
+            )}
+            {renderField(
+              'location2',
+              'Location 2',
+              location2,
+              setLocation2,
+              'Optional second location',
+            )}
+            <View style={styles.priceRow}>
+              <View style={styles.priceCol}>
+                {renderField(
+                  'basePrice',
+                  'Base Price',
+                  basePrice,
+                  setBasePrice,
+                  '0',
+                  {keyboardType: 'numeric', required: true},
+                )}
+              </View>
+              <View style={styles.priceCol}>
+                {renderField(
+                  'discountPrice',
+                  'Discount Price',
+                  discountPrice,
+                  setDiscountPrice,
+                  '0',
+                  {keyboardType: 'numeric'},
+                )}
+              </View>
+            </View>
+          </View>
+
+          {showAppointmentField && (
+            <View style={styles.sectionCard}>
+              <View style={styles.toggleRow}>
+                <View style={[styles.sectionIcon, {backgroundColor: '#EEF4FF'}]}>
+                  <MaterialCommunityIcons
+                    name="calendar-clock"
+                    size={wp(5.4)}
+                    color={Colors.sooprsblue}
+                  />
+                </View>
+                <View style={styles.toggleInfo}>
+                  <Text style={styles.toggleLabel}>Appointment Available</Text>
+                  <Text style={styles.toggleSubLabel}>
+                    {requiresAppointment
+                      ? 'Customers can book a time slot for this package'
+                      : 'Turn on if customers should book a time slot'}
+                  </Text>
+                </View>
+                <Switch
+                  value={requiresAppointment}
+                  onValueChange={setRequiresAppointment}
+                  trackColor={{false: '#E2E8F0', true: '#93C5FD'}}
+                  thumbColor={requiresAppointment ? Colors.sooprsblue : '#F8FAFC'}
+                />
+              </View>
+            </View>
+          )}
+
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <View style={[styles.sectionIcon, {backgroundColor: '#F5F3FF'}]}>
+                <MaterialCommunityIcons
+                  name="image-multiple-outline"
+                  size={wp(5.4)}
+                  color="#7C3AED"
+                />
+              </View>
+              <View style={styles.sectionHeaderText}>
+                <Text style={styles.sectionTitle}>
+                  Photos<Text style={styles.required}> *</Text>
+                </Text>
+                <Text style={styles.sectionSubtitle}>
+                  One cover image and up to 4 gallery photos
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.photoRow}>
+              <View style={styles.coverColumn}>
+                <Text style={styles.photoLabel}>Cover photo</Text>
+                {thumbnailImage ? (
+                  <View style={styles.photoTile}>
+                    <Image source={{uri: thumbnailImage}} style={styles.photoImage} />
+                    <TouchableOpacity
+                      style={styles.photoChange}
+                      activeOpacity={0.85}
+                      onPress={pickThumbnailImage}>
+                      <Text style={styles.photoChangeText}>Change</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.photoRemove}
+                      onPress={removeThumbnailImage}
+                      hitSlop={{top: 6, bottom: 6, left: 6, right: 6}}>
+                      <Text style={styles.photoRemoveText}>×</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={[styles.photoTile, styles.photoAdd]}
+                    activeOpacity={0.85}
+                    onPress={pickThumbnailImage}>
+                    <MaterialCommunityIcons
+                      name="camera-plus-outline"
+                      size={wp(5.2)}
+                      color={Colors.sooprsblue}
+                    />
+                    <Text style={styles.photoAddText}>Add cover</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              <View style={styles.galleryColumn}>
+                <Text style={styles.photoLabel}>
+                  Gallery · {defaultImages.length}/4
+                </Text>
+                <View style={styles.photoGrid}>
+                  {defaultImages.map((imageUri, index) => (
+                    <View key={`${imageUri}-${index}`} style={styles.photoTile}>
+                      <Image source={{uri: imageUri}} style={styles.photoImage} />
+                      <TouchableOpacity
+                        style={styles.photoRemove}
+                        onPress={() => removeDefaultImage(index)}
+                        hitSlop={{top: 6, bottom: 6, left: 6, right: 6}}>
+                        <Text style={styles.photoRemoveText}>×</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                  {defaultImages.length < 4 && (
+                    <TouchableOpacity
+                      style={[styles.photoTile, styles.photoAdd]}
+                      activeOpacity={0.85}
+                      onPress={pickDefaultImage}>
+                      <MaterialCommunityIcons
+                        name="plus"
+                        size={wp(5.2)}
+                        color={Colors.sooprsblue}
+                      />
+                      <Text style={styles.photoAddText}>Add</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={[styles.submitBtn, isSubmitting && styles.submitBtnDisabled]}
+            onPress={createPackage}
+            disabled={isSubmitting}
+            activeOpacity={0.85}>
+            {isSubmitting ? (
+              <ActivityIndicator size="small" color={Colors.white} />
+            ) : (
+              <MaterialCommunityIcons
+                name={isEditMode ? 'content-save-outline' : 'plus-circle-outline'}
+                size={wp(5.4)}
+                color={Colors.white}
+              />
+            )}
+            <Text style={styles.submitText}>
+              {isSubmitting
+                ? isEditMode
+                  ? 'Updating package...'
+                  : 'Creating package...'
+                : isEditMode
+                  ? 'Update Package'
+                  : 'Add Package'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
 export default AddPackagesScreen;
 
+const cardShadow = Platform.select({
+  ios: {
+    shadowColor: '#0F172A',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+  },
+  android: {
+    elevation: 2,
+  },
+});
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
-    paddingTop: hp(3),
+    backgroundColor: '#F4F7FB',
+  },
+  flex: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: wp(5),
-    paddingVertical: hp(2),
+    paddingHorizontal: wp(2.5),
+    paddingTop:
+      Platform.OS === 'ios'
+        ? hp(6.5)
+        : (StatusBar.currentHeight || hp(3)) + hp(1.2),
+    paddingBottom: hp(1.5),
+    backgroundColor: Colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8EEF5',
+  },
+  backButton: {
+    padding: wp(2),
   },
   backIcon: {
-    width: wp(8),
-    height: wp(8),
-    tintColor: Colors.black,
+    width: wp(7.2),
+    height: wp(7.2),
+    tintColor: '#0F172A',
+  },
+  headerTextWrap: {
+    flex: 1,
+    alignItems: 'center',
   },
   headerTitle: {
-    fontSize: FSize.fs18,
-    fontWeight: '700',
-    marginLeft: wp(4),
-    color: Colors.black,
+    fontSize: FSize.fs22,
+    fontWeight: '800',
+    color: '#0F172A',
   },
-  divider: {
-    height: hp(0.1),
-    backgroundColor: Colors.lightgrey2,
-  },
-  label: {
-    fontSize: FSize.fs13,
-    fontWeight: '600',
-    marginLeft: wp(5),
-    marginTop: hp(2),
-    color: Colors.black,
-  },
-  subLabel: {
-    fontSize: FSize.fs12,
-    fontWeight: '500',
-    marginLeft: wp(5),
-    marginTop: hp(1),
-    color: Colors.grey,
-  },
-  required: {
-    color: 'red',
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '90%',
-    alignSelf: 'center',
-    marginTop: hp(2),
-    paddingVertical: hp(1.5),
-    paddingHorizontal: wp(3),
-    borderWidth: 1,
-    borderColor: '#A2A2A2',
-    borderRadius: wp(2),
-    backgroundColor: Colors.white,
-  },
-  toggleInfo: {
-    flex: 1,
-    marginRight: wp(3),
-  },
-  toggleLabel: {
-    fontSize: FSize.fs13,
-    fontWeight: '600',
-    color: Colors.black,
-  },
-  toggleSubLabel: {
-    fontSize: FSize.fs11,
-    color: Colors.grey,
-    marginTop: hp(0.5),
-  },
-  rowContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '90%',
-    alignSelf: 'center',
-  },
-  colContainer: {
-    width: '47%',
-  },
-  colInput: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#A2A2A2',
-    borderRadius: wp(2),
-    paddingVertical: hp(1.8),
-    paddingHorizontal: wp(3),
-    marginTop: hp(0.8),
+  headerSubtitle: {
+    marginTop: hp(0.25),
     fontSize: FSize.fs14,
-    color: Colors.grey,
+    color: '#64748B',
+    fontWeight: '600',
+    textAlign: 'center',
   },
-  input: {
-    width: '90%',
-    alignSelf: 'center',
-    borderWidth: 1,
-    borderColor: '#A2A2A2',
-    borderRadius: wp(2),
-    paddingVertical: hp(1.8),
-    paddingHorizontal: wp(3),
-    marginTop: hp(0.8),
-    fontSize: FSize.fs14,
-    color: Colors.grey,
+  headerSpacer: {
+    width: wp(11),
   },
-  textArea: {
-    minHeight: hp(10),
-    textAlignVertical: 'top',
+  scrollContent: {
+    paddingHorizontal: wp(4),
     paddingTop: hp(1.8),
+    paddingBottom: hp(2),
   },
-  section: {
-    marginTop: hp(1),
-  },
-  inputContainer: {
-    width: '90%',
-    alignSelf: 'center',
-  },
-  inputWithTagsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  sectionCard: {
+    backgroundColor: Colors.white,
+    borderRadius: wp(4.2),
+    paddingHorizontal: wp(4),
+    paddingTop: hp(1.7),
+    paddingBottom: hp(1.6),
+    marginBottom: hp(1.6),
     borderWidth: 1,
-    borderColor: '#A2A2A2',
-    borderRadius: wp(2),
-    paddingVertical: hp(1),
-    paddingHorizontal: wp(3),
-    marginTop: hp(0.8),
-    minHeight: hp(5),
-    flexWrap: 'wrap',
+    borderColor: '#E2E8F0',
+    ...cardShadow,
   },
-  inputWithTags: {
-    flex: 1,
-    fontSize: FSize.fs14,
-    minWidth: wp(30),
-    padding: 0,
-  },
-  tagsInsideInput: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    marginLeft: wp(2),
-  },
-  tagInsideInput: {
+  sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: wp(5),
-    paddingVertical: hp(0.4),
-    paddingHorizontal: wp(2.5),
-    marginRight: wp(1.5),
-    marginBottom: hp(0.3),
+    marginBottom: hp(1.6),
+    paddingBottom: hp(1.3),
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
-  tagTextInsideInput: {
-    fontSize: FSize.fs12,
-    marginRight: wp(1),
-  },
-  tagRemoveInsideInput: {
-    width: wp(3.5),
-    height: wp(3.5),
-    borderRadius: wp(1.75),
+  sectionIcon: {
+    width: wp(11),
+    height: wp(11),
+    borderRadius: wp(3.2),
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: wp(3),
   },
-  tagRemoveTextInsideInput: {
-    fontSize: FSize.fs12,
+  sectionHeaderText: {
+    flex: 1,
+  },
+  sectionTitle: {
+    fontSize: FSize.fs18,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  sectionSubtitle: {
+    marginTop: hp(0.25),
+    fontSize: FSize.fs13,
+    color: '#64748B',
     fontWeight: '600',
+    lineHeight: hp(2.2),
   },
-  tagsContainer: {
+  fieldWrap: {
+    marginBottom: hp(1.5),
+  },
+  label: {
+    fontSize: FSize.fs17,
+    fontWeight: '600',
+    color: '#0F172A',
+    marginBottom: hp(0.7),
+  },
+  required: {
+    color: '#DC2626',
+  },
+  input: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: wp(3),
+    paddingHorizontal: wp(3.6),
+    paddingVertical: Platform.OS === 'ios' ? hp(1.5) : hp(1.2),
+    minHeight: hp(6.4),
+    fontSize: FSize.fs14,
+    color: '#64748B',
+    fontWeight: '700',
+  },
+  inputFocused: {
+    borderColor: Colors.sooprsblue,
+    backgroundColor: '#F8FBFF',
+  },
+  textArea: {
+    minHeight: hp(13),
+    textAlignVertical: 'top',
+    paddingTop: hp(1.5),
+  },
+  priceRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    width: '100%',
-    marginTop: hp(1),
+    gap: wp(3),
   },
-  tag: {
+  priceCol: {
+    flex: 1,
+  },
+  tagSection: {
+    marginBottom: hp(1.8),
+  },
+  tagInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: wp(5),
-    paddingVertical: hp(0.6),
-    paddingHorizontal: wp(3),
-    marginRight: wp(2),
-    marginBottom: hp(1),
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: wp(3),
+    paddingLeft: wp(3.4),
+    paddingRight: wp(1.2),
+    minHeight: hp(6.4),
   },
-  tagText: {
-    fontSize: FSize.fs13,
-    marginRight: wp(1.5),
+  tagInput: {
+    flex: 1,
+    fontSize: FSize.fs14,
+    color: '#64748B',
+    fontWeight: '700',
+    paddingVertical: hp(1.2),
+  },
+  tagAddBtn: {
+    backgroundColor: Colors.sooprsblue,
+    borderRadius: wp(2.4),
+    paddingHorizontal: wp(3.6),
+    paddingVertical: hp(1),
+  },
+  tagAddBtnText: {
+    color: Colors.white,
+    fontSize: FSize.fs15,
+    fontWeight: '800',
+  },
+  tagsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: hp(1),
+    gap: wp(2),
+  },
+  tagChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EEF4FF',
+    borderRadius: wp(5),
+    paddingVertical: hp(0.7),
+    paddingLeft: wp(3.2),
+    paddingRight: wp(1.6),
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  tagChipText: {
+    fontSize: FSize.fs14,
+    fontWeight: '700',
+    color: '#1E3A8A',
+    marginRight: wp(1.4),
   },
   tagRemove: {
-    width: wp(4),
-    height: wp(4),
-    borderRadius: wp(2),
+    width: wp(5.2),
+    height: wp(5.2),
+    borderRadius: wp(2.6),
+    backgroundColor: Colors.sooprsblue,
     alignItems: 'center',
     justifyContent: 'center',
   },
   tagRemoveText: {
-    fontSize: FSize.fs14,
-    fontWeight: '600',
+    color: Colors.white,
+    fontSize: FSize.fs16,
+    fontWeight: '700',
+    lineHeight: FSize.fs18,
   },
   optionsContainer: {
+    marginTop: hp(1.1),
+  },
+  suggestLabel: {
+    fontSize: FSize.fs13,
+    fontWeight: '700',
+    color: '#94A3B8',
+    marginBottom: hp(0.7),
+  },
+  optionsWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    width: '90%',
-    alignSelf: 'center',
-    marginTop: hp(0.5),
+    gap: wp(2),
   },
   addOptionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
     borderRadius: wp(5),
-    paddingVertical: hp(0.6),
-    paddingHorizontal: wp(3),
-    marginRight: wp(2),
-    marginBottom: hp(1),
+    paddingVertical: hp(0.85),
+    paddingHorizontal: wp(3.2),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  addOptionButtonAdded: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
   },
   addOptionText: {
-    fontSize: FSize.fs13,
-    fontWeight: '500',
+    fontSize: FSize.fs14,
+    fontWeight: '700',
+    color: '#334155',
   },
-  imagesRowContainer: {
+  addOptionTextAdded: {
+    color: '#047857',
+  },
+  toggleRow: {
     flexDirection: 'row',
-    width: '90%',
-    alignSelf: 'center',
-    marginTop: hp(1),
-    justifyContent: 'space-between',
-  },
-  thumbnailContainer: {
     alignItems: 'center',
-    marginRight: wp(3),
   },
-  defaultImagesContainer: {
+  toggleInfo: {
     flex: 1,
-    alignItems: 'flex-start',
-  },
-  horizontalScrollView: {
-    width: '100%',
-  },
-  defaultImagesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingRight: wp(2),
-  },
-  defaultImageSlot: {
-    width: wp(22),
     marginRight: wp(2),
-    alignItems: 'center',
-    flexShrink: 0,
   },
-  uploadSlot: {
-    width: wp(22),
-    alignItems: 'center',
+  toggleLabel: {
+    fontSize: FSize.fs17,
+    fontWeight: '800',
+    color: '#0F172A',
   },
-  uploadSlotActions: {
-    width: '100%',
-    marginTop: hp(0.5),
-    alignItems: 'center',
-  },
-  uploadArea: {
-    width: '100%',
-    aspectRatio: 1,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: '#A2A2A2',
-    borderRadius: wp(2),
-    backgroundColor: Colors.lightgrey1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: wp(2),
-  },
-  uploadIcon: {
-    width: wp(8),
-    height: wp(8),
-    // tintColor: Colors.,
-    marginBottom: hp(0.5),
-  },
-  uploadText: {
-    fontSize: FSize.fs11,
-    color: Colors.grey,
-    textAlign: 'center',
-    marginBottom: hp(0.5),
-  },
-  addButton: {
-    backgroundColor: Colors.sooprsblue,
-    paddingVertical: hp(0.5),
-    paddingHorizontal: wp(3),
-    borderRadius: wp(2),
-    marginTop: hp(0.5),
-  },
-  addButtonText: {
-    color: Colors.white,
-    fontSize: FSize.fs12,
+  toggleSubLabel: {
+    fontSize: FSize.fs14,
+    color: '#64748B',
     fontWeight: '600',
+    marginTop: hp(0.35),
+    lineHeight: hp(2.3),
   },
-  uploadedImage: {
+  photoRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: wp(3),
+  },
+  coverColumn: {
+    width: wp(28),
+  },
+  galleryColumn: {
+    flex: 1,
+  },
+  photoLabel: {
+    fontSize: FSize.fs14,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: hp(0.7),
+  },
+  photoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: wp(2),
+  },
+  photoTile: {
+    width: wp(28),
+    height: wp(28),
+    borderRadius: wp(2.6),
+    overflow: 'hidden',
+    backgroundColor: '#E2E8F0',
+  },
+  photoImage: {
     width: '100%',
-    aspectRatio: 1,
-    borderRadius: wp(2),
-    backgroundColor: Colors.lightgrey1,
+    height: '100%',
   },
-  removeButton: {
-    flexDirection: 'row',
+  photoAdd: {
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: '#93C5FD',
+    backgroundColor: '#F8FBFF',
     alignItems: 'center',
-    marginTop: hp(0.5),
+    justifyContent: 'center',
   },
-  removeIcon: {
-    width: wp(4),
-    height: wp(4),
-    tintColor: 'red',
-    marginRight: wp(1),
-  },
-  removeText: {
+  photoAddText: {
+    marginTop: hp(0.3),
     fontSize: FSize.fs12,
-    color: 'red',
-    fontWeight: '500',
+    fontWeight: '800',
+    color: Colors.sooprsblue,
+    textAlign: 'center',
   },
-  checkboxRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+  photoChange: {
+    position: 'absolute',
+    left: wp(1.2),
+    bottom: wp(1.2),
+    backgroundColor: 'rgba(15, 23, 42, 0.72)',
+    borderRadius: wp(1.6),
+    paddingHorizontal: wp(1.8),
+    paddingVertical: hp(0.3),
   },
-  checkbox: {
-    width: wp(4),
-    height: wp(4),
-    borderWidth: 1,
-    borderColor: Colors.lightgrey2,
-    borderRadius: wp(1),
-    marginRight: wp(1.5),
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkboxChecked: {
-    backgroundColor: Colors.sooprsblue,
-    borderColor: Colors.sooprsblue,
-  },
-  checkboxIcon: {
-    width: wp(2.5),
-    height: wp(2.5),
-    tintColor: Colors.white,
-  },
-  checkboxLabel: {
+  photoChangeText: {
+    color: Colors.white,
     fontSize: FSize.fs11,
-    color: Colors.black,
+    fontWeight: '800',
+  },
+  photoRemove: {
+    position: 'absolute',
+    top: wp(1),
+    right: wp(1),
+    width: wp(5),
+    height: wp(5),
+    borderRadius: wp(2.5),
+    backgroundColor: 'rgba(15, 23, 42, 0.72)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoRemoveText: {
+    color: Colors.white,
+    fontSize: FSize.fs14,
+    fontWeight: '700',
+    lineHeight: FSize.fs16,
+  },
+  footer: {
+    paddingHorizontal: wp(4),
+    paddingTop: hp(1.2),
+    paddingBottom: Platform.OS === 'ios' ? hp(2.8) : hp(1.8),
+    backgroundColor: Colors.white,
+    borderTopWidth: 1,
+    borderTopColor: '#E8EEF5',
   },
   submitBtn: {
-    width: '90%',
-    alignSelf: 'center',
     backgroundColor: Colors.sooprsblue,
-    paddingVertical: hp(2),
-    borderRadius: wp(3),
-    marginTop: hp(3),
-    marginBottom: hp(4),
+    paddingVertical: hp(1.85),
+    borderRadius: wp(3.2),
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: wp(2),
+    ...Platform.select({
+      ios: {
+        shadowColor: Colors.sooprsblue,
+        shadowOffset: {width: 0, height: 6},
+        shadowOpacity: 0.28,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   submitBtnDisabled: {
-    backgroundColor: Colors.grey,
-    opacity: 0.6,
+    backgroundColor: '#94A3B8',
+    ...Platform.select({
+      ios: {shadowOpacity: 0},
+      android: {elevation: 0},
+    }),
   },
   submitText: {
-    textAlign: 'center',
-    fontSize: FSize.fs16,
     color: Colors.white,
-    fontWeight: '600',
+    fontSize: FSize.fs17,
+    fontWeight: '800',
   },
 });

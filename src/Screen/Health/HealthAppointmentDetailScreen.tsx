@@ -1,15 +1,15 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {
   ActivityIndicator,
+  Image,
+  Platform,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Image,
 } from 'react-native';
 import {useFocusEffect, useNavigation, useRoute} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -251,8 +251,12 @@ const HealthAppointmentDetailScreen = () => {
       (isHistoryStatus(status) && item?.ratingStatus !== 'submitted'));
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+    <View style={styles.container}>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="#FFFFFF"
+        translucent={Platform.OS === 'android'}
+      />
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -260,12 +264,11 @@ const HealthAppointmentDetailScreen = () => {
           hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
           <Image source={Images.backArrow} style={styles.backArrowIcon} />
         </TouchableOpacity>
-        <View>
+        <View style={styles.headerTextWrap}>
           <Text style={styles.headerTitle}>Appointment</Text>
-          <Text style={styles.headerSubtitle}>
-            Join when window is open
-          </Text>
+          <Text style={styles.headerSubtitle}>Join when the window is open</Text>
         </View>
+        <View style={styles.headerSpacer} />
       </View>
 
       {loading ? (
@@ -393,7 +396,7 @@ const HealthAppointmentDetailScreen = () => {
           )}
         </ScrollView>
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -407,30 +410,42 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: wp(4),
-    paddingVertical: hp(1.5),
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: wp(2.5),
+    paddingTop:
+      Platform.OS === 'ios'
+        ? hp(6.5)
+        : (StatusBar.currentHeight || hp(3)) + hp(1.2),
+    paddingBottom: hp(1.4),
+    backgroundColor: Colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    gap: wp(3),
+    borderBottomColor: '#E8EEF5',
   },
   backButton: {
-    padding: wp(1),
+    padding: wp(2),
   },
   backArrowIcon: {
-    width: wp(5),
-    height: wp(5),
+    width: wp(7.2),
+    height: wp(7.2),
     resizeMode: 'contain',
+    tintColor: '#0F172A',
+  },
+  headerTextWrap: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerSpacer: {
+    width: wp(11),
   },
   headerTitle: {
-    fontSize: FSize.fs18,
-    fontWeight: '700',
+    fontSize: FSize.fs22,
+    fontWeight: '800',
     color: '#0F172A',
   },
   headerSubtitle: {
-    fontSize: FSize.fs12,
+    marginTop: hp(0.2),
+    fontSize: FSize.fs14,
     color: '#64748B',
-    marginTop: 2,
+    fontWeight: '600',
   },
   content: {
     padding: wp(4),

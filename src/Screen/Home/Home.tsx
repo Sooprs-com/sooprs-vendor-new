@@ -163,6 +163,7 @@ const Home = () => {
         const isProfileCompleted = data.vendorDetail.is_profile_completed;
         
         if (data.stats) {
+          console.log('data.stats', data.stats);
           setStatus(data.stats);
         }
         

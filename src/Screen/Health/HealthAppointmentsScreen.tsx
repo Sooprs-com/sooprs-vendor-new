@@ -3,8 +3,8 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
+  Platform,
   RefreshControl,
-  SafeAreaView,
   StatusBar,
   StyleSheet,
   Text,
@@ -101,6 +101,24 @@ function canShowJoin(item: HealthAppointment) {
   const status = normalizeMeetingStatus(item.status, item.legacyStatus);
   // Open window: Join from list/detail even after soft miss / for rejoin.
   return status === 'open' || status === 'waiting' || status === 'in_progress';
+}
+
+function getStatusTone(status: string) {
+  switch (status) {
+    case 'open':
+    case 'in_progress':
+    case 'completed':
+      return {bg: '#ECFDF5', text: '#15803D'};
+    case 'waiting':
+    case 'scheduled':
+      return {bg: '#EEF4FF', text: Colors.sooprsblue};
+    case 'no_show':
+    case 'rejected':
+    case 'cancelled':
+      return {bg: '#FEF2F2', text: '#DC2626'};
+    default:
+      return {bg: '#F1F5F9', text: '#475569'};
+  }
 }
 
 function getJoinHint(item: HealthAppointment) {
@@ -273,6 +291,10 @@ const HealthAppointmentsScreen = () => {
         : '—';
     const appointmentId = getAppointmentId(item);
 
+    const patientName = getPatientName(item);
+    const statusTone = getStatusTone(status);
+    const initial = patientName.trim().charAt(0).toUpperCase() || 'P';
+
     return (
       <View style={styles.card}>
         <TouchableOpacity
@@ -283,20 +305,30 @@ const HealthAppointmentsScreen = () => {
             })
           }>
           <View style={styles.cardHeader}>
-            <Text style={styles.patientName} numberOfLines={1}>
-              {getPatientName(item)}
-            </Text>
-            <View style={styles.statusChip}>
-              <Text style={styles.statusText}>
-                {getVendorStatusLabel(status)}
-              </Text>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{initial}</Text>
             </View>
+            <View style={styles.cardTitleWrap}>
+              <Text style={styles.patientName} numberOfLines={1}>
+                {patientName}
+              </Text>
+              <View style={[styles.statusChip, {backgroundColor: statusTone.bg}]}>
+                <Text style={[styles.statusText, {color: statusTone.text}]}>
+                  {getVendorStatusLabel(status)}
+                </Text>
+              </View>
+            </View>
+            <MaterialCommunityIcons
+              name="chevron-right"
+              size={wp(6)}
+              color="#CBD5E1"
+            />
           </View>
 
           <View style={styles.metaRow}>
             <MaterialCommunityIcons
               name="calendar-clock"
-              size={wp(4)}
+              size={wp(4.8)}
               color="#64748B"
             />
             <Text style={styles.metaText}>
@@ -354,7 +386,7 @@ const HealthAppointmentsScreen = () => {
               <>
                 <MaterialCommunityIcons
                   name="video"
-                  size={wp(4.5)}
+                  size={wp(5.2)}
                   color={Colors.white}
                 />
                 <Text style={styles.joinText}>
@@ -371,8 +403,12 @@ const HealthAppointmentsScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+    <View style={styles.container}>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="#FFFFFF"
+        translucent={Platform.OS === 'android'}
+      />
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -380,29 +416,60 @@ const HealthAppointmentsScreen = () => {
           hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
           <Image source={Images.backArrow} style={styles.backArrowIcon} />
         </TouchableOpacity>
-        <View>
+        <View style={styles.headerTextWrap}>
           <Text style={styles.headerTitle}>Health Consultations</Text>
-          <Text style={styles.headerSubtitle}>Join meetings in the open window</Text>
+          <Text style={styles.headerSubtitle}>Join meetings and view history</Text>
         </View>
+        <View style={styles.headerSpacer} />
       </View>
 
-      <View style={styles.tabs}>
-        <TouchableOpacity
-          style={[styles.tab, tab === 'upcoming' && styles.tabActive]}
-          onPress={() => setTab('upcoming')}>
-          <Text
-            style={[styles.tabText, tab === 'upcoming' && styles.tabTextActive]}>
-            Upcoming ({upcoming.length})
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, tab === 'history' && styles.tabActive]}
-          onPress={() => setTab('history')}>
-          <Text
-            style={[styles.tabText, tab === 'history' && styles.tabTextActive]}>
-            History ({history.length})
-          </Text>
-        </TouchableOpacity>
+      <View style={styles.tabsWrap}>
+        <View style={styles.tabs}>
+          <TouchableOpacity
+            style={[styles.tab, tab === 'upcoming' && styles.tabActive]}
+            onPress={() => setTab('upcoming')}
+            activeOpacity={0.85}>
+            <Text
+              style={[styles.tabText, tab === 'upcoming' && styles.tabTextActive]}>
+              Upcoming
+            </Text>
+            <View
+              style={[
+                styles.tabCount,
+                tab === 'upcoming' && styles.tabCountActive,
+              ]}>
+              <Text
+                style={[
+                  styles.tabCountText,
+                  tab === 'upcoming' && styles.tabCountTextActive,
+                ]}>
+                {upcoming.length}
+              </Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, tab === 'history' && styles.tabActive]}
+            onPress={() => setTab('history')}
+            activeOpacity={0.85}>
+            <Text
+              style={[styles.tabText, tab === 'history' && styles.tabTextActive]}>
+              History
+            </Text>
+            <View
+              style={[
+                styles.tabCount,
+                tab === 'history' && styles.tabCountActive,
+              ]}>
+              <Text
+                style={[
+                  styles.tabCountText,
+                  tab === 'history' && styles.tabCountTextActive,
+                ]}>
+                {history.length}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {loading ? (
@@ -425,12 +492,14 @@ const HealthAppointmentsScreen = () => {
             />
           }
           ListEmptyComponent={
-            <View style={styles.centered}>
-              <MaterialCommunityIcons
-                name="calendar-blank-outline"
-                size={wp(12)}
-                color="#94A3B8"
-              />
+            <View style={styles.emptyCard}>
+              <View style={styles.emptyIconWrap}>
+                <MaterialCommunityIcons
+                  name={tab === 'upcoming' ? 'calendar-clock' : 'history'}
+                  size={wp(8)}
+                  color={Colors.sooprsblue}
+                />
+              </View>
               <Text style={styles.emptyTitle}>
                 {tab === 'upcoming' ? 'No upcoming consultations' : 'No history yet'}
               </Text>
@@ -443,7 +512,7 @@ const HealthAppointmentsScreen = () => {
           }
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -452,59 +521,109 @@ export default HealthAppointmentsScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F4F7FB',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: wp(4),
-    paddingVertical: hp(1.5),
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: wp(2.5),
+    paddingTop:
+      Platform.OS === 'ios'
+        ? hp(6.5)
+        : (StatusBar.currentHeight || hp(3)) + hp(1.2),
+    paddingBottom: hp(1.4),
+    backgroundColor: Colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    gap: wp(3),
+    borderBottomColor: '#E8EEF5',
   },
   backButton: {
-    padding: wp(1),
+    padding: wp(2),
   },
   backArrowIcon: {
-    width: wp(5),
-    height: wp(5),
+    width: wp(7.2),
+    height: wp(7.2),
     resizeMode: 'contain',
+    tintColor: '#0F172A',
+  },
+  headerTextWrap: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerSpacer: {
+    width: wp(11),
   },
   headerTitle: {
-    fontSize: FSize.fs18,
-    fontWeight: '700',
+    fontSize: FSize.fs24,
+    fontWeight: '800',
     color: '#0F172A',
   },
   headerSubtitle: {
-    fontSize: FSize.fs12,
+    marginTop: hp(0.2),
+    fontSize: FSize.fs16,
     color: '#64748B',
-    marginTop: 2,
+    fontWeight: '600',
+  },
+  tabsWrap: {
+    backgroundColor: Colors.white,
+    paddingHorizontal: wp(4),
+    paddingTop: hp(1.4),
+    paddingBottom: hp(1.6),
   },
   tabs: {
     flexDirection: 'row',
-    marginHorizontal: wp(4),
-    marginTop: hp(1.5),
-    backgroundColor: '#E2E8F0',
-    borderRadius: wp(2.5),
+    backgroundColor: '#F1F5F9',
+    borderRadius: wp(3),
     padding: wp(1),
   },
   tab: {
     flex: 1,
-    paddingVertical: hp(1.1),
-    borderRadius: wp(2),
+    flexDirection: 'row',
+    paddingVertical: hp(1.15),
+    borderRadius: wp(2.4),
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: wp(1.6),
   },
   tabActive: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.white,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0F172A',
+        shadowOffset: {width: 0, height: 2},
+        shadowOpacity: 0.06,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 1,
+      },
+    }),
   },
   tabText: {
-    fontSize: FSize.fs13,
+    fontSize: FSize.fs16,
     color: '#64748B',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   tabTextActive: {
+    color: Colors.sooprsblue,
+  },
+  tabCount: {
+    minWidth: wp(6.4),
+    height: wp(6.4),
+    borderRadius: wp(3.2),
+    paddingHorizontal: wp(1.6),
+    backgroundColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabCountActive: {
+    backgroundColor: '#E8F1FF',
+  },
+  tabCountText: {
+    fontSize: FSize.fs14,
+    fontWeight: '800',
+    color: '#64748B',
+  },
+  tabCountTextActive: {
     color: Colors.sooprsblue,
   },
   listContent: {
@@ -513,6 +632,7 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     flexGrow: 1,
+    padding: wp(4),
   },
   centered: {
     flex: 1,
@@ -520,46 +640,93 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: wp(8),
   },
+  emptyCard: {
+    marginTop: hp(4),
+    backgroundColor: Colors.white,
+    borderRadius: wp(4),
+    borderWidth: 1,
+    borderColor: '#E8EEF5',
+    alignItems: 'center',
+    paddingHorizontal: wp(6),
+    paddingVertical: hp(4),
+  },
+  emptyIconWrap: {
+    width: wp(16),
+    height: wp(16),
+    borderRadius: wp(8),
+    backgroundColor: '#EEF4FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   emptyTitle: {
-    marginTop: hp(1.5),
-    fontSize: FSize.fs16,
-    fontWeight: '700',
+    marginTop: hp(1.6),
+    fontSize: FSize.fs18,
+    fontWeight: '800',
     color: '#0F172A',
+    textAlign: 'center',
   },
   emptySubtitle: {
     marginTop: hp(0.6),
-    fontSize: FSize.fs13,
+    fontSize: FSize.fs15,
     color: '#64748B',
     textAlign: 'center',
+    lineHeight: hp(2.4),
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: wp(3),
+    borderRadius: wp(4),
     padding: wp(4),
-    marginBottom: hp(1.5),
+    marginBottom: hp(1.4),
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#E8EEF5',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0F172A',
+        shadowOffset: {width: 0, height: 4},
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: wp(2),
+    gap: wp(3),
+  },
+  avatar: {
+    width: wp(11),
+    height: wp(11),
+    borderRadius: wp(5.5),
+    backgroundColor: '#EEF4FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontSize: FSize.fs18,
+    fontWeight: '800',
+    color: Colors.sooprsblue,
+  },
+  cardTitleWrap: {
+    flex: 1,
   },
   patientName: {
-    flex: 1,
-    fontSize: FSize.fs16,
-    fontWeight: '700',
+    fontSize: FSize.fs18,
+    fontWeight: '800',
     color: '#0F172A',
   },
   statusChip: {
+    alignSelf: 'flex-start',
+    marginTop: hp(0.45),
     backgroundColor: '#EEF4FF',
-    paddingHorizontal: wp(2.5),
-    paddingVertical: hp(0.4),
-    borderRadius: wp(2),
+    paddingHorizontal: wp(2.2),
+    paddingVertical: hp(0.3),
+    borderRadius: wp(4),
   },
   statusText: {
-    fontSize: FSize.fs11,
+    fontSize: FSize.fs14,
     color: Colors.sooprsblue,
     fontWeight: '700',
   },
@@ -571,7 +738,7 @@ const styles = StyleSheet.create({
   },
   metaText: {
     flex: 1,
-    fontSize: FSize.fs13,
+    fontSize: FSize.fs15,
     color: '#64748B',
   },
   historyBlock: {
@@ -582,28 +749,28 @@ const styles = StyleSheet.create({
     gap: hp(0.4),
   },
   historyLine: {
-    fontSize: FSize.fs13,
+    fontSize: FSize.fs15,
     color: '#334155',
   },
   missReason: {
     marginTop: hp(0.4),
-    fontSize: FSize.fs13,
+    fontSize: FSize.fs15,
     color: '#DC2626',
     fontWeight: '600',
   },
   completedLine: {
     marginTop: hp(0.4),
-    fontSize: FSize.fs13,
+    fontSize: FSize.fs15,
     color: '#16A34A',
     fontWeight: '600',
   },
   ratingDone: {
-    fontSize: FSize.fs12,
+    fontSize: FSize.fs14,
     color: '#64748B',
   },
   hintText: {
     marginTop: hp(1),
-    fontSize: FSize.fs13,
+    fontSize: FSize.fs15,
     color: '#D97706',
     fontWeight: '600',
   },
@@ -620,6 +787,6 @@ const styles = StyleSheet.create({
   joinText: {
     color: Colors.white,
     fontWeight: '700',
-    fontSize: FSize.fs15,
+    fontSize: FSize.fs17,
   },
 });

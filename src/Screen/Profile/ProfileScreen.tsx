@@ -41,11 +41,11 @@ type MenuItem = {
 const ProfileScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const [vendorName, setVendorName] = useState('Ankur Pandit');
-  const [vendorMobile, setVendorMobile] = useState('9888675676');
+  const [vendorName, setVendorName] = useState('');
+  const [vendorMobile, setVendorMobile] = useState('');
   const [vendorImage, setVendorImage] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   const handleLogout = async () => {
@@ -68,7 +68,7 @@ const ProfileScreen = () => {
               });
               (navigation as any).reset({
                 index: 0,
-                routes: [{name: 'EnterMobileNumber'}],
+                routes: [{name: 'VendorEmailLogin'}],
               });
             } catch (error) {
               Alert.alert('Error', 'Failed to logout. Please try again.');
@@ -82,24 +82,24 @@ const ProfileScreen = () => {
 
   const getVendorProfile = async () => {
     try {
-      setLoading(true);
       const res: any = await getDataWithToken({}, mobile_siteConfig.GET_USER_DETAILS);
       const data: any = await res.json();
 
       if (data?.success && data?.vendorDetail) {
-        if (data.vendorDetail.name) {
-          setVendorName(data.vendorDetail.name);
-        }
-        if (data.vendorDetail.mobile) {
-          setVendorMobile(data.vendorDetail.mobile);
-        }
-        if (data.vendorDetail.image) {
-          setVendorImage(data.vendorDetail.image);
-        }
+        setVendorName(data.vendorDetail.name || '');
+        setVendorMobile(data.vendorDetail.mobile || '');
+        setVendorImage(data.vendorDetail.image || null);
+      } else {
+        setVendorName('');
+        setVendorMobile('');
+        setVendorImage(null);
       }
     } catch (error) {
+      setVendorName('');
+      setVendorMobile('');
+      setVendorImage(null);
     } finally {
-      setLoading(false);
+      setProfileLoaded(true);
     }
   };
 
@@ -234,14 +234,16 @@ const ProfileScreen = () => {
       subtitle: 'View and manage your consultation availability.',
       onPress: () => (navigation as any).navigate('AvailableSlotsScreen'),
     },
-    {
-      icon: 'video-outline',
-      iconColor: '#059669',
-      iconBg: '#ECFDF5',
-      title: 'Health Consultations',
-      subtitle: 'Join meetings and view consultation history.',
-      onPress: () => (navigation as any).navigate('HealthAppointmentsScreen'),
-    },
+
+    // {
+    //   icon: 'video-outline',
+    //   iconColor: '#059669',
+    //   iconBg: '#ECFDF5',
+    //   title: 'Health Consultations',
+    //   subtitle: 'Join meetings and view consultation history.',
+    //   onPress: () => (navigation as any).navigate('HealthAppointmentsScreen'),
+    // },
+
     {
       icon: 'wallet-outline',
       iconColor: '#0EA5E9',
@@ -250,6 +252,7 @@ const ProfileScreen = () => {
       subtitle: 'Check your available credits and usage details.',
       onPress: () => (navigation as any).navigate('AddCredits'),
     },
+
     {
       icon: 'crown-outline',
       iconColor: '#7C3AED',
@@ -258,6 +261,7 @@ const ProfileScreen = () => {
       subtitle: 'Manage your active plans and renewals.',
       onPress: () => (navigation as any).navigate('SubscriptionScreen'),
     },
+
     {
       icon: 'headset',
       iconColor: '#D97706',
@@ -277,6 +281,7 @@ const ProfileScreen = () => {
       subtitle: 'Learn how we protect and use your data.',
       onPress: () => (navigation as any).navigate('WebView', {header: 'Privacy Policy'}),
     },
+    
     {
       icon: 'file-document-outline',
       iconColor: '#0F766E',
@@ -311,6 +316,7 @@ const ProfileScreen = () => {
     },
   ];
 
+  const hasUser = Boolean(vendorName || vendorMobile || vendorImage);
   const profileSource = selectedImage
     ? {uri: selectedImage}
     : vendorImage
@@ -351,38 +357,55 @@ const ProfileScreen = () => {
             <MaterialCommunityIcons name="pencil-outline" size={wp(4.6)} color={Colors.sooprsblue} />
           </TouchableOpacity>
 
-          <View style={styles.heroTopRow}>
-            <View style={styles.avatarWrap}>
-              {uploading ? (
-                <View style={[styles.avatar, styles.avatarLoading]}>
-                  <ActivityIndicator size="large" color={Colors.sooprsblue} />
-                </View>
-              ) : (
-                <Image source={profileSource} style={styles.avatar} />
-              )}
-              <TouchableOpacity
-                style={styles.cameraBtn}
-                onPress={pickProfileImage}
-                disabled={uploading}
-                activeOpacity={0.8}>
-                <MaterialCommunityIcons name="camera" size={wp(4.4)} color={Colors.white} />
-              </TouchableOpacity>
+          {!profileLoaded ? (
+            <View style={styles.heroTopRow}>
+              <View style={[styles.avatar, styles.avatarLoading, styles.avatarSkeleton]}>
+                <ActivityIndicator size="large" color={Colors.sooprsblue} />
+              </View>
+              <View style={styles.heroInfo}>
+                <View style={styles.skeletonName} />
+                <View style={styles.skeletonPhone} />
+                <View style={styles.skeletonBadge} />
+              </View>
             </View>
+          ) : (
+            <View style={styles.heroTopRow}>
+              <View style={styles.avatarWrap}>
+                {uploading ? (
+                  <View style={[styles.avatar, styles.avatarLoading]}>
+                    <ActivityIndicator size="large" color={Colors.sooprsblue} />
+                  </View>
+                ) : (
+                  <Image source={profileSource} style={styles.avatar} />
+                )}
+                <TouchableOpacity
+                  style={styles.cameraBtn}
+                  onPress={pickProfileImage}
+                  disabled={uploading}
+                  activeOpacity={0.8}>
+                  <MaterialCommunityIcons name="camera" size={wp(4.4)} color={Colors.white} />
+                </TouchableOpacity>
+              </View>
 
-            <View style={styles.heroInfo}>
-              <Text style={styles.userName} numberOfLines={2}>
-                {vendorName}
-              </Text>
-              <View style={styles.phoneRow}>
-                <MaterialCommunityIcons name="phone-outline" size={wp(4.2)} color="#64748B" />
-                <Text style={styles.phoneNumber}>{vendorMobile}</Text>
-              </View>
-              <View style={styles.verifiedBadge}>
-                <MaterialCommunityIcons name="check-decagram" size={wp(4.2)} color="#16A34A" />
-                <Text style={styles.verifiedText}>Verified Partner</Text>
+              <View style={styles.heroInfo}>
+                <Text style={styles.userName} numberOfLines={2}>
+                  {vendorName || 'User'}
+                </Text>
+                {!!vendorMobile && (
+                  <View style={styles.phoneRow}>
+                    <MaterialCommunityIcons name="phone-outline" size={wp(4.2)} color="#64748B" />
+                    <Text style={styles.phoneNumber}>{vendorMobile}</Text>
+                  </View>
+                )}
+                {hasUser ? (
+                  <View style={styles.verifiedBadge}>
+                    <MaterialCommunityIcons name="check-decagram" size={wp(4.2)} color="#16A34A" />
+                    <Text style={styles.verifiedText}>Verified Partner</Text>
+                  </View>
+                ) : null}
               </View>
             </View>
-          </View>
+          )}
         </View>
 
         <View style={styles.sectionCard}>
@@ -430,11 +453,6 @@ const ProfileScreen = () => {
         </View>
       </ScrollView>
 
-      {loading && !vendorName ? (
-        <View style={styles.fullLoader}>
-          <ActivityIndicator size="large" color={Colors.sooprsblue} />
-        </View>
-      ) : null}
     </View>
   );
 };
@@ -529,6 +547,29 @@ const styles = StyleSheet.create({
   avatarLoading: {
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  avatarSkeleton: {
+    marginRight: wp(3.6),
+  },
+  skeletonName: {
+    width: '72%',
+    height: hp(2.4),
+    borderRadius: wp(1.2),
+    backgroundColor: '#E2E8F0',
+  },
+  skeletonPhone: {
+    width: '48%',
+    height: hp(1.8),
+    borderRadius: wp(1.2),
+    backgroundColor: '#E2E8F0',
+    marginTop: hp(0.9),
+  },
+  skeletonBadge: {
+    width: '42%',
+    height: hp(2.2),
+    borderRadius: wp(5),
+    backgroundColor: '#E2E8F0',
+    marginTop: hp(1),
   },
   cameraBtn: {
     position: 'absolute',
@@ -676,11 +717,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#94A3B8',
     marginTop: hp(0.3),
-  },
-  fullLoader: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(248,250,252,0.5)',
   },
 });

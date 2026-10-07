@@ -1,4 +1,11 @@
-import React, {useRef, useState, useEffect, useCallback} from 'react';
+import React, {
+  useRef,
+  useState,
+  useEffect,
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+} from 'react';
 import {
   StyleSheet,
   Text,
@@ -12,7 +19,14 @@ import {
   Alert,
   BackHandler,
   InteractionManager,
+  useWindowDimensions,
 } from 'react-native';
+import {Gesture, GestureDetector} from 'react-native-gesture-handler';
+import Animated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {
@@ -21,6 +35,7 @@ import {
   ClientRoleType,
   IRtcEngine,
   RtcSurfaceView,
+  RtcTextureView,
   RtcConnection,
   IRtcEngineEventHandler,
   RenderModeType,
@@ -33,6 +48,11 @@ import Images from '../../assets/image';
 import FSize from '../../assets/commonCSS/FSize';
 import {useVendorCall} from '../../context/VendorCallContext';
 import {leaveVideoCallScreen} from '../../router/navigationRef';
+import {useCallMedia} from './CallMediaContext';
+
+const PIP_WIDTH = wp(28);
+const PIP_HEIGHT = hp(18);
+const PIP_EDGE = wp(2);
 
 type VideoCallRouteParams = {
   role?: 'user' | 'vendor';
@@ -66,6 +86,11 @@ const getPermission = async (): Promise<boolean> => {
 const VideoCallScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
+  const {width: screenW, height: screenH} = useWindowDimensions();
+  const pipX = useSharedValue(screenW - PIP_WIDTH - wp(4));
+  const pipY = useSharedValue(hp(16));
+  const dragOriginX = useSharedValue(0);
+  const dragOriginY = useSharedValue(0);
   const params = (route.params || {}) as VideoCallRouteParams;
   const {
     endCall,
@@ -76,6 +101,10 @@ const VideoCallScreen = () => {
     clearLastEndedCall,
     activeCall,
   } = useVendorCall();
+  const {api: callMediaApi} = useCallMedia();
+  const callMediaRef = useRef(callMediaApi);
+  callMediaRef.current = callMediaApi;
+  const initialMediaSnap = useRef(callMediaApi.peek()).current;
 
   const role = params.role ?? 'vendor';
   // Prefer live activeCall (rejoin refreshes creds without remounting params).
@@ -114,20 +143,41 @@ const VideoCallScreen = () => {
   const softLeavingRef = useRef(false);
   const isCleaningUpRef = useRef(false);
   /** True only after Agora onJoinChannelSuccess — guards false disconnects. */
-  const hasJoinedOnceRef = useRef(false);
+  const hasJoinedOnceRef = useRef(initialMediaSnap?.isJoined ?? false);
+  /** Screen is closing into the global mini-call. Keep the Agora engine alive. */
+  const minimizingRef = useRef(false);
+  /** This mount continued an engine that was already in the mini-call. */
+  const resumedRef = useRef(false);
+  const screenUnmountingRef = useRef(false);
+  const focusedOnceRef = useRef(false);
 
   const [isScreenSettled, setIsScreenSettled] = useState(false);
-  const [isJoined, setIsJoined] = useState(false);
-  const [remoteUid, setRemoteUid] = useState(0);
-  const [statusMessage, setStatusMessage] = useState(
-    initialWaiting ? 'Waiting for patient…' : 'Connecting…',
+  const [isMinimizing, setIsMinimizing] = useState(false);
+  const [isJoined, setIsJoined] = useState(initialMediaSnap?.isJoined ?? false);
+  const [isPreviewReady, setIsPreviewReady] = useState(
+    initialMediaSnap?.isPreviewReady ?? false,
   );
-  const [isMuted, setIsMuted] = useState(false);
-  const [isCameraOff, setIsCameraOff] = useState(false);
-  const [isSpeakerOn, setIsSpeakerOn] = useState(true);
-  const [isInitializing, setIsInitializing] = useState(true);
-  const [isSwapped, setIsSwapped] = useState(false);
-  const [waitingForPatient, setWaitingForPatient] = useState(initialWaiting);
+  const [remoteUid, setRemoteUid] = useState(initialMediaSnap?.remoteUid ?? 0);
+  const [statusMessage, setStatusMessage] = useState(
+    initialMediaSnap?.statusMessage ||
+      (initialWaiting ? 'Waiting for patient…' : 'Connecting…'),
+  );
+  const [isMuted, setIsMuted] = useState(initialMediaSnap?.isMuted ?? false);
+  const [isCameraOff, setIsCameraOff] = useState(
+    initialMediaSnap?.isCameraOff ?? false,
+  );
+  const [isSpeakerOn, setIsSpeakerOn] = useState(
+    initialMediaSnap?.isSpeakerOn ?? true,
+  );
+  const [isInitializing, setIsInitializing] = useState(
+    initialMediaSnap ? false : true,
+  );
+  const [isSwapped, setIsSwapped] = useState(initialMediaSnap?.isSwapped ?? false);
+  const [waitingForPatient, setWaitingForPatient] = useState(
+    initialMediaSnap
+      ? initialMediaSnap.isWaitingRoom && initialMediaSnap.remoteUid === 0
+      : initialWaiting,
+  );
   const [disconnected, setDisconnected] = useState(false);
   const [rejoining, setRejoining] = useState(false);
 
@@ -186,6 +236,12 @@ const VideoCallScreen = () => {
   }, [agoraToken, channelName, uid]);
 
   const setupEventHandler = useCallback(() => {
+    const engine = agoraEngineRef.current;
+    if (engine && eventHandler.current) {
+      try {
+        engine.unregisterEventHandler(eventHandler.current);
+      } catch {}
+    }
     eventHandler.current = {
       onJoinChannelSuccess: () => {
         hasJoinedOnceRef.current = true;
@@ -253,6 +309,8 @@ const VideoCallScreen = () => {
       await agoraEngine.enableVideo();
       agoraEngine.startPreview();
       agoraEngine.setEnableSpeakerphone(true);
+      callMediaRef.current.rememberEngine(agoraEngine);
+      setIsPreviewReady(true);
       return true;
     } catch (e) {
       setStatusMessage('Failed to initialize call');
@@ -262,12 +320,16 @@ const VideoCallScreen = () => {
   }, [agoraAppId]);
 
   const cleanupAgoraEngine = useCallback(async () => {
+    if (minimizingRef.current) {
+      return;
+    }
     if (isCleaningUpRef.current) {
       return;
     }
     isCleaningUpRef.current = true;
     try {
       const engine = agoraEngineRef.current;
+      callMediaRef.current.forgetEngine();
       if (!engine) {
         return;
       }
@@ -296,6 +358,7 @@ const VideoCallScreen = () => {
     if (!lastEndedCall) {
       return;
     }
+    minimizingRef.current = false;
     intentionalLeaveRef.current = true;
     allowNavigateAwayRef.current = true;
     clearLastEndedCall();
@@ -335,14 +398,85 @@ const VideoCallScreen = () => {
     leaveRoom,
   ]);
 
+  /**
+   * Back / leaving this screen keeps the Agora call alive and shows the
+   * global draggable mini call. End Call still hangs up.
+   * If the engine is not up yet, fall back to leaving the meeting UI.
+   */
+  const handleMinimize = useCallback(() => {
+    if (minimizingRef.current || softLeavingRef.current) {
+      return;
+    }
+    if (!agoraEngineRef.current && callMediaRef.current.hasEngine()) {
+      const resumed = callMediaRef.current.claimForFullscreen();
+      if (resumed?.engine) {
+        agoraEngineRef.current = resumed.engine;
+      }
+    }
+    if (!agoraEngineRef.current) {
+      void handleSoftLeave();
+      return;
+    }
+    minimizingRef.current = true;
+    intentionalLeaveRef.current = true;
+    allowNavigateAwayRef.current = true;
+    setIsMinimizing(true);
+  }, [handleSoftLeave]);
+
+  useEffect(() => {
+    if (!isMinimizing) {
+      return undefined;
+    }
+    const engine = agoraEngineRef.current;
+    if (engine) {
+      if (eventHandler.current) {
+        try {
+          engine.unregisterEventHandler(eventHandler.current);
+        } catch {}
+        eventHandler.current = undefined;
+      }
+      callMediaRef.current.holdForBubble(engine, {
+        onJoinChannelSuccess: () => {
+          callMediaRef.current.patch({
+            isJoined: true,
+            isInitializing: false,
+          });
+        },
+        onUserJoined: (_connection, remoteUserUid) => {
+          callMediaRef.current.patch({
+            remoteUid: remoteUserUid,
+            isJoined: true,
+            isWaitingRoom: false,
+            waitingOver: true,
+            isInitializing: false,
+            statusMessage: 'Connected',
+          });
+        },
+        onUserOffline: (_connection, remoteUserUid) => {
+          const current = callMediaRef.current.getSnapshot();
+          callMediaRef.current.patch({
+            remoteUid:
+              current.remoteUid === remoteUserUid ? 0 : current.remoteUid,
+            isSwapped: false,
+            statusMessage: 'Waiting to reconnect…',
+          });
+        },
+      });
+    }
+    const frame = requestAnimationFrame(() => {
+      leaveVideoCallScreen();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isMinimizing]);
+
   useEffect(() => {
     const onBack = () => {
-      void handleSoftLeave();
+      handleMinimize();
       return true;
     };
     const sub = BackHandler.addEventListener('hardwareBackPress', onBack);
     return () => sub.remove();
-  }, [handleSoftLeave]);
+  }, [handleMinimize]);
 
   useEffect(() => {
     const unsub = navigation.addListener('beforeRemove', e => {
@@ -350,10 +484,36 @@ const VideoCallScreen = () => {
         return;
       }
       e.preventDefault();
-      void handleSoftLeave();
+      handleMinimize();
     });
     return unsub;
-  }, [navigation, handleSoftLeave]);
+  }, [navigation, handleMinimize]);
+
+  useEffect(() => {
+    const unsubFocus = navigation.addListener('focus', () => {
+      focusedOnceRef.current = true;
+    });
+    if (navigation.isFocused()) {
+      focusedOnceRef.current = true;
+    }
+    const unsub = navigation.addListener('blur', () => {
+      if (!focusedOnceRef.current) {
+        return;
+      }
+      if (
+        minimizingRef.current ||
+        allowNavigateAwayRef.current ||
+        softLeavingRef.current
+      ) {
+        return;
+      }
+      handleMinimize();
+    });
+    return () => {
+      unsubFocus();
+      unsub();
+    };
+  }, [navigation, handleMinimize]);
 
   // Wait for nav transition / IncomingCallActivity teardown before Agora surfaces.
   useEffect(() => {
@@ -376,6 +536,49 @@ const VideoCallScreen = () => {
     };
   }, [callKey]);
 
+  useLayoutEffect(() => {
+    if (minimizingRef.current) {
+      return;
+    }
+    const resumed = callMediaRef.current.claimForFullscreen();
+    if (!resumed?.engine) {
+      return;
+    }
+    const savedAppointmentId = Number(
+      callMediaRef.current.getReturnRoute()?.params?.appointmentId,
+    );
+    const nextAppointmentId = Number(
+      params.appointmentId ?? activeCall?.appointmentId,
+    );
+    if (
+      savedAppointmentId &&
+      nextAppointmentId &&
+      savedAppointmentId !== nextAppointmentId
+    ) {
+      resumedRef.current = false;
+      agoraEngineRef.current = undefined;
+      void callMediaRef.current.releaseEngine();
+      return;
+    }
+    resumedRef.current = true;
+    agoraEngineRef.current = resumed.engine;
+    const snap = resumed.snapshot;
+    setIsJoined(snap.isJoined);
+    setIsPreviewReady(snap.isPreviewReady);
+    setRemoteUid(snap.remoteUid);
+    setIsCameraOff(snap.isCameraOff);
+    setIsMuted(snap.isMuted);
+    setIsSpeakerOn(snap.isSpeakerOn);
+    setIsSwapped(snap.isSwapped);
+    setWaitingForPatient(snap.isWaitingRoom && snap.remoteUid === 0);
+    setDisconnected(false);
+    if (snap.statusMessage) {
+      setStatusMessage(snap.statusMessage);
+    }
+    setIsInitializing(false);
+    hasJoinedOnceRef.current = snap.isJoined;
+  }, [activeCall?.appointmentId, params.appointmentId]);
+
   useEffect(() => {
     if (!hasRemoteCallCredentials) {
       setStatusMessage('Preparing call…');
@@ -385,6 +588,20 @@ const VideoCallScreen = () => {
 
     if (!isScreenSettled) {
       return undefined;
+    }
+
+    if (resumedRef.current && agoraEngineRef.current) {
+      setupEventHandler();
+      setIsInitializing(false);
+      return () => {
+        if (minimizingRef.current) {
+          return;
+        }
+        if (resumedRef.current && !screenUnmountingRef.current) {
+          return;
+        }
+        void cleanupAgoraEngine();
+      };
     }
 
     // Fresh credentials on this screen = auto-join Agora. Do not block on a
@@ -421,6 +638,12 @@ const VideoCallScreen = () => {
     return () => {
       mounted = false;
       clearTimeout(joinTimeout);
+      if (minimizingRef.current) {
+        return;
+      }
+      if (resumedRef.current && !screenUnmountingRef.current) {
+        return;
+      }
       // Only tear down the engine — keep the meeting open on the server.
       // Never call leaveRoom here (remounts were wiping the session → Rejoin).
       void cleanupAgoraEngine();
@@ -435,7 +658,14 @@ const VideoCallScreen = () => {
     setupVideoSDKEngine,
   ]);
 
+  useEffect(() => {
+    return () => {
+      screenUnmountingRef.current = true;
+    };
+  }, []);
+
   const handleEndCall = async () => {
+    minimizingRef.current = false;
     intentionalLeaveRef.current = true;
     await cleanupAgoraEngine();
     try {
@@ -509,11 +739,61 @@ const VideoCallScreen = () => {
     agoraEngineRef.current?.switchCamera();
   };
 
-  const toggleSwap = () => {
+  const toggleSwap = useCallback(() => {
     if (isJoined && remoteUid !== 0 && !disconnected) {
       setIsSwapped(prev => !prev);
     }
-  };
+  }, [isJoined, remoteUid, disconnected]);
+
+  const toggleSwapRef = useRef(toggleSwap);
+  toggleSwapRef.current = toggleSwap;
+
+  const onPipTap = useCallback(() => {
+    toggleSwapRef.current();
+  }, []);
+
+  useEffect(() => {
+    const maxX = Math.max(PIP_EDGE, screenW - PIP_WIDTH - PIP_EDGE);
+    const maxY = Math.max(PIP_EDGE, screenH - PIP_HEIGHT - PIP_EDGE);
+    pipX.value = Math.min(Math.max(pipX.value, PIP_EDGE), maxX);
+    pipY.value = Math.min(Math.max(pipY.value, PIP_EDGE), maxY);
+  }, [screenW, screenH, pipX, pipY]);
+
+  const pipGesture = useMemo(() => {
+    const maxX = Math.max(PIP_EDGE, screenW - PIP_WIDTH - PIP_EDGE);
+    const maxY = Math.max(PIP_EDGE, screenH - PIP_HEIGHT - PIP_EDGE);
+    // Pan only activates after real movement, so a tap never reaches Pan.onEnd.
+    // A separate tap gesture restores click-to-swap without fighting the drag.
+    const pan = Gesture.Pan()
+      .minDistance(14)
+      .onStart(() => {
+        dragOriginX.value = pipX.value;
+        dragOriginY.value = pipY.value;
+      })
+      .onUpdate(event => {
+        pipX.value = Math.min(
+          maxX,
+          Math.max(PIP_EDGE, dragOriginX.value + event.translationX),
+        );
+        pipY.value = Math.min(
+          maxY,
+          Math.max(PIP_EDGE, dragOriginY.value + event.translationY),
+        );
+      });
+    const tap = Gesture.Tap()
+      .maxDuration(400)
+      .maxDistance(14)
+      .onEnd((_event, success) => {
+        if (success) {
+          runOnJS(onPipTap)();
+        }
+      });
+    return Gesture.Exclusive(pan, tap);
+  }, [screenW, screenH, dragOriginX, dragOriginY, pipX, pipY, onPipTap]);
+
+  const pipStyle = useAnimatedStyle(() => ({
+    transform: [{translateX: pipX.value}, {translateY: pipY.value}],
+  }));
  
   const waitingCopy = waitingForPatient
     ? 'Waiting for patient…'
@@ -529,16 +809,28 @@ const VideoCallScreen = () => {
 
   const renderRemoteContent = (isOverlay: boolean) => {
     if (isJoined && remoteUid !== 0 && !disconnected) {
+      const canvas = {
+        uid: remoteUid,
+        renderMode: RenderModeType.RenderModeHidden,
+      };
+      // TextureView stays in the RN view tree, so a drag on the small
+      // window reaches the gesture handler. SurfaceView on Android does not.
+      if (isOverlay && Platform.OS === 'android') {
+        return (
+          <RtcTextureView
+            key="remote-small"
+            style={styles.fillVideo}
+            pointerEvents="none"
+            canvas={canvas}
+          />
+        );
+      }
       return (
         <RtcSurfaceView
           key={`remote-${isOverlay ? 'small' : 'big'}`}
           style={styles.fillVideo}
           pointerEvents="none"
-          zOrderMediaOverlay={Platform.OS === 'android' && isOverlay}
-          canvas={{
-            uid: remoteUid,
-            renderMode: RenderModeType.RenderModeHidden,
-          }}
+          canvas={canvas}
         />
       );
     }
@@ -569,17 +861,27 @@ const VideoCallScreen = () => {
 
   const renderLocalContent = (isOverlay: boolean) => {
     if (isJoined && !isCameraOff && !disconnected) {
+      const canvas = {
+        uid: 0,
+        sourceType: VideoSourceType.VideoSourceCamera,
+        renderMode: RenderModeType.RenderModeHidden,
+      };
+      if (isOverlay && Platform.OS === 'android') {
+        return (
+          <RtcTextureView
+            key="local-small"
+            style={styles.fillVideo}
+            pointerEvents="none"
+            canvas={canvas}
+          />
+        );
+      }
       return (
         <RtcSurfaceView
           key={`local-${isOverlay ? 'small' : 'big'}`}
           style={styles.fillVideo}
           pointerEvents="none"
-          zOrderMediaOverlay={Platform.OS === 'android' && isOverlay}
-          canvas={{
-            uid: 0,
-            sourceType: VideoSourceType.VideoSourceCamera,
-            renderMode: RenderModeType.RenderModeHidden,
-          }}
+          canvas={canvas}
         />
       );
     }
@@ -594,6 +896,40 @@ const VideoCallScreen = () => {
       </>
     );
   };
+
+  callMediaRef.current.syncSnapshot({
+    isJoined,
+    isPreviewReady,
+    remoteUid,
+    isCameraOff,
+    isMuted,
+    isSpeakerOn,
+    isSwapped,
+    isWaitingRoom: waitingForPatient && remoteUid === 0,
+    waitingOver: !waitingForPatient || remoteUid !== 0,
+    statusMessage,
+    isInitializing,
+    remoteLabel,
+  });
+  callMediaRef.current.setReturnRoute({
+    name: 'VideoCallScreen',
+    params: {
+      role,
+      channelName,
+      token: agoraToken,
+      appId: agoraAppId,
+      uid,
+      appointmentId: activeCall?.appointmentId ?? params.appointmentId,
+      callKey,
+      uiAction: activeCall?.uiAction ?? params.uiAction,
+      status: activeCall?.status ?? params.status,
+      bothPresent: activeCall?.bothPresent ?? params.bothPresent,
+    },
+  });
+
+  if (isMinimizing) {
+    return <View style={styles.container} />;
+  }
 
   return (
     <View style={styles.container}>
@@ -612,14 +948,14 @@ const VideoCallScreen = () => {
         <TouchableOpacity
           style={styles.leaveBtn}
           activeOpacity={0.85}
-          onPress={() => void handleSoftLeave()}
+          onPress={handleMinimize}
           hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
           <MaterialCommunityIcons
             name="chevron-left"
             size={wp(7)}
             color={Colors.white}
           />
-          <Text style={styles.leaveBtnText}>Leave</Text>
+          <Text style={styles.leaveBtnText}>Back</Text>
         </TouchableOpacity>
         <Text style={styles.callTitle}>Health Consultation</Text>
         <Text style={styles.callMeta}>
@@ -634,21 +970,21 @@ const VideoCallScreen = () => {
         </Text>
       </View>
 
-      <TouchableOpacity
-        style={styles.localVideo}
-        activeOpacity={canSwap ? 0.85 : 1}
-        onPress={toggleSwap}>
-        {isSwapped ? renderRemoteContent(true) : renderLocalContent(true)}
-        {canSwap && (
-          <View style={styles.swapBadge} pointerEvents="none">
-            <MaterialCommunityIcons
-              name="swap-horizontal"
-              size={wp(4.5)}
-              color={Colors.white}
-            />
-          </View>
-        )}
-      </TouchableOpacity>
+      <GestureDetector gesture={pipGesture}>
+        <Animated.View collapsable={false} style={[styles.localVideo, pipStyle]}>
+          {isSwapped ? renderRemoteContent(true) : renderLocalContent(true)}
+          <View style={styles.pipHitTarget} />
+          {canSwap && (
+            <View style={styles.swapBadge} pointerEvents="none">
+              <MaterialCommunityIcons
+                name="swap-horizontal"
+                size={wp(4.5)}
+                color={Colors.white}
+              />
+            </View>
+          )}
+        </Animated.View>
+      </GestureDetector>
 
       <View style={styles.controlsBar}>
         <View style={styles.controlsRow}>
@@ -845,23 +1181,27 @@ const styles = StyleSheet.create({
   },
   localVideo: {
     position: 'absolute',
-    top: hp(16),
-    right: wp(4),
-    width: wp(28),
-    height: hp(18),
+    left: 0,
+    top: 0,
+    width: PIP_WIDTH,
+    height: PIP_HEIGHT,
     borderRadius: wp(2.5),
     backgroundColor: '#334155',
-    borderWidth: 2,
-    borderColor: '#475569',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+    zIndex: 5,
+    elevation: 8,
+  },
+  pipHitTarget: {
+    ...StyleSheet.absoluteFillObject,
     zIndex: 2,
   },
   swapBadge: {
     position: 'absolute',
     top: wp(1.5),
     left: wp(1.5),
+    zIndex: 3,
     width: wp(7),
     height: wp(7),
     borderRadius: wp(3.5),

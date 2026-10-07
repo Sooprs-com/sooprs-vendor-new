@@ -1,5 +1,6 @@
 import {useEffect, useRef} from 'react';
 import {useVendorCall} from '../context/VendorCallContext';
+import {useCallMedia} from '../Screen/VideoCall/CallMediaContext';
 import {
   isOnVideoCallScreen,
   leaveVideoCallScreen,
@@ -14,6 +15,7 @@ import {
  */
 export function VendorCallBridge() {
   const {activeCall, canRejoin, lastEndedCall} = useVendorCall();
+  const {mode: callMediaMode} = useCallMedia();
   const wasInCall = useRef(false);
   const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastRedirectedAppointmentRef = useRef<number | null>(null);
@@ -22,6 +24,11 @@ export function VendorCallBridge() {
   // Avoid settleHomeFirst reset when already redirecting once — remount tears Agora.
   useEffect(() => {
     if (!activeCall || !navigationRef.isReady()) {
+      return;
+    }
+
+    // Minimized call stays on the floating bubble. Do not force full screen.
+    if (callMediaMode === 'bubble') {
       return;
     }
 
@@ -72,7 +79,7 @@ export function VendorCallBridge() {
         redirectTimerRef.current = null;
       }
     };
-  }, [activeCall]);
+  }, [activeCall, callMediaMode]);
 
   useEffect(() => {
     if (activeCall) {

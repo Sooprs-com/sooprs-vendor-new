@@ -750,13 +750,13 @@ const AvailableSlotsScreen = () => {
           <Text style={styles.headerSubtitle}>Manage your weekly availability</Text>
         </View>
         <TouchableOpacity
-          style={styles.addButtonPill}
+          style={styles.editButtonPill}
           onPress={() => {
             setModalVisible(true);
           }}
           activeOpacity={0.85}>
-          <MaterialCommunityIcons name="plus" size={16} color={Colors.white} />
-          <Text style={styles.addButtonPillText}>Add</Text>
+          <MaterialCommunityIcons name="pencil-outline" size={16} color={Colors.white} />
+          <Text style={styles.editButtonPillText}>Edit</Text>
         </TouchableOpacity>
       </View>
 
@@ -941,7 +941,7 @@ const styles = StyleSheet.create({
     color: Colors.grey,
     marginTop: hp(0.2),
   },
-  addButtonPill: {
+  editButtonPill: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.sooprsblue,
@@ -950,7 +950,7 @@ const styles = StyleSheet.create({
     borderRadius: wp(10),
     gap: wp(1),
   },
-  addButtonPillText: {
+  editButtonPillText: {
     fontSize: FSize.fs13,
     fontWeight: '700',
     color: Colors.white,

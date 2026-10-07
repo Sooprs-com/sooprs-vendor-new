@@ -12,6 +12,8 @@ export const mobile_siteConfig = {
 
 
   REGISTER_USER_NEW: 'auth/vendor-register', // Update with your actual endpoint
+  LOGIN_VENDOR: 'auth/login-vendor',
+  VENDOR_REGISTER_WITH_PASSWORD: 'auth/vendor-register-with-password',
   VERIFY_OTP_NEW: 'auth/verify-otp-user', // Update with your actual endpoint
   COMPLETE_PROFILE: 'user/vendor/complete-vendor-profile', // Update with your actual endpoint
   VERIFY_ORDER:"update_wallet",
