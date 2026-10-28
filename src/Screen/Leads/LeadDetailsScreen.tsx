@@ -289,7 +289,7 @@ const LeadDetailsScreen = () => {
           <View style={styles.identityMeta}>
             {category ? (
               <View style={[styles.categoryChip, {backgroundColor: visual.bg}]}>
-                <MaterialCommunityIcons name={visual.name} size={wp(3.8)} color={visual.color} />
+                <MaterialCommunityIcons name={visual.name} size={wp(4.4)} color={visual.color} />
                 <Text style={[styles.categoryChipText, {color: visual.color}]} numberOfLines={1}>
                   {category}
                 </Text>
@@ -297,7 +297,7 @@ const LeadDetailsScreen = () => {
             ) : null}
             {postedLabel ? (
               <View style={styles.timeChip}>
-                <MaterialCommunityIcons name="clock-outline" size={wp(3.8)} color="#64748B" />
+                <MaterialCommunityIcons name="clock-outline" size={wp(4.4)} color="#64748B" />
                 <Text style={styles.timeChipText}>{postedLabel}</Text>
               </View>
             ) : null}
@@ -306,21 +306,21 @@ const LeadDetailsScreen = () => {
 
         <View style={styles.statsRow}>
           <View style={[styles.statTile, {backgroundColor: '#ECFDF5'}]}>
-            <MaterialCommunityIcons name="currency-inr" size={wp(5.2)} color="#16A34A" />
+            <MaterialCommunityIcons name="currency-inr" size={wp(5.8)} color="#16A34A" />
             <Text style={styles.statLabel}>Max Budget</Text>
             <Text style={[styles.statValue, {color: '#16A34A'}]} numberOfLines={1}>
               {formattedMax ? `₹${formattedMax}` : 'N/A'}
             </Text>
           </View>
           <View style={[styles.statTile, {backgroundColor: '#EEF4FF'}]}>
-            <MaterialCommunityIcons name="wallet-outline" size={wp(5.2)} color="#2563EB" />
+            <MaterialCommunityIcons name="wallet-outline" size={wp(5.8)} color="#2563EB" />
             <Text style={styles.statLabel}>Credits</Text>
             <Text style={[styles.statValue, {color: '#2563EB'}]} numberOfLines={1}>
               {credit ? `₹${formatINR(credit) || credit}` : '—'}
             </Text>
           </View>
           <View style={[styles.statTile, {backgroundColor: '#FFF7ED'}]}>
-            <MaterialCommunityIcons name="map-marker-outline" size={wp(5.2)} color="#D97706" />
+            <MaterialCommunityIcons name="map-marker-outline" size={wp(5.8)} color="#D97706" />
             <Text style={styles.statLabel}>Location</Text>
             <Text style={[styles.statValue, {color: '#D97706'}]} numberOfLines={1}>
               {location || '—'}
@@ -331,7 +331,7 @@ const LeadDetailsScreen = () => {
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionIcon}>
-              <MaterialCommunityIcons name="text-box-outline" size={wp(4.6)} color="#2563EB" />
+              <MaterialCommunityIcons name="text-box-outline" size={wp(5.2)} color="#2563EB" />
             </View>
             <Text style={styles.sectionTitle}>About this request</Text>
           </View>
@@ -344,7 +344,7 @@ const LeadDetailsScreen = () => {
           <View style={styles.sectionCard}>
             <View style={styles.sectionHeader}>
               <View style={[styles.sectionIcon, {backgroundColor: '#ECFDF5'}]}>
-                <MaterialCommunityIcons name="cash-multiple" size={wp(4.6)} color="#16A34A" />
+                <MaterialCommunityIcons name="cash-multiple" size={wp(5.2)} color="#16A34A" />
               </View>
               <Text style={styles.sectionTitle}>Budget</Text>
             </View>
@@ -357,7 +357,7 @@ const LeadDetailsScreen = () => {
           <View style={styles.sectionCard}>
             <View style={styles.sectionHeader}>
               <View style={[styles.sectionIcon, {backgroundColor: '#F1F5F9'}]}>
-                <MaterialCommunityIcons name="information-outline" size={wp(4.6)} color="#475569" />
+                <MaterialCommunityIcons name="information-outline" size={wp(5.2)} color="#475569" />
               </View>
               <Text style={styles.sectionTitle}>Request info</Text>
             </View>
@@ -366,7 +366,7 @@ const LeadDetailsScreen = () => {
                 key={row.label}
                 style={[styles.infoRow, index === infoRows.length - 1 && styles.infoRowLast]}>
                 <View style={styles.infoLeft}>
-                  <MaterialCommunityIcons name={row.icon} size={wp(4.6)} color="#64748B" />
+                  <MaterialCommunityIcons name={row.icon} size={wp(5.2)} color="#64748B" />
                   <Text style={styles.infoLabel}>{row.label}</Text>
                 </View>
                 <Text style={styles.infoValue} numberOfLines={2}>
@@ -381,7 +381,7 @@ const LeadDetailsScreen = () => {
           <View style={styles.sectionCard}>
             <View style={styles.sectionHeader}>
               <View style={[styles.sectionIcon, {backgroundColor: '#EEF4FF'}]}>
-                <MaterialCommunityIcons name="account-circle-outline" size={wp(4.6)} color="#2563EB" />
+                <MaterialCommunityIcons name="account-circle-outline" size={wp(5.2)} color="#2563EB" />
               </View>
               <Text style={styles.sectionTitle}>Customer contact</Text>
             </View>
@@ -407,11 +407,11 @@ const LeadDetailsScreen = () => {
               {phoneNumber ? (
                 <>
                   <TouchableOpacity style={styles.whatsappBtn} onPress={handleWhatsApp} activeOpacity={0.8}>
-                    <MaterialCommunityIcons name="whatsapp" size={wp(5)} color="#16A34A" />
+                    <MaterialCommunityIcons name="whatsapp" size={wp(5.6)} color="#16A34A" />
                     <Text style={styles.whatsappText}>WhatsApp</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.callBtn} onPress={handleCall} activeOpacity={0.8}>
-                    <MaterialCommunityIcons name="phone" size={wp(5)} color={Colors.white} />
+                    <MaterialCommunityIcons name="phone" size={wp(5.6)} color={Colors.white} />
                     <Text style={styles.callText}>Call</Text>
                   </TouchableOpacity>
                 </>
@@ -422,7 +422,7 @@ const LeadDetailsScreen = () => {
 
         {contactLocked ? (
           <View style={styles.lockBanner}>
-            <MaterialCommunityIcons name="lock-outline" size={wp(5)} color="#D97706" />
+            <MaterialCommunityIcons name="lock-outline" size={wp(5.6)} color="#D97706" />
             <Text style={styles.lockText}>
               Complete your profile verification to contact this lead.
             </Text>
@@ -436,7 +436,7 @@ const LeadDetailsScreen = () => {
             style={styles.ctaButton}
             activeOpacity={0.85}
             onPress={() => setShowContactModal(true)}>
-            <MaterialCommunityIcons name="card-account-phone-outline" size={wp(5.2)} color={Colors.white} />
+            <MaterialCommunityIcons name="card-account-phone-outline" size={wp(5.8)} color={Colors.white} />
             <Text style={styles.ctaText}>Get Contact Details</Text>
           </TouchableOpacity>
         </View>
@@ -461,7 +461,7 @@ const LeadDetailsScreen = () => {
               </Text>
               {credit ? (
                 <View style={styles.creditChip}>
-                  <MaterialCommunityIcons name="wallet-outline" size={wp(4)} color="#2563EB" />
+                  <MaterialCommunityIcons name="wallet-outline" size={wp(4.6)} color="#2563EB" />
                   <Text style={styles.creditChipText}>₹{formatINR(credit) || credit} credits</Text>
                 </View>
               ) : null}
@@ -516,7 +516,7 @@ const styles = StyleSheet.create({
     tintColor: '#0F172A',
   },
   headerTitle: {
-    fontSize: FSize.fs18,
+    fontSize: FSize.fs20,
     fontWeight: '800',
     color: '#0F172A',
   },
@@ -537,11 +537,11 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
   identityName: {
-    fontSize: FSize.fs20,
+    fontSize: FSize.fs22,
     fontWeight: '800',
     color: '#0F172A',
     letterSpacing: -0.3,
-    lineHeight: hp(3.1),
+    lineHeight: hp(3.5),
   },
   identityMeta: {
     flexDirection: 'row',
@@ -560,7 +560,7 @@ const styles = StyleSheet.create({
     maxWidth: '68%',
   },
   categoryChipText: {
-    fontSize: FSize.fs12,
+    fontSize: FSize.fs14,
     fontWeight: '700',
     flexShrink: 1,
   },
@@ -570,7 +570,7 @@ const styles = StyleSheet.create({
     gap: wp(1),
   },
   timeChipText: {
-    fontSize: FSize.fs12,
+    fontSize: FSize.fs14,
     color: '#64748B',
     fontWeight: '600',
   },
@@ -587,13 +587,13 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     marginTop: hp(0.7),
-    fontSize: FSize.fs11,
+    fontSize: FSize.fs13,
     color: '#64748B',
     fontWeight: '600',
   },
   statValue: {
     marginTop: hp(0.25),
-    fontSize: FSize.fs14,
+    fontSize: FSize.fs16,
     fontWeight: '800',
   },
   sectionCard: {
@@ -610,8 +610,8 @@ const styles = StyleSheet.create({
     marginBottom: hp(1.1),
   },
   sectionIcon: {
-    width: wp(8),
-    height: wp(8),
+    width: wp(9),
+    height: wp(9),
     borderRadius: wp(2.2),
     backgroundColor: '#EEF4FF',
     alignItems: 'center',
@@ -619,23 +619,23 @@ const styles = StyleSheet.create({
     marginRight: wp(2.2),
   },
   sectionTitle: {
-    fontSize: FSize.fs16,
+    fontSize: FSize.fs18,
     fontWeight: '800',
     color: '#0F172A',
   },
   description: {
-    fontSize: FSize.fs14,
+    fontSize: FSize.fs16,
     color: '#475569',
-    lineHeight: hp(2.5),
+    lineHeight: hp(2.9),
   },
   budgetHighlight: {
-    fontSize: FSize.fs20,
+    fontSize: FSize.fs22,
     fontWeight: '800',
     color: '#16A34A',
   },
   budgetHint: {
     marginTop: hp(0.4),
-    fontSize: FSize.fs12,
+    fontSize: FSize.fs14,
     color: '#94A3B8',
   },
   infoRow: {
@@ -658,14 +658,14 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   infoLabel: {
-    fontSize: FSize.fs13,
+    fontSize: FSize.fs15,
     color: '#64748B',
     fontWeight: '600',
   },
   infoValue: {
     flex: 1,
     textAlign: 'right',
-    fontSize: FSize.fs13,
+    fontSize: FSize.fs15,
     fontWeight: '700',
     color: '#0F172A',
   },
@@ -673,13 +673,13 @@ const styles = StyleSheet.create({
     marginBottom: hp(0.9),
   },
   contactLabel: {
-    fontSize: FSize.fs12,
+    fontSize: FSize.fs14,
     color: '#94A3B8',
     fontWeight: '600',
   },
   contactValue: {
     marginTop: hp(0.15),
-    fontSize: FSize.fs15,
+    fontSize: FSize.fs17,
     fontWeight: '700',
     color: '#0F172A',
   },
@@ -701,7 +701,7 @@ const styles = StyleSheet.create({
     paddingVertical: hp(1.25),
   },
   whatsappText: {
-    fontSize: FSize.fs13,
+    fontSize: FSize.fs15,
     fontWeight: '800',
     color: '#16A34A',
   },
@@ -716,7 +716,7 @@ const styles = StyleSheet.create({
     paddingVertical: hp(1.25),
   },
   callText: {
-    fontSize: FSize.fs13,
+    fontSize: FSize.fs15,
     fontWeight: '800',
     color: Colors.white,
   },
@@ -731,10 +731,10 @@ const styles = StyleSheet.create({
   },
   lockText: {
     flex: 1,
-    fontSize: FSize.fs13,
+    fontSize: FSize.fs15,
     color: '#B45309',
     fontWeight: '600',
-    lineHeight: hp(2.2),
+    lineHeight: hp(2.5),
   },
   footer: {
     position: 'absolute',
@@ -770,7 +770,7 @@ const styles = StyleSheet.create({
     }),
   },
   ctaText: {
-    fontSize: FSize.fs15,
+    fontSize: FSize.fs17,
     fontWeight: '800',
     color: Colors.white,
   },
@@ -796,17 +796,17 @@ const styles = StyleSheet.create({
     marginBottom: hp(1.6),
   },
   modalTitle: {
-    fontSize: FSize.fs20,
+    fontSize: FSize.fs22,
     fontWeight: '800',
     color: '#0F172A',
     textAlign: 'center',
   },
   modalSubtitle: {
     marginTop: hp(0.7),
-    fontSize: FSize.fs13,
+    fontSize: FSize.fs15,
     color: '#64748B',
     textAlign: 'center',
-    lineHeight: hp(2.3),
+    lineHeight: hp(2.6),
   },
   modalLeadBox: {
     marginTop: hp(2),
@@ -817,7 +817,7 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
   modalLeadTitle: {
-    fontSize: FSize.fs15,
+    fontSize: FSize.fs17,
     fontWeight: '800',
     color: '#0F172A',
   },
@@ -833,7 +833,7 @@ const styles = StyleSheet.create({
     paddingVertical: hp(0.5),
   },
   creditChipText: {
-    fontSize: FSize.fs13,
+    fontSize: FSize.fs15,
     fontWeight: '700',
     color: '#2563EB',
   },
@@ -851,7 +851,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelBtnText: {
-    fontSize: FSize.fs14,
+    fontSize: FSize.fs16,
     color: '#64748B',
     fontWeight: '700',
   },
@@ -866,7 +866,7 @@ const styles = StyleSheet.create({
     opacity: 0.65,
   },
   confirmBtnText: {
-    fontSize: FSize.fs14,
+    fontSize: FSize.fs16,
     color: Colors.white,
     fontWeight: '800',
   },

@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import {View} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 // import AppRouter from './src/AppRouter';
@@ -25,7 +26,6 @@ import {navigationRef, flushPendingVideoCallNavigation} from './src/router/navig
 import {VendorCallBridge} from './src/router/VendorCallBridge';
 import {isCallLaunchGuardActive} from './src/services/callLaunchGuard';
 import {loadPendingCallAction} from './src/services/pendingCallAction';
-import {ensureIncomingCallPermissions} from './src/services/notificationPermission';
 
 const isLoggedInValue = (value: string | null) =>
   value === 'TRUE' || value === 'true' || value === '1';
@@ -48,10 +48,9 @@ const AppContent = () => {
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        // Notifications + Android full-screen intent + battery unrestricted
-        // so lock-screen incoming calls work like WhatsApp.
-        await ensureIncomingCallPermissions();
-
+        // Permission prompts run after the first screen is visible
+        // (VendorCallContext). Awaiting them here left a blank window and
+        // dropped the last dialogs until the app was killed and reopened.
         const callLaunchActive = await isCallLaunchGuardActive();
         const pendingCallAction = await loadPendingCallAction();
         const isPendingAccept =
@@ -142,8 +141,7 @@ const AppContent = () => {
   }, [dispatch]);
 
   if (!isReady) {
-    // Show splash screen while initializing
-    return null;
+    return <View style={{flex: 1, backgroundColor: '#92BFFF'}} />;
   }
 
   return (

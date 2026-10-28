@@ -88,6 +88,7 @@ import Hire_Professional from './FAQ/Hire_Professional';
       </View>
     );
   };
+
   const WebView = ({route, navigation}) => {
     const {header, webLink} = route?.params || {};
     const [inputData, setInputData] = useState({
@@ -282,6 +283,7 @@ import Hire_Professional from './FAQ/Hire_Professional';
         });
         return;
       }
+
       const req = {
         name: inputData.Name,
         email: inputData.Email,
@@ -292,6 +294,7 @@ import Hire_Professional from './FAQ/Hire_Professional';
         Alert.alert('Success', 'Your message has been sent successfully!');
       });
     };
+    
     //handle contact
     const handleContactPress = (index, item) => {
       let url;
@@ -360,6 +363,7 @@ import Hire_Professional from './FAQ/Hire_Professional';
                   ? TermsAndConditions
                   : ''
               }
+
               keyExtractor={(item, index) => item + index}
               renderItem={({item}) => <Text style={styles.item}>{item}</Text>}
               renderSectionHeader={({section: {title}}) => (
@@ -367,6 +371,7 @@ import Hire_Professional from './FAQ/Hire_Professional';
               )}
             />
           )}
+
           {/* Contect Us Section */}
           {header === 'Contact Us' && (
             <ScrollView>
@@ -526,13 +531,14 @@ import Hire_Professional from './FAQ/Hire_Professional';
       fontWeight: '800',
       color: '#0F172A',
     },
+
     screenHeaderSubtitle: {
       marginTop: hp(0.12),
       fontSize: FSize.fs14,
       color: '#94A3B8',
       fontWeight: '600',
     },
-    
+
     headerSpacer: {
       width: wp(10),
     },
@@ -546,6 +552,7 @@ import Hire_Professional from './FAQ/Hire_Professional';
       // backgroundColor: '#f8f8f8',
       padding: 10,
     },
+
     header: {
       fontSize: 18,
       color: 'black',
@@ -555,6 +562,7 @@ import Hire_Professional from './FAQ/Hire_Professional';
       marginVertical: 5,
       borderRadius: 4,
     },
+
     item: {
       fontSize: FSize.fs15,
       color: 'black',
@@ -565,5 +573,6 @@ import Hire_Professional from './FAQ/Hire_Professional';
       borderRadius: 4,
       marginVertical: 2,
     },
+
   });
   

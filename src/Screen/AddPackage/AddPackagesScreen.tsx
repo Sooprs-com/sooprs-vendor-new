@@ -1268,15 +1268,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  
   toggleInfo: {
     flex: 1,
     marginRight: wp(2),
   },
+
   toggleLabel: {
     fontSize: FSize.fs17,
     fontWeight: '800',
     color: '#0F172A',
   },
+
   toggleSubLabel: {
     fontSize: FSize.fs14,
     color: '#64748B',
@@ -1284,31 +1287,35 @@ const styles = StyleSheet.create({
     marginTop: hp(0.35),
     lineHeight: hp(2.3),
   },
+
   photoRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: wp(3),
+    gap: wp(2),
   },
+
   coverColumn: {
-    width: wp(28),
+    width: wp(25),
   },
   galleryColumn: {
     flex: 1,
   },
+
   photoLabel: {
     fontSize: FSize.fs14,
     fontWeight: '700',
     color: '#0F172A',
     marginBottom: hp(0.7),
   },
+
   photoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: wp(2),
   },
   photoTile: {
-    width: wp(28),
-    height: wp(28),
+    width: wp(25),
+    height: wp(25),
     borderRadius: wp(2.6),
     overflow: 'hidden',
     backgroundColor: '#E2E8F0',

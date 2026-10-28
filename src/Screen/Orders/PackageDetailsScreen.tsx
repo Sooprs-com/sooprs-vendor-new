@@ -458,7 +458,7 @@ const PackageDetailsScreen = () => {
     });
   };
 
-  const renderChromeHeader = (orderId?: string) => (
+  const renderChromeHeader = () => (
     <View style={styles.header}>
       <View style={styles.headerLeft}>
         <TouchableOpacity
@@ -470,9 +470,6 @@ const PackageDetailsScreen = () => {
         </TouchableOpacity>
         <View style={styles.headerTextWrap}>
           <Text style={styles.headerTitle}>Order Details</Text>
-          <Text style={styles.headerSubtitle} numberOfLines={1}>
-            {orderId || 'Booking overview'}
-          </Text>
         </View>
       </View>
     </View>
@@ -582,6 +579,7 @@ const PackageDetailsScreen = () => {
     5,
     Math.max(0, Math.round(Number(clientRating?.rating) || 0)),
   );
+  
   const showNotRatedYet =
     !showClientRating &&
     (ratingStatus === 'pending' ||
@@ -633,7 +631,7 @@ const PackageDetailsScreen = () => {
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      {renderChromeHeader(orderData.order_id_generated)}
+      {renderChromeHeader()}
 
       <View style={styles.sheet}>
         <ScrollView
@@ -1013,12 +1011,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#0F172A',
     letterSpacing: -0.2,
-  },
-  headerSubtitle: {
-    fontSize: FSize.fs15,
-    color: '#94A3B8',
-    marginTop: hp(0.2),
-    fontWeight: '500',
   },
   sheet: {
     flex: 1,

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -7,130 +7,330 @@ import {
   TouchableOpacity,
   Image,
   StatusBar,
-  TextInput,
-  Alert,
   FlatList,
   Dimensions,
   ActivityIndicator,
   Animated,
+  Platform,
+  LayoutAnimation,
+  UIManager,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Colors from '../../assets/commonCSS/Colors';
-import { hp, wp } from '../../assets/commonCSS/GlobalCSS';
+import {hp, wp} from '../../assets/commonCSS/GlobalCSS';
 import FSize from '../../assets/commonCSS/FSize';
+import {fFamily} from '../../assets/commonCSS/fFamily';
 import Images from '../../assets/image';
-import { getDataWithToken } from '../../services/mobile-api';
-import { mobile_siteConfig } from '../../services/mobile-siteConfig';
+import {getDataWithToken} from '../../services/mobile-api';
+import {mobile_siteConfig} from '../../services/mobile-siteConfig';
 import FormattedDescription from '../../Component/FormattedDescription';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const DESCRIPTION_PREVIEW_LINES = 5;
+const {width: SCREEN_WIDTH} = Dimensions.get('window');
+const MAX_DESCRIPTION_LINES = 5;
+const MAX_VISIBLE_POINTS = 4;
+const CARD_GAP = wp(2.5);
+const CARD_WIDTH = (SCREEN_WIDTH - wp(8) - CARD_GAP) / 2;
+const BACK_ICON_SIZE = wp(6);
+
+if (
+  Platform.OS === 'android' &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+function getInclusionIcon(label: string): string {
+  const t = String(label || '').toLowerCase();
+  if (t.includes('video') || t.includes('call') || t.includes('online')) {
+    return 'video-outline';
+  }
+  if (t.includes('one on one') || t.includes('1:1') || t.includes('one-on-one')) {
+    return 'account-outline';
+  }
+  if (t.includes('session') || t.includes('consult')) {
+    return 'account-outline';
+  }
+  if (t.includes('yoga') || t.includes('meditat')) {
+    return 'meditation';
+  }
+  if (t.includes('spa') || t.includes('massage')) {
+    return 'spa-outline';
+  }
+  if (
+    t.includes('food') ||
+    t.includes('meal') ||
+    t.includes('diet') ||
+    t.includes('breakfast') ||
+    t.includes('lunch') ||
+    t.includes('dinner')
+  ) {
+    return 'food-outline';
+  }
+  if (t.includes('hotel') || t.includes('stay') || t.includes('accommodation')) {
+    return 'bed-outline';
+  }
+  if (t.includes('transport') || t.includes('cab') || t.includes('car')) {
+    return 'car-outline';
+  }
+  if (t.includes('photo')) {
+    return 'camera-outline';
+  }
+  if (t.includes('decor') || t.includes('flower')) {
+    return 'flower-outline';
+  }
+  if (t.includes('wifi')) {
+    return 'wifi';
+  }
+  if (t.includes('guide')) {
+    return 'account-tie-outline';
+  }
+  if (t.includes('sound') || t.includes('music') || t.includes('dj')) {
+    return 'music-note-outline';
+  }
+  return 'check-circle-outline';
+}
+
+function toDisplayText(value: any): string {
+  if (value == null) {
+    return '';
+  }
+  if (typeof value === 'string' || typeof value === 'number') {
+    return String(value);
+  }
+  if (typeof value === 'object') {
+    const text =
+      value.text ||
+      value.title ||
+      value.name ||
+      value.description ||
+      value.policy ||
+      value.value;
+    if (text != null && typeof text !== 'object') {
+      return String(text);
+    }
+  }
+  return '';
+}
+
+function formatRupee(amount: number | string) {
+  const value = typeof amount === 'string' ? parseFloat(amount) : amount;
+  if (!Number.isFinite(value)) {
+    return '₹0';
+  }
+  return `₹${value.toLocaleString('en-IN')}`;
+}
+
+function normalizePolicy(policy: any): string[] {
+  if (Array.isArray(policy)) {
+    return policy.map(item => toDisplayText(item)).filter(Boolean);
+  }
+  if (policy && typeof policy === 'object') {
+    return Object.values(policy)
+      .map(item => toDisplayText(item))
+      .filter(Boolean);
+  }
+  return [];
+}
 
 const CabRideReviewScreen = ({route}: any) => {
-  const { data } = route.params;
+  const {data} = route.params || {};
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const carouselRef = useRef<FlatList>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [packageData, setPackageData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [isActive, setIsActive] = useState(true);
+  const [showStickyHeader, setShowStickyHeader] = useState(false);
+  const stickyHeaderAnim = useRef(new Animated.Value(0)).current;
+  const [showAllInclusions, setShowAllInclusions] = useState(false);
+  const [showAllExclusions, setShowAllExclusions] = useState(false);
+  const [isIncludedExpanded, setIsIncludedExpanded] = useState(true);
+  const [isExcludedExpanded, setIsExcludedExpanded] = useState(false);
+  const [isFareBreakdownExpanded, setIsFareBreakdownExpanded] = useState(true);
   const [showFullDescription, setShowFullDescription] = useState(false);
-  const [descriptionOverflows, setDescriptionOverflows] = useState(false);
-  const toggleAnim = useRef(new Animated.Value(1)).current;
+  const [shouldShowDescriptionToggle, setShouldShowDescriptionToggle] = useState(false);
 
-  // Get image URI helper function
-  const getImageUri = (imagePath: string | null): any => {
-    if (imagePath) {
-      const baseUrl = mobile_siteConfig.BASE_URL.replace('/api/', '');
-      return { uri: baseUrl + imagePath };
+  const getImageUri = (imagePath: any): any => {
+    if (typeof imagePath !== 'string' || !imagePath) {
+      return Images.banner1;
     }
-    return Images.profileImage; // Default image
+    if (imagePath.startsWith('http')) {
+      return {uri: imagePath};
+    }
+    const baseUrl = mobile_siteConfig.BASE_URL.replace('/api/', '');
+    const path = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+    return {uri: `${baseUrl}${path}`};
   };
 
-  // Get carousel images from package data
   const getCarouselImages = () => {
-    if (!packageData?.package) return [Images.profileImage];
-    
-    const images = [];
+    if (!packageData?.package) {
+      return [Images.banner1];
+    }
+    const images: any[] = [];
     if (packageData.package.thumbnail_image) {
       images.push(getImageUri(packageData.package.thumbnail_image));
     }
-    if (packageData.package.other_images && Array.isArray(packageData.package.other_images)) {
+    if (Array.isArray(packageData.package.other_images)) {
       packageData.package.other_images.forEach((img: string) => {
         images.push(getImageUri(img));
       });
     }
-    return images.length > 0 ? images : [Images.profileImage];
+    return images.length > 0 ? images : [Images.banner1];
   };
 
   const packageDetails = () => {
+    if (!data?.slug) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     getDataWithToken({}, mobile_siteConfig.GET_PACKAGE_DETAILS + data.slug)
       .then((res: any) => res.json())
       .then((res: any) => {
         if (res?.success && res?.package) {
-          setPackageData(res);
-          // Set initial status (1 = active, 0 = inactive)
-          const status = res.package.status;
-          const initialActive = status === 1 || status === '1' || status === true;
-          setIsActive(initialActive);
-          // Set initial animation value
-          toggleAnim.setValue(initialActive ? 1 : 0);
+          setPackageData({
+            ...res,
+            package: {
+              ...res.package,
+              policy: normalizePolicy(res.package.policy),
+            },
+          });
         }
       })
-      .catch((err: any) => {
-      })
+      .catch(() => undefined)
       .finally(() => {
         setLoading(false);
       });
   };
 
-
   useEffect(() => {
     packageDetails();
   }, []);
 
-
   useEffect(() => {
     setShowFullDescription(false);
-  }, [packageData?.package?.long_description, packageData?.package?.short_description]);
+    setShowAllInclusions(false);
+    setShowAllExclusions(false);
+  }, [packageData?.package?.slug]);
 
   const onCarouselScroll = (event: any) => {
     const slideIndex = Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH);
     setCurrentImageIndex(slideIndex);
   };
 
-
-  const renderCarouselItem = ({ item }: any) => (
-    <Image 
-      source={item} 
-      style={styles.carouselImage} 
-      resizeMode="cover"
-      defaultSource={Images.profileImage}
-    />
+  const renderCarouselItem = ({item}: any) => (
+    <Image source={item} style={styles.carouselImage} resizeMode="cover" />
   );
 
-  // Show loading state
+  const openEdit = (pkg: any) => {
+    (navigation as any).navigate('AddPackagesScreen', {
+      packageData: pkg,
+      isEditMode: true,
+    });
+  };
+
   if (loading || !packageData?.package) {
     return (
-      <View style={[styles.container, styles.loadingContainer]}>
-        <ActivityIndicator size="large" color={Colors.sooprsblue} />
-        <Text style={styles.loadingText}>Loading package details...</Text>
+      <View style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}
+          activeOpacity={0.7}
+          style={[styles.loaderBackButton, {top: insets.top + hp(1.5)}]}>
+          <Image source={Images.backArrow} style={styles.backIcon} />
+        </TouchableOpacity>
+        <View style={styles.loaderWrap}>
+          <ActivityIndicator size="large" color={Colors.sooprsblue} />
+          <Text style={styles.loadingText}>Loading package details...</Text>
+        </View>
       </View>
     );
   }
 
   const pkg = packageData.package;
   const carouselImages = getCarouselImages();
-
+  const includedList = Array.isArray(pkg?.included) ? pkg.included : [];
+  const excludedList = Array.isArray(pkg?.not_included) ? pkg.not_included : [];
+  const inclusionsToShow = showAllInclusions
+    ? includedList
+    : includedList.slice(0, MAX_VISIBLE_POINTS);
+  const exclusionsToShow = showAllExclusions
+    ? excludedList
+    : excludedList.slice(0, MAX_VISIBLE_POINTS);
+  const locationText = [pkg?.location1, pkg?.location2].filter(Boolean).join(', ');
+  const baseFareNumber =
+    parseFloat(pkg?.fare_breakup?.base_price || pkg?.base_price || '0') || 0;
+  const packageDiscountPrice =
+    parseFloat(
+      pkg?.fare_breakup?.discount_price || pkg?.discount_price || String(baseFareNumber),
+    ) || 0;
+  const packageDiscountValue = Math.max(0, baseFareNumber - packageDiscountPrice);
+  const gstPercentRaw = pkg?.fare_breakup?.gst_percentage || '5';
+  const gstPercentLabel = String(gstPercentRaw).includes('%')
+    ? String(gstPercentRaw)
+    : `${gstPercentRaw}%`;
+  const gstAmountNumber = parseFloat(pkg?.fare_breakup?.gst_amount || '0') || 0;
+  const totalAmount =
+    parseFloat(pkg?.fare_breakup?.grand_total || pkg?.effective_price || '0') ||
+    Math.max(0, packageDiscountPrice + gstAmountNumber);
+  const hasFare =
+    Boolean(pkg?.fare_breakup) || baseFareNumber > 0 || packageDiscountPrice > 0;
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
-        {/* IMAGE CAROUSEL */}
+      <Animated.View
+        pointerEvents={showStickyHeader ? 'auto' : 'none'}
+        style={[
+          styles.stickyHeader,
+          {
+            paddingTop: insets.top + hp(0.8),
+            opacity: stickyHeaderAnim,
+            transform: [
+              {
+                translateY: stickyHeaderAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-hp(20), 0],
+                }),
+              },
+            ],
+          },
+        ]}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}
+          style={styles.stickyBackButton}>
+          <Image source={Images.backArrow} style={styles.stickyBackIcon} />
+        </TouchableOpacity>
+        <Text style={styles.stickyHeaderTitle} numberOfLines={1}>
+          Details
+        </Text>
+      </Animated.View>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {paddingBottom: hp(4) + insets.bottom},
+        ]}
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={event => {
+          const y = event.nativeEvent.contentOffset.y;
+          const shouldShow = y >= hp(32);
+          if (shouldShow !== showStickyHeader) {
+            setShowStickyHeader(shouldShow);
+            Animated.timing(stickyHeaderAnim, {
+              toValue: shouldShow ? 1 : 0,
+              duration: 200,
+              useNativeDriver: true,
+            }).start();
+          }
+        }}>
         <View style={styles.carouselContainer}>
           <FlatList
             ref={carouselRef}
@@ -141,98 +341,53 @@ const CabRideReviewScreen = ({route}: any) => {
             showsHorizontalScrollIndicator={false}
             onScroll={onCarouselScroll}
             scrollEventThrottle={16}
-            keyExtractor={(item, index) => index.toString()}
+            keyExtractor={(_, index) => index.toString()}
           />
-          
-          {/* HEADER OVERLAY */}
-          <View style={styles.headerOverlay}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+
+          <View style={[styles.headerOverlay, {paddingTop: insets.top + hp(1)}]} pointerEvents="box-none">
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}
+              activeOpacity={0.7}
+              style={styles.backButton}>
               <Image source={Images.backArrow} style={styles.backIcon} />
             </TouchableOpacity>
           </View>
 
-          {/* CAROUSEL DOTS */}
-          <View style={styles.carouselDots}>
-            {carouselImages.map((_, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.dot,
-                  index === currentImageIndex && styles.activeDot,
-                ]}
-              />
-            ))}
-          </View>
-
-          {/* RATING OVERLAY */}
-          <View style={styles.ratingOverlay}>
-            <Image source={Images.starIcon} style={styles.ratingStarIcon} />
-            <Text style={styles.ratingValue}>4.9</Text>
-          </View>
+          {carouselImages.length > 1 && (
+            <View style={styles.carouselDots}>
+              {carouselImages.map((_, index) => (
+                <View
+                  key={index}
+                  style={[styles.dot, index === currentImageIndex && styles.activeDot]}
+                />
+              ))}
+            </View>
+          )}
         </View>
 
-        {/* WHITE CONTENT CARD */}
         <View style={styles.contentCard}>
           <View style={styles.titleRow}>
-            <Text style={styles.serviceTitle}>{pkg.name || 'Package Name'}</Text>
+            <Text style={styles.serviceTitle} numberOfLines={2}>
+              {toDisplayText(pkg?.name) || 'Package Name'}
+            </Text>
             <TouchableOpacity
               style={styles.editButton}
               activeOpacity={0.8}
               hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
-              onPress={() => {
-                (navigation as any).navigate('AddPackagesScreen', {
-                  packageData: pkg,
-                  isEditMode: true,
-                });
-              }}>
+              onPress={() => openEdit(pkg)}>
               <Image source={Images.editButton} style={styles.editIcon} />
             </TouchableOpacity>
-            {/* STATUS TOGGLE */}
-            {/* <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => {
-                const newActive = !isActive;
-                setIsActive(newActive);
-                Animated.spring(toggleAnim, {
-                  toValue: newActive ? 1 : 0,
-                  useNativeDriver: true,
-                  tension: 100,
-                  friction: 8,
-                }).start();
-              }}
-              style={[
-                styles.statusToggle,
-                {
-                  backgroundColor: isActive ? Colors.sooprsblue : '#F44336',
-                }
-              ]}>
-              <Text style={styles.statusToggleText}>
-                {isActive ? 'Active' : 'Inactive'}
-              </Text>
-              <Animated.View
-                style={[
-                  styles.statusToggleKnob,
-                  {
-                    transform: [
-                      {
-                        translateX: toggleAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [-wp(20), 0], // Move from left (inactive) to right (active)
-                        }),
-                      },
-                    ],
-                  },
-                ]}
-              />
-            </TouchableOpacity> */}
           </View>
 
-          {[pkg.location1, pkg.location2].filter(Boolean).length > 0 ? (
+          {locationText ? (
             <View style={styles.locationRow}>
-              <Image source={Images.locationIcon} style={styles.locationIcon} />
-              <Text style={styles.locationText}>
-                {[pkg.location1, pkg.location2].filter(Boolean).join(', ')}
-              </Text>
+              <MaterialCommunityIcons
+                name="map-marker-outline"
+                size={wp(4.4)}
+                color={Colors.sooprsblue}
+              />
+              <Text style={styles.locationText}>{locationText}</Text>
             </View>
           ) : null}
 
@@ -241,10 +396,10 @@ const CabRideReviewScreen = ({route}: any) => {
             baseStyle={styles.description}
             fallback="No description available"
             collapsed={!showFullDescription}
-            collapsedLines={DESCRIPTION_PREVIEW_LINES}
-            onOverflowChange={setDescriptionOverflows}
+            collapsedLines={MAX_DESCRIPTION_LINES}
+            onOverflowChange={setShouldShowDescriptionToggle}
           />
-          {descriptionOverflows ? (
+          {shouldShowDescriptionToggle ? (
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => setShowFullDescription(prev => !prev)}
@@ -254,173 +409,163 @@ const CabRideReviewScreen = ({route}: any) => {
               </Text>
             </TouchableOpacity>
           ) : null}
-        </View>
 
-        {/* AMENITIES */}
-        {pkg.amenities && pkg.amenities.length > 0 && (
-          <View style={styles.amenitiesSectionWrapper}>
-            <Text style={styles.amenitiesTitle}>Amenities</Text>
-            <View style={styles.amenitiesContainer}>
-              {pkg.amenities.map((amenity: string, index: number) => (
-                <View key={index} style={styles.amenityBox}>
-                  <View style={styles.amenityDot} />
-                  <Text style={styles.amenityText}>{amenity}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
-
-
-        {/* INCLUSIONS */}
-        {pkg.included && pkg.included.length > 0 && (
-          <View style={styles.inclusionsSectionWrapper}>
-            <Text style={styles.inclusionsTitle}>Inclusions</Text>
-            <View style={styles.inclusionsSection}>
-              {pkg.included.map((item: string, index: number) => (
-                <View key={index} style={styles.inclusionRow}>
-                  <View style={styles.greenDot} />
-                  <Text style={styles.inclusionText}>{item}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
-
-
-        {/* EXCLUSIONS */}
-        {pkg.not_included && pkg.not_included.length > 0 && (
-          <View style={styles.exclusionsSectionWrapper}>
-            <Text style={styles.exclusionsTitle}>Exclusions</Text>
-            <View style={styles.exclusionsSection}>
-              {pkg.not_included.map((item: string, index: number) => (
-                <View key={index} style={styles.exclusionRow}>
-                  <View style={styles.redDot} />
-                  <Text style={styles.exclusionText}>{item}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
-
-
-        {/* BOOKING POLICY */}
-        {pkg.policy && pkg.policy.length > 0 && (
-          <View style={styles.policySectionWrapper}>
-            <Text style={styles.policyTitle}>Booking Policy</Text>
-            <View style={styles.policySection}>
-              {pkg.policy.map((policyItem: string, index: number) => {
-                // Parse policy item to extract label and value
-                  return (
-                    <View key={index} style={styles.policyRow}>
-                      <Text style={styles.grayBullet}>•</Text>
-                      <Text style={styles.policyText}>{policyItem}</Text>
-                    </View>
-                  );
-
-              })}
-            </View>
-          </View>
-        )}
-
-
-        {/* FARE BREAKUP */}
-        {pkg.fare_breakup && (
-          <View style={styles.fareBreakupSectionWrapper}>
-            <Text style={styles.fareBreakupTitle}>Fare Breakup</Text>
-            <View style={styles.fareBreakupSection}>
-              <View style={styles.fareRow}>
-                <Text style={styles.fareLabel}>Base Fare:</Text>
-                <Text style={styles.fareAmount}>
-                  ₹{parseFloat(pkg.fare_breakup.base_price || 0).toLocaleString('en-IN')}
+          {includedList.length > 0 && (
+            <View style={styles.sectionBlock}>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setIsIncludedExpanded(prev => !prev)}
+                style={styles.sectionHeaderRow}>
+                <Text style={[styles.sectionTitle, styles.sectionTitleInline]}>
+                  What's Included
                 </Text>
-              </View>
-              {pkg.fare_breakup.discount_price && (
-                <View style={styles.fareRow}>
-                  <Text style={styles.fareLabel}>Discount Price:</Text>
-                  <Text style={styles.fareAmount}>
-                    ₹{parseFloat(pkg.fare_breakup.discount_price).toLocaleString('en-IN')}
-                  </Text>
-                </View>
-              )}
-              {pkg.fare_breakup.gst_amount && (
-                <View style={styles.fareRow}>
-                  <Text style={styles.fareLabel}>GST Amount ({pkg.fare_breakup.gst_percentage || '5%'}):</Text>
-                  <Text style={styles.fareAmount}>
-                    ₹{parseFloat(pkg.fare_breakup.gst_amount).toLocaleString('en-IN')}
-                  </Text>
-                </View>
-              )}
-              <View style={[styles.fareRow, styles.totalFareRow]}>
-                <Text style={styles.totalFareLabel}>To Pay:</Text>
-                <Text style={styles.totalFareAmount}>
-                  ₹{parseFloat(pkg.fare_breakup.grand_total || pkg.effective_price || 0).toLocaleString('en-IN')}
-                </Text>
-              </View>
-            </View>
-          </View>
-        )}
-
-        {/* TRAVELLER DETAILS */}
-        {/* <View style={styles.travellerSection}>
-          <Text style={styles.travellerTitle}>Traveller Details</Text>
-
-          <View style={styles.travellerCard}>
-            <View style={styles.travellerHeaderRow}>
-              <Text style={styles.travellerLabel}>Traveller</Text>
-              <TouchableOpacity>
-                <Text style={styles.travellerSaveText}>Save</Text>
+                <MaterialCommunityIcons
+                  name={isIncludedExpanded ? 'chevron-up' : 'chevron-down'}
+                  size={wp(6)}
+                  color="#111827"
+                />
               </TouchableOpacity>
+              {isIncludedExpanded && (
+                <>
+                  <View style={styles.featureGrid}>
+                    {inclusionsToShow.map((item: any, index: number) => (
+                      <View key={`included-${index}`} style={styles.includeCard}>
+                        <View style={styles.includeIconWrap}>
+                          <MaterialCommunityIcons
+                            name={getInclusionIcon(item) as any}
+                            size={wp(5.2)}
+                            color={Colors.sooprsblue}
+                          />
+                        </View>
+                        <Text style={styles.includeCardText}>{toDisplayText(item)}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  {includedList.length > MAX_VISIBLE_POINTS && (
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => setShowAllInclusions(prev => !prev)}
+                      style={[styles.viewAllOffersBtn, styles.sectionSeeMoreBtn]}>
+                      <Text style={styles.viewAllOffersText}>
+                        {showAllInclusions
+                          ? 'Show less'
+                          : `See more (+${includedList.length - MAX_VISIBLE_POINTS})`}
+                      </Text>
+                      <MaterialCommunityIcons
+                        name={showAllInclusions ? 'chevron-up' : 'chevron-down'}
+                        size={wp(4)}
+                        color={Colors.sooprsblue}
+                      />
+                    </TouchableOpacity>
+                  )}
+                </>
+              )}
             </View>
+          )}
 
-            <View style={styles.travellerInputsRow}>
-              <View style={styles.travellerInputBox}>
-                <Text style={styles.travellerFieldLabel}>Full Name</Text>
-                <TextInput
-                  style={styles.travellerFieldInput}
-                  value={travellerName}
-                  onChangeText={setTravellerName}
+          {excludedList.length > 0 && (
+            <View style={styles.sectionBlock}>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setIsExcludedExpanded(prev => !prev)}
+                style={styles.sectionHeaderRow}>
+                <Text style={[styles.sectionTitle, styles.sectionTitleInline]}>
+                  What's Excluded
+                </Text>
+                <MaterialCommunityIcons
+                  name={isExcludedExpanded ? 'chevron-up' : 'chevron-down'}
+                  size={wp(6)}
+                  color="#111827"
                 />
-              </View>
+              </TouchableOpacity>
+              {isExcludedExpanded && (
+                <>
+                  <View style={styles.featureGrid}>
+                    {exclusionsToShow.map((item: any, index: number) => (
+                      <View key={`excluded-${index}`} style={styles.excludeCard}>
+                        <View style={styles.excludeIconWrap}>
+                          <MaterialCommunityIcons
+                            name="close-circle"
+                            size={wp(5.4)}
+                            color="#E53935"
+                          />
+                        </View>
+                        <Text style={styles.excludeCardText}>{toDisplayText(item)}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  {excludedList.length > MAX_VISIBLE_POINTS && (
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => setShowAllExclusions(prev => !prev)}
+                      style={[styles.viewAllOffersBtn, styles.sectionSeeMoreBtn]}>
+                      <Text style={styles.viewAllOffersText}>
+                        {showAllExclusions
+                          ? 'Show less'
+                          : `See more (+${excludedList.length - MAX_VISIBLE_POINTS})`}
+                      </Text>
+                      <MaterialCommunityIcons
+                        name={showAllExclusions ? 'chevron-up' : 'chevron-down'}
+                        size={wp(4)}
+                        color={Colors.sooprsblue}
+                      />
+                    </TouchableOpacity>
+                  )}
+                </>
+              )}
+            </View>
+          )}
 
-              <View style={styles.travellerInputBox}>
-                <Text style={styles.travellerFieldLabel}>Mobile No.</Text>
-                <TextInput
-                  style={styles.travellerFieldInput}
-                  value={travellerMobile}
-                  onChangeText={setTravellerMobile}
+          {hasFare && (
+            <View style={styles.sectionBlock}>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => {
+                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                  setIsFareBreakdownExpanded(prev => !prev);
+                }}
+                style={styles.sectionHeaderRow}>
+                <Text style={[styles.sectionTitle, styles.sectionTitleInline]}>
+                  Fare Breakdown
+                </Text>
+                <MaterialCommunityIcons
+                  name={isFareBreakdownExpanded ? 'chevron-up' : 'chevron-down'}
+                  size={wp(6)}
+                  color="#111827"
                 />
+              </TouchableOpacity>
+              <View style={styles.fareBreakupSection}>
+                {isFareBreakdownExpanded && (
+                  <>
+                    <View style={styles.fareRow}>
+                      <Text style={styles.fareLabel}>Base Fare</Text>
+                      <Text style={styles.fareAmount}>{formatRupee(baseFareNumber)}</Text>
+                    </View>
+                    {packageDiscountValue > 0 && (
+                      <View style={styles.fareRow}>
+                        <Text style={styles.fareLabel}>Discount</Text>
+                        <Text style={styles.fareDiscountAmount}>
+                          - {formatRupee(packageDiscountValue)}
+                        </Text>
+                      </View>
+                    )}
+                    {gstAmountNumber > 0 && (
+                      <View style={styles.fareRow}>
+                        <Text style={styles.fareLabel}>GST Amount ({gstPercentLabel})</Text>
+                        <Text style={styles.fareAmount}>{formatRupee(gstAmountNumber)}</Text>
+                      </View>
+                    )}
+                  </>
+                )}
+                <View style={[styles.fareRow, isFareBreakdownExpanded && styles.totalFareRow]}>
+                  <Text style={styles.totalFareLabel}>Total Amount</Text>
+                  <Text style={styles.totalFareAmount}>{formatRupee(totalAmount)}</Text>
+                </View>
               </View>
             </View>
-
-            <View style={styles.travellerInputBoxFull}>
-              <Text style={styles.travellerFieldLabel}>Email ID</Text>
-              <TextInput
-                style={styles.travellerFieldInput}
-                value={travellerEmail}
-                onChangeText={setTravellerEmail}
-              />
-            </View>
-          </View>
-        </View> */}
-      </ScrollView>
-
-      {/* BOTTOM BAR */}
-      {/* <View style={styles.bottomBar}>
-        <View style={styles.paymentOptionsContainer}>
-          <View style={styles.radioOuterPayment}>
-            <View style={styles.radioInnerPayment} />
-          </View>
-          <Text style={styles.paymentOptionAmount}>₹ {totalPrice}</Text>
+          )}
         </View>
-
-        <TouchableOpacity
-          style={styles.payButton}
-          onPress={() => Alert.alert("Success", "Static payment completed")}
-        >
-          <Text style={styles.payButtonText}>Proceed to Pay</Text>
-        </TouchableOpacity>
-      </View> */}
+      </ScrollView>
     </View>
   );
 };
@@ -428,35 +573,83 @@ const CabRideReviewScreen = ({route}: any) => {
 export default CabRideReviewScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5F5' },
-
-  loadingContainer: {
+  container: {flex: 1, backgroundColor: Colors.lightgrey1},
+  loaderWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loaderBackButton: {
+    position: 'absolute',
+    left: wp(4),
+    zIndex: 10,
+    width: wp(10),
+    height: wp(10),
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: Colors.white,
+    elevation: 3,
+    shadowColor: Colors.black,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.12,
+    shadowRadius: 3.84,
+    borderRadius: wp(5),
   },
-
   loadingText: {
     marginTop: hp(2),
     fontSize: FSize.fs14,
     color: Colors.gray,
+    fontFamily: fFamily.ibmRegular,
   },
-
-  scrollView: { flex: 1, backgroundColor: "rgba(255, 255, 255, 1)"},
-
-  scrollContent: { paddingBottom: hp(18) },
-
-  /* CAROUSEL */
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingBottom: hp(1.5),
+    paddingHorizontal: wp(4),
+    backgroundColor: Colors.white,
+    flexDirection: 'row',
+    alignItems: 'center',
+    zIndex: 20,
+    elevation: 4,
+    shadowColor: Colors.black,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+  },
+  stickyBackButton: {
+    width: wp(10),
+    height: wp(10),
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.white,
+    borderRadius: wp(3),
+    marginRight: wp(3),
+  },
+  stickyBackIcon: {
+    width: BACK_ICON_SIZE,
+    height: BACK_ICON_SIZE,
+    tintColor: Colors.black,
+  },
+  stickyHeaderTitle: {
+    flex: 1,
+    fontSize: FSize.fs18,
+    color: Colors.black,
+    fontFamily: fFamily.ibmBold,
+  },
+  scrollView: {flex: 1, backgroundColor: Colors.lightgrey1},
+  scrollContent: {paddingBottom: hp(4)},
   carouselContainer: {
     width: SCREEN_WIDTH,
-    height: hp(35),
+    height: hp(36),
     position: 'relative',
+    backgroundColor: Colors.lightgrey1,
   },
-
   carouselImage: {
     width: SCREEN_WIDTH,
-    height: hp(35),
+    height: hp(36),
   },
-
   headerOverlay: {
     position: 'absolute',
     top: 0,
@@ -464,47 +657,29 @@ const styles = StyleSheet.create({
     right: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: hp(6),
-    paddingBottom: hp(2),
+    justifyContent: 'space-between',
+    paddingBottom: hp(1),
     paddingHorizontal: wp(4),
     zIndex: 10,
   },
-
   backButton: {
     width: wp(10),
     height: wp(10),
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: "white",
-    elevation:2,
+    backgroundColor: Colors.white,
+    elevation: 3,
     shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.12,
     shadowRadius: 3.84,
     borderRadius: wp(5),
   },
-
   backIcon: {
-    width: wp(6),
-    height: wp(6),
+    width: BACK_ICON_SIZE,
+    height: BACK_ICON_SIZE,
     tintColor: Colors.black,
   },
-
-  shareButton: {
-    width: wp(10),
-    height: wp(10),
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: wp(5),
-  },
-
-  shareIcon: {
-    width: wp(5),
-    height: wp(5),
-    tintColor: Colors.white,
-  },
-
   editButton: {
     width: wp(11),
     height: wp(11),
@@ -519,15 +694,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.22,
     shadowRadius: 4,
   },
-
   editIcon: {
     width: wp(8),
     height: wp(8),
   },
-
   carouselDots: {
     position: 'absolute',
-    bottom: hp(6),
+    bottom: hp(5),
     left: 0,
     right: 0,
     flexDirection: 'row',
@@ -535,7 +708,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 10,
   },
-
   dot: {
     width: wp(2),
     height: wp(2),
@@ -543,421 +715,189 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     marginHorizontal: wp(1),
   },
-
   activeDot: {
     backgroundColor: Colors.white,
     width: wp(4),
   },
-
-  ratingOverlay: {
-    position: 'absolute',
-    bottom: hp(6),
-    right: wp(4),
-    backgroundColor: 'rgba(1, 123, 78, 1)',
-    paddingHorizontal: wp(2),
-    paddingVertical: hp(.2),
-    borderRadius: wp(2),
-    flexDirection: 'row',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-
-  ratingText: {
-    fontSize: FSize.fs11,
-    color: Colors.white,
-    fontWeight: '600',
-    marginRight: wp(1),
-  },
-
-  ratingStarIcon: {
-    width: wp(3),
-    height: wp(3),
-    tintColor: 'white',
-    marginRight: wp(1),
-  },
-
-  ratingValue: {
-    fontSize: FSize.fs12,
-    color: Colors.white,
-    fontWeight: '700',
-  },
-
-  /* STATUS TOGGLE */
-  statusToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: wp(3),
-    paddingVertical: hp(0.8),
-    borderRadius: wp(10),
-    width: wp(27),
-    height: hp(5),
-    position: 'relative',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-
-  statusToggleText: {
-    fontSize: FSize.fs13,
-    color: Colors.white,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    zIndex: 1,
-    flex: 1,
-    textAlign: 'center',
-  },
-
-  statusToggleKnob: {
-    width: wp(5.5),
-    height: wp(5.5),
-    borderRadius: wp(2.75),
-    backgroundColor: Colors.white,
-    position: 'absolute',
-    right: wp(1),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 3,
-    zIndex: 2,
-  },
-
-  /* CONTENT CARD */
   contentCard: {
-    backgroundColor: "rgba(255, 255, 255, 1)",
-    borderTopLeftRadius: wp(6),
-    borderTopRightRadius: wp(6),
-    marginTop: -hp(3),
-    paddingTop: hp(3),
+    backgroundColor: Colors.lightgrey1,
+    borderTopLeftRadius: wp(4),
+    borderTopRightRadius: wp(4),
+    marginTop: -hp(3.2),
+    paddingTop: hp(2),
     paddingHorizontal: wp(4),
-    paddingBottom: hp(2),
+    paddingBottom: hp(1.5),
     zIndex: 5,
   },
-
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: hp(1),
   },
-
   serviceTitle: {
+    flex: 1,
     fontSize: FSize.fs24,
     fontWeight: '700',
     color: Colors.black,
-    flex: 1,
   },
-
-  shareButtonCard: {
-    width: wp(8),
-    height: wp(8),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  shareIconCard: {
-    width: wp(5),
-    height: wp(5),
-    tintColor: Colors.gray,
-  },
-
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: hp(1.5),
+    marginBottom: hp(0.7),
   },
-
-  locationIcon: {
-    width: wp(4),
-    height: wp(4),
-    tintColor: Colors.sooprsblue,
-    marginRight: wp(1.5),
-  },
-
   locationText: {
-    fontSize: FSize.fs14,
-    color: Colors.gray,
+    marginLeft: wp(1),
+    flex: 1,
+    fontSize: FSize.fs16,
+    color: '#4B5563',
+    fontFamily: fFamily.ibmMedium,
   },
-
   description: {
     fontSize: FSize.fs17,
     color: Colors.black,
     lineHeight: hp(3.1),
   },
-
   seeMoreButton: {
     alignSelf: 'flex-end',
     marginTop: hp(0.4),
   },
-
   seeMoreText: {
-    fontSize: FSize.fs15,
+    fontSize: FSize.fs14,
     color: Colors.sooprsblue,
-    fontWeight: '700',
+    fontWeight: '600',
   },
-
-  /* AMENITIES */
-  amenitiesSectionWrapper: { marginBottom: hp(2), paddingHorizontal: wp(4),backgroundColor: "rgba(255, 255, 255, 1)"},
-
-  amenitiesTitle: { fontSize: FSize.fs16, fontWeight: '700', marginBottom: hp(1) },
-
-  amenitiesContainer: {
-    borderWidth: 1,
-    borderColor: Colors.lightGrey,
-    borderRadius: wp(3),
-    padding: wp(3),
+  sectionBlock: {
+    marginTop: hp(1.3),
   },
-
-  amenityBox: {
+  sectionTitle: {
+    fontSize: FSize.fs19,
+    color: '#111827',
+    fontWeight: '800',
+    marginBottom: hp(0.8),
+  },
+  sectionTitleInline: {
+    marginBottom: 0,
+    flex: 1,
+    paddingRight: wp(2),
+  },
+  sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: hp(0.8),
+    justifyContent: 'space-between',
+    marginBottom: hp(0.8),
   },
-
-  amenityDot: {
-    width: wp(2),
-    height: wp(2),
-    borderRadius: wp(1),
-    backgroundColor: Colors.sooprsblue,
-    marginRight: wp(2),
-  },
-
-  amenityText: { fontSize: FSize.fs14, color: Colors.black },
-
-  /* INCLUSIONS */
-  inclusionsSectionWrapper: { marginBottom: hp(2), paddingHorizontal: wp(4), backgroundColor: "rgba(255, 255, 255, 1)"},
-
-  inclusionsTitle: { fontSize: FSize.fs16, fontWeight: '700', marginBottom: hp(1) },
-
-  inclusionsSection: {
-    borderWidth: 1,
-    borderColor: Colors.lightGrey,
-    borderRadius: wp(3),
-    padding: wp(3),
-  },
-
-  inclusionRow: { flexDirection: 'row', alignItems: 'center', marginVertical: hp(0.5) },
-
-  greenDot: {
-    width: wp(2),
-    height: wp(2),
-    borderRadius: wp(1),
-    backgroundColor: '#4CAF50',
-    marginRight: wp(2.5),
-  },
-
-  inclusionText: { fontSize: FSize.fs14, color: Colors.black },
-
-  /* EXCLUSIONS */
-  exclusionsSectionWrapper: { marginBottom: hp(2), paddingHorizontal: wp(4), backgroundColor: "rgba(255, 255, 255, 1)"},
-
-  exclusionsTitle: { fontSize: FSize.fs16, fontWeight: '700', marginBottom: hp(1) },
-
-  exclusionsSection: {
-    borderWidth: 1,
-    borderColor: Colors.lightGrey,
-    borderRadius: wp(3),
-    padding: wp(3),
-  },
-
-  exclusionRow: { flexDirection: 'row', alignItems: 'center', marginVertical: hp(0.5) },
-
-  redDot: {
-    width: wp(2),
-    height: wp(2),
-    borderRadius: wp(1),
-    backgroundColor: '#F44336',
-    marginRight: wp(2.5),
-  },
-
-  exclusionText: { fontSize: FSize.fs14, color: Colors.black },
-
-  /* POLICY */
-  policySectionWrapper: { marginBottom: hp(2), paddingHorizontal: wp(4), backgroundColor: "rgba(255, 255, 255, 1)" },
-
-  policyTitle: { fontSize: FSize.fs16, fontWeight: '700', marginBottom: hp(1) },
-
-  policySection: {
-    borderWidth: 1,
-    borderColor: Colors.lightGrey,
-    borderRadius: wp(3),
-    padding: wp(3),
-  },
-
-  policyRow: { flexDirection: 'row', alignItems: 'flex-start', marginVertical: hp(0.5) },
-
-  policyItemRow: {
+  viewAllOffersBtn: {
     flexDirection: 'row',
-    marginVertical: hp(0.8),
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
-
-  policyLabel: {
-    fontSize: FSize.fs14,
-    color: Colors.black,
-    fontWeight: '600',
-    marginRight: wp(1),
+  sectionSeeMoreBtn: {
+    alignSelf: 'flex-end',
+    marginTop: hp(1),
   },
-
-  policyValue: {
-    fontSize: FSize.fs14,
-    color: Colors.black,
+  viewAllOffersText: {
+    fontSize: FSize.fs15,
+    color: Colors.sooprsblue,
+    fontFamily: fFamily.ibmSemiBold,
+    marginRight: wp(0.5),
+  },
+  featureGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: CARD_GAP,
+  },
+  includeCard: {
+    width: CARD_WIDTH,
+    backgroundColor: Colors.white,
+    borderRadius: wp(3.5),
+    paddingVertical: hp(1.5),
+    paddingHorizontal: wp(3),
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  includeIconWrap: {
+    width: wp(8.5),
+    height: wp(8.5),
+    borderRadius: wp(2.2),
+    backgroundColor: '#EAF4FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: wp(2.2),
+  },
+  includeCardText: {
     flex: 1,
+    fontSize: FSize.fs15,
+    color: '#1F2937',
+    fontWeight: '700',
   },
-
-  grayBullet: {
-    fontSize: FSize.fs20,
-    color: Colors.gray,
+  excludeCard: {
+    width: CARD_WIDTH,
+    backgroundColor: Colors.white,
+    borderRadius: wp(3.5),
+    paddingVertical: hp(1.5),
+    paddingHorizontal: wp(3),
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#F5C6C6',
+  },
+  excludeIconWrap: {
     marginRight: wp(2),
-    lineHeight: hp(2),
   },
-
-  policyText: { fontSize: FSize.fs14, color: Colors.black, flex: 1, lineHeight: hp(2.2) },
-
-  /* FARE BREAKUP */
-  fareBreakupSectionWrapper: { marginBottom: hp(2), paddingHorizontal: wp(4), backgroundColor: "rgba(255, 255, 255, 1)" },
-
-  fareBreakupTitle: { fontSize: FSize.fs16, fontWeight: '700', marginBottom: hp(1) },
-
+  excludeCardText: {
+    flex: 1,
+    fontSize: FSize.fs15,
+    color: '#1F2937',
+    fontWeight: '700',
+  },
   fareBreakupSection: {
     borderWidth: 1,
-    borderColor: Colors.lightGrey,
-    borderRadius: wp(3),
-    padding: wp(3),
+    borderColor: '#E5E7EB',
+    borderRadius: wp(3.5),
+    paddingHorizontal: wp(3.5),
+    paddingVertical: hp(1.2),
+    backgroundColor: Colors.white,
+    overflow: 'hidden',
   },
-
   fareRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginVertical: hp(0.8),
+    marginVertical: hp(0.7),
   },
-
   fareLabel: {
-    fontSize: FSize.fs14,
-    color: Colors.black,
+    fontSize: FSize.fs16,
+    color: '#4B5563',
+    fontWeight: '400',
+    flex: 1,
+    paddingRight: wp(2),
   },
-
   fareAmount: {
-    fontSize: FSize.fs14,
-    color: Colors.black,
-    fontWeight: '600',
+    fontSize: FSize.fs16,
+    color: '#111827',
+    fontWeight: '700',
   },
-
+  fareDiscountAmount: {
+    fontSize: FSize.fs16,
+    color: '#E53935',
+    fontWeight: '700',
+  },
   totalFareRow: {
-    marginTop: hp(1),
+    marginTop: hp(0.6),
     paddingTop: hp(1),
     borderTopWidth: 1,
-    borderTopColor: Colors.lightGrey,
+    borderTopColor: '#E5E7EB',
   },
-
   totalFareLabel: {
-    fontSize: FSize.fs16,
-    color: Colors.black,
-    fontWeight: '700',
+    fontSize: FSize.fs17,
+    color: '#111827',
+    fontWeight: '500',
   },
-
   totalFareAmount: {
     fontSize: FSize.fs18,
-    color: Colors.black,
-    fontWeight: '700',
-  },
-
-  /* TRAVELLER */
-  travellerSection: { marginBottom: hp(2), paddingHorizontal: wp(4) },
-
-  travellerTitle: { fontSize: FSize.fs16, fontWeight: '700', marginBottom: hp(1) },
-
-  travellerCard: {
-    borderWidth: 1,
-    borderColor: Colors.lightGrey,
-    borderRadius: wp(3),
-    padding: wp(3),
-  },
-
-  travellerHeaderRow: { flexDirection: 'row', justifyContent: 'space-between' },
-
-  travellerLabel: { fontSize: FSize.fs13, color: Colors.gray },
-
-  travellerSaveText: {
-    fontSize: FSize.fs13,
-    color: Colors.sooprsblue,
-    fontWeight: '600',
-  },
-
-  travellerInputsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: hp(1.5) },
-
-  travellerInputBox: { width: '48%' },
-
-  travellerFieldLabel: { fontSize: FSize.fs12, color: Colors.gray },
-
-  travellerFieldInput: {
-    borderRadius: wp(2),
-    backgroundColor: '#F5F5F5',
-    paddingHorizontal: wp(3),
-    paddingVertical: hp(1),
-    marginTop: hp(0.5),
-    fontSize: FSize.fs13,
-  },
-
-  travellerInputBoxFull: { marginTop: hp(1.5) },
-
-  /* BOTTOM BAR */
-  bottomBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: wp(4),
-    paddingVertical: hp(2),
-    borderTopWidth: 1,
-    borderColor: Colors.lightGrey,
-    backgroundColor: Colors.white,
-  },
-
-  paymentOptionsContainer: { flexDirection: 'row', alignItems: 'center' },
-
-  radioOuterPayment: {
-    width: wp(5),
-    height: wp(5),
-    borderRadius: wp(2.5),
-    borderWidth: 2,
-    borderColor: Colors.sooprsblue,
-    marginRight: wp(2),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  radioInnerPayment: {
-    width: wp(2.5),
-    height: wp(2.5),
-    borderRadius: wp(1.25),
-    backgroundColor: Colors.sooprsblue,
-  },
-
-  paymentOptionAmount: {
-    fontSize: FSize.fs17,
-    fontWeight: '700',
-    color: Colors.black,
-  },
-
-  payButton: {
-    backgroundColor: Colors.sooprsblue,
-    paddingHorizontal: wp(6),
-    paddingVertical: hp(1.4),
-    borderRadius: wp(3),
-  },
-
-  payButtonText: {
-    color: Colors.white,
-    fontSize: FSize.fs16,
-    fontWeight: '700',
+    color: '#111827',
+    fontWeight: '800',
   },
 });

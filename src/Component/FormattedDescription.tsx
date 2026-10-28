@@ -47,7 +47,7 @@ function descriptionPlainText(prepared: {
     .join('\n');
 }
 
-function isLongerThanLines(text: string, lineLimit: number) {
+function isLongerThanLines(text: string, lineLimit: number, charsPerLine = 32) {
   const parts = text.replace(/\r/g, '').split('\n');
   let lines = 0;
   parts.forEach(part => {
@@ -55,7 +55,7 @@ function isLongerThanLines(text: string, lineLimit: number) {
     if (length === 0) {
       return;
     }
-    lines += Math.max(1, Math.ceil(length / 42));
+    lines += Math.max(1, Math.ceil(length / Math.max(12, charsPerLine)));
   });
   return lines > lineLimit;
 }
@@ -94,12 +94,17 @@ const FormattedDescription = ({
   const lineHeight =
     typeof flat.lineHeight === 'number' ? flat.lineHeight : Math.round(fontSize * 1.45);
   const [lineCount, setLineCount] = useState(0);
+  const [containerWidth, setContainerWidth] = useState(0);
   const onOverflowChangeRef = useRef(onOverflowChange);
   onOverflowChangeRef.current = onOverflowChange;
 
   const preview = descriptionPlainText(prepared);
-  const textOverflows = isLongerThanLines(preview, collapsedLines);
-  const overflows = lineCount > 0 ? lineCount > collapsedLines : textOverflows;
+  const charsPerLine =
+    containerWidth > 0 ? Math.floor(containerWidth / (fontSize * 0.52)) : 32;
+  const textOverflows = isLongerThanLines(preview, collapsedLines, charsPerLine);
+  const measuredOverflow = lineCount > collapsedLines;
+  const plainLength = preview.replace(/\s+/g, ' ').trim().length;
+  const overflows = measuredOverflow || textOverflows || plainLength > 160;
   const showCollapsedPreview = collapsed && overflows;
 
   useEffect(() => {
@@ -167,10 +172,19 @@ const FormattedDescription = ({
   );
 
   return (
-    <View style={styles.wrap}>
+    <View
+      style={styles.wrap}
+      onLayout={event => {
+        const next = Math.round(event.nativeEvent.layout.width);
+        setContainerWidth(prev => (prev === next ? prev : next));
+      }}>
       <Text
         accessible={false}
-        style={[baseStyle, styles.measure]}
+        style={[
+          baseStyle,
+          styles.measure,
+          containerWidth > 0 ? {width: containerWidth} : null,
+        ]}
         onTextLayout={event => {
           const next = event.nativeEvent.lines?.length || 0;
           setLineCount(prev => (prev === next ? prev : next));
@@ -196,7 +210,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     opacity: 0,
     left: 0,
-    right: 0,
+    top: 0,
     zIndex: -1,
   },
   paragraph: {
